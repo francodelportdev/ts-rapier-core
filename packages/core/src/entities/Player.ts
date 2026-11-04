@@ -1,6 +1,24 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
 import { Input } from "../systems/Input";
+import { EventEmitter, type Listener } from "../systems/EventEmitter";
+
+/** What the player is doing. Updated once per physics step. */
+export type PlayerState = "idle" | "run" | "jump" | "fall" | "dash";
+
+/** Events emitted by `Player`, with their payloads. Velocities are in m/s, positions in meters. */
+export interface PlayerEvents {
+  /** The state changed (for example, from "run" to "jump"). */
+  stateChange: { from: PlayerState; to: PlayerState };
+  /** A jump started. `airJump` is true for jumps that started in the air (double jump). */
+  jump: { airJump: boolean; jumpNumber: number };
+  /** The player touched the ground after being in the air. `fallSpeed` is the downward speed at impact. */
+  land: { fallSpeed: number };
+  /** A dash started. `direction` is 1 (right) or -1 (left). */
+  dash: { direction: 1 | -1; inAir: boolean };
+  /** The player went back to its start position. `fell` is true if it fell below `respawnBelow`. */
+  respawn: { fell: boolean };
+}
 
 /** Which keys (`KeyboardEvent.code`) trigger each action. Any key in the list works. */
 export interface PlayerKeys {
@@ -105,6 +123,9 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
 /** Mass used to push dynamic bodies, in kg. Boxes weigh 1 kg, so the player shoves them easily. */
 const CHARACTER_MASS = 10;
 
+/** Shortest time in the air, in seconds, that counts as falling (and as landing afterwards). */
+const MIN_AIR_TIME = 0.05;
+
 /** Moves `current` towards `target` by at most `maxDelta`. */
 function approach(current: number, target: number, maxDelta: number): number {
   return current < target ? Math.min(current + maxDelta, target) : Math.max(current - maxDelta, target);
@@ -132,6 +153,11 @@ export class Player extends Entity<ResolvedOptions> {
   private dashTimer = 0;
   private dashCooldownTimer = 0;
   private airDashUsed = false;
+  private dashFromGround = false;
+  private state: PlayerState = "idle";
+  /** Seconds since the player last touched the ground. */
+  private airTime = 0;
+  private readonly events = new EventEmitter<PlayerEvents>();
 
   constructor(world: RAPIER.World, options: PlayerOptions = {}) {
     super(world, resolveOptions(options));
@@ -152,6 +178,41 @@ export class Player extends Entity<ResolvedOptions> {
     return this.dashTimer > 0;
   }
 
+  /** What the player is doing right now. */
+  public getState(): PlayerState {
+    return this.state;
+  }
+
+  /** Current velocity, in m/s. */
+  public getVelocity(): { x: number; y: number } {
+    return { x: this.vx, y: this.vy };
+  }
+
+  /** Which way the player faces: 1 = right, -1 = left. */
+  public getFacing(): 1 | -1 {
+    return this.facing;
+  }
+
+  /**
+   * Subscribes to a player event. Returns a function that unsubscribes.
+   *
+   * ```ts
+   * const off = player.on("jump", ({ airJump }) => playSound(airJump ? "jump2" : "jump"));
+   * ```
+   */
+  public on<K extends keyof PlayerEvents>(event: K, listener: Listener<PlayerEvents[K]>): () => void {
+    return this.events.on(event, listener);
+  }
+
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof PlayerEvents>(event: K, listener: Listener<PlayerEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof PlayerEvents>(event: K, listener: Listener<PlayerEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   protected override createBody(): RAPIER.RigidBody {
     const { x, y } = this.options;
     return this.world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(x, y));
@@ -164,11 +225,18 @@ export class Player extends Entity<ResolvedOptions> {
 
   /** Moves the player back to its start position and stops it. */
   public respawn(): void {
+    this.reset();
+    this.events.emit("respawn", { fell: false });
+  }
+
+  private reset(): void {
     this.body.setTranslation({ x: this.options.x, y: this.options.y }, true);
     this.vx = 0;
     this.vy = 0;
     this.dashTimer = 0;
     this.rising = false;
+    this.grounded = false;
+    this.airTime = 0;
   }
 
   public override update(): void {
@@ -176,7 +244,10 @@ export class Player extends Entity<ResolvedOptions> {
     const o = this.options;
     const keys = o.keys;
 
-    if (this.body.translation().y < o.respawnBelow) this.respawn();
+    if (this.body.translation().y < o.respawnBelow) {
+      this.reset();
+      this.events.emit("respawn", { fell: true });
+    }
 
     // --- Read input ---------------------------------------------------------
     const dir = (this.input.isAnyPressed(keys.right) ? 1 : 0) - (this.input.isAnyPressed(keys.left) ? 1 : 0);
@@ -202,13 +273,16 @@ export class Player extends Entity<ResolvedOptions> {
       this.dashTimer = o.dash.duration;
       this.dashCooldownTimer = o.dash.cooldown;
       if (!this.grounded) this.airDashUsed = true;
+      this.dashFromGround = this.grounded;
+      this.events.emit("dash", { direction: this.facing, inAir: !this.grounded });
     }
 
     if (this.dashTimer > 0 && o.dash) {
-      // Fixed horizontal burst; gravity is paused while dashing.
+      // Fixed horizontal burst; gravity is paused while dashing. A ground dash keeps a small
+      // downward push so the controller still detects (and snaps to) the ground.
       this.dashTimer = Math.max(0, this.dashTimer - dt);
       this.vx = this.facing * o.dash.speed;
-      this.vy = 0;
+      this.vy = this.dashFromGround ? -1 : 0;
       if (this.dashTimer === 0) this.vx = this.facing * o.speed; // exit at normal top speed
     } else {
       // --- Horizontal movement ----------------------------------------------
@@ -227,6 +301,7 @@ export class Player extends Entity<ResolvedOptions> {
         this.jumpBufferTimer = 0;
         this.coyoteTimer = 0;
         this.rising = true;
+        this.events.emit("jump", { airJump: !canGroundJump, jumpNumber: this.jumpsUsed });
       }
 
       // Variable jump height: releasing the key early cuts the rise (once per jump).
@@ -244,7 +319,10 @@ export class Player extends Entity<ResolvedOptions> {
     const desired = { x: this.vx * dt, y: this.vy * dt };
     this.controller.computeColliderMovement(collider, desired);
     const moved = this.controller.computedMovement();
+    const fallSpeed = Math.max(0, -this.vy);
     this.grounded = this.controller.computedGrounded();
+    const prevAirTime = this.airTime;
+    this.airTime = this.grounded ? 0 : this.airTime + dt;
 
     // Hitting a ceiling stops the rise. (Horizontal speed is kept, so the player
     // keeps pushing dynamic bodies instead of restarting from zero every step.)
@@ -252,8 +330,27 @@ export class Player extends Entity<ResolvedOptions> {
     if (this.grounded && this.vy < 0) this.vy = 0;
     if (this.vy === 0) this.rising = false;
 
+    // --- State and events ---------------------------------------------------
+    if (this.grounded && prevAirTime >= MIN_AIR_TIME) this.events.emit("land", { fallSpeed });
+    this.setState(this.computeState());
+
     const t = this.body.translation();
     this.body.setNextKinematicTranslation({ x: t.x + moved.x, y: t.y + moved.y });
+  }
+
+  private computeState(): PlayerState {
+    if (this.isDashing()) return "dash";
+    if (this.vy > 0) return "jump";
+    // Brief losses of ground contact (spawning, the end of a dash, small bumps) don't count as falling.
+    if (this.grounded || this.airTime < MIN_AIR_TIME) return Math.abs(this.vx) > 0.1 ? "run" : "idle";
+    return "fall";
+  }
+
+  private setState(to: PlayerState): void {
+    if (to === this.state) return;
+    const from = this.state;
+    this.state = to;
+    this.events.emit("stateChange", { from, to });
   }
 
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {

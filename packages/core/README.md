@@ -118,7 +118,42 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 
 Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`.
 
-Methods: `isGrounded()`, `isDashing()` and `respawn()`.
+Methods: `isGrounded()`, `isDashing()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
+
+#### State
+
+`getState()` returns `"idle" | "run" | "jump" | "fall" | "dash"` and is updated once per physics step. Losses of ground contact shorter than 0.05 s don't count as `"fall"`, which keeps the state from flickering on spawn or over bumps.
+
+#### Events
+
+```ts
+const off = player.on("land", ({ fallSpeed }) => {
+  if (fallSpeed > 15) shakeCamera();
+});
+off(); // unsubscribe. once() and off() are also available.
+```
+
+| Event | Payload | When |
+|---|---|---|
+| `stateChange` | `{ from: PlayerState; to: PlayerState }` | The state changed. |
+| `jump` | `{ airJump: boolean; jumpNumber: number }` | A jump started. `airJump` is true for jumps in the air. |
+| `land` | `{ fallSpeed: number }` | The player touched the ground after at least 0.05 s in the air. The speed is in m/s. |
+| `dash` | `{ direction: 1 \| -1; inAir: boolean }` | A dash started. |
+| `respawn` | `{ fell: boolean }` | The player went back to its start position. `fell` is true for falls below `respawnBelow`, and false for `respawn()` calls. |
+
+Listeners run synchronously, inside the physics step.
+
+### `EventEmitter`
+
+The typed emitter that `Player` uses. It's exported so that your own entities can emit events too:
+
+```ts
+import { EventEmitter } from "@francodelportdev/rapier-engine";
+
+const events = new EventEmitter<{ hit: { damage: number } }>();
+events.on("hit", ({ damage }) => console.log(damage));
+events.emit("hit", { damage: 10 });
+```
 
 ### `Input` (singleton)
 

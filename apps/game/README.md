@@ -8,6 +8,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Player: move & jump | [`src/demos/player.ts`](src/demos/player.ts) | Acceleration, jump, variable height, coyote time, jump buffer. All options written out. |
 | Player: double jump | [`src/demos/double-jump.ts`](src/demos/double-jump.ts) | `maxJumps: 2` |
 | Player: dash | [`src/demos/dash.ts`](src/demos/dash.ts) | `dash: { speed, duration, cooldown }` |
+| Player: state & events | [`src/demos/events.ts`](src/demos/events.ts) | `getState()` and `player.on("jump" \| "land" \| "dash" \| "respawn" \| "stateChange")`, shown in a live HUD. |
 
 Click a demo to give it keyboard focus. Only the focused demo receives keys.
 

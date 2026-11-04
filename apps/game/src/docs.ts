@@ -4,8 +4,9 @@ import main from "./main.ts?raw";
 import player from "./demos/player.ts?raw";
 import doubleJump from "./demos/double-jump.ts?raw";
 import dash from "./demos/dash.ts?raw";
+import events from "./demos/events.ts?raw";
 
-const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash };
+const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash, events };
 
 // --- Source viewers ---------------------------------------------------------
 for (const el of document.querySelectorAll<HTMLElement>("[data-source]")) {

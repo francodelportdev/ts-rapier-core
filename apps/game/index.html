@@ -16,6 +16,7 @@
           <li><a href="#player">Move &amp; jump</a></li>
           <li><a href="#double-jump">Double jump</a></li>
           <li><a href="#dash">Dash</a></li>
+          <li><a href="#events">State &amp; events</a></li>
         </ul>
       </nav>
 
@@ -125,7 +126,7 @@
               <tr><td><code>jumpBuffer</code></td><td><code>0.1</code></td><td>Seconds.</td></tr>
               <tr><td><code>maxJumps</code></td><td><code>1</code></td><td>See <a href="#double-jump">Double jump</a>.</td></tr>
               <tr><td><code>dash</code></td><td><code>false</code></td><td>See <a href="#dash">Dash</a>.</td></tr>
-              <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position.</td></tr>
+              <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position. See <a href="#events">State &amp; events</a> for the <code>respawn</code> event.</td></tr>
               <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
             </tbody>
           </table>
@@ -207,6 +208,67 @@
           </div>
           <pre><code data-source="dash"></code></pre>
         </section>
+
+        <!-- ============================== State & events ============================== -->
+        <section id="events">
+          <p class="eyebrow">Player</p>
+          <h1>State &amp; events</h1>
+          <p class="lead">The player reports what it's doing, so your game can play sounds, switch animations or update the UI without changing the engine.</p>
+
+          <div class="demo">
+            <canvas id="events-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+            <div class="hud">
+              <span class="state-label" id="events-state" data-state="idle">idle</span>
+              <ol class="event-log" id="events-log"></ol>
+            </div>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+            <li><kbd>Space</kbd> Jump (twice for a double jump)</li>
+            <li><kbd>Shift</kbd> Dash</li>
+            <li><kbd>R</kbd> Respawn</li>
+          </ul>
+
+          <h2>State</h2>
+          <p><code>player.getState()</code> returns one of these values. It's updated once per physics step.</p>
+          <table>
+            <thead><tr><th>State</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td><code>"idle"</code></td><td>On the ground and not moving.</td></tr>
+              <tr><td><code>"run"</code></td><td>On the ground and moving.</td></tr>
+              <tr><td><code>"jump"</code></td><td>In the air, going up.</td></tr>
+              <tr><td><code>"fall"</code></td><td>In the air, going down.</td></tr>
+              <tr><td><code>"dash"</code></td><td>During a dash.</td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Very short losses of ground contact, under 0.05 s (for example when spawning or going over a bump), don't count as <code>"fall"</code>. Without this, the state would flicker. Other getters: <code>isGrounded()</code>, <code>isDashing()</code>, <code>getVelocity()</code> (m/s) and <code>getFacing()</code> (1 or -1).</p>
+
+          <h2>Events</h2>
+          <p><code>player.on(event, listener)</code> subscribes and returns a function that unsubscribes. There's also <code>once()</code> and <code>off()</code>. The payloads are fully typed.</p>
+          <table>
+            <thead><tr><th>Event</th><th>Payload</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td><code>stateChange</code></td><td><code>{ from, to }</code></td><td>The state changed.</td></tr>
+              <tr><td><code>jump</code></td><td><code>{ airJump, jumpNumber }</code></td><td>A jump started. <code>airJump</code> is true for jumps in the air.</td></tr>
+              <tr><td><code>land</code></td><td><code>{ fallSpeed }</code></td><td>The player touched the ground after being in the air. Useful for dust particles or fall damage.</td></tr>
+              <tr><td><code>dash</code></td><td><code>{ direction, inAir }</code></td><td>A dash started.</td></tr>
+              <tr><td><code>respawn</code></td><td><code>{ fell }</code></td><td>The player went back to its start position. <code>fell</code> is true if it fell below <code>respawnBelow</code>, and false if you called <code>respawn()</code>.</td></tr>
+            </tbody>
+          </table>
+<pre><code>const off = player.on("land", ({ fallSpeed }) =&gt; {
+  if (fallSpeed &gt; 15) shakeCamera();
+});
+
+off(); // stop listening</code></pre>
+          <p class="hint">Listeners run synchronously, inside the physics step. Keep them short, and do heavy work (such as loading assets) elsewhere.</p>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/events.ts</code></h2>
+            <button type="button" data-copy="events">Copy</button>
+          </div>
+          <pre><code data-source="events"></code></pre>
+        </section>
       </main>
     </div>
 
@@ -214,6 +276,7 @@
     <script type="module" src="/src/demos/player.ts"></script>
     <script type="module" src="/src/demos/double-jump.ts"></script>
     <script type="module" src="/src/demos/dash.ts"></script>
+    <script type="module" src="/src/demos/events.ts"></script>
     <script type="module" src="/src/docs.ts"></script>
   </body>
 </html>
