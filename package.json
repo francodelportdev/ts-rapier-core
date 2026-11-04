@@ -1,15 +1,14 @@
 {
   "name": "ts-rapier-core",
-  "module": "index.ts",
-  "type": "module",
   "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "bun run --filter mi-juego dev",
+    "build": "bun run --filter '*' build"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
+    "@types/bun": "latest",
     "typescript": "^5"
-  },
-  "dependencies": {
-    "@dimforge/rapier2d": "^0.21.0"
   }
 }
