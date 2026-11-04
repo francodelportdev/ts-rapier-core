@@ -1,5 +1,7 @@
 # ts-rapier-core
 
+[![CI](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml/badge.svg)](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml)
+
 An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.rs) physics, plus a playable demo.
 
 | Path | What it is |
