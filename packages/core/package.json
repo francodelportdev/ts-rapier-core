@@ -25,7 +25,9 @@
   ],
   "scripts": {
     "build": "rm -rf dist && bun build src/index.ts --outdir dist --target browser --format esm --external @dimforge/rapier2d-compat && tsc -p tsconfig.build.json",
-    "prepublishOnly": "bun run build"
+    "test": "bun test",
+    "typecheck": "tsc -p .",
+    "prepublishOnly": "bun run typecheck && bun test && bun run build"
   },
   "dependencies": {
     "@dimforge/rapier2d-compat": "^0.14.0"

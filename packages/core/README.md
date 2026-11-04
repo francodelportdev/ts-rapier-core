@@ -237,8 +237,32 @@ Import `RAPIER` from `@dimforge/rapier2d-compat` (the default export). It gives 
 ## Development
 
 ```bash
-bun run build   # dist/index.js (bun build) + dist/*.d.ts (tsc)
+bun run build      # dist/index.js (bun build) + dist/*.d.ts (tsc)
+bun test           # runs the test suite
+bun run typecheck  # tsc on src and test
 ```
+
+### Tests
+
+The tests run the real engine and real Rapier physics under `bun test`, with no browser. [`test/setup.ts`](test/setup.ts) provides a minimal `window` and `document`, and [`test/helpers.ts`](test/helpers.ts) lets you press keys, step the physics and create games on a fake canvas:
+
+```ts
+import { createWorld, keys, simulate } from "./helpers";
+
+const world = createWorld();
+const player = new Player(world);
+keys.down("Space");
+simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
+```
+
+| File | Covers |
+|---|---|
+| `player.test.ts` | Movement and keys, box pushing, jump height, variable jump, double jump, ceilings, coyote time, jump buffer, dash and cooldown, respawn |
+| `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
+| `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
+| `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
+
+Rapier is deterministic, so a given sequence of key presses always produces the same result.
 
 Inside the monorepo, `apps/game` resolves the `"source"` export condition, so it uses `src/` directly and you don't need to build first.
 
