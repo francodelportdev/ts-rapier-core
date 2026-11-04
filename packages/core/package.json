@@ -1,0 +1,17 @@
+{
+  "name": "@mi-usuario/rapier-engine",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@dimforge/rapier2d-compat": "^0.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5"
+  }
+}
