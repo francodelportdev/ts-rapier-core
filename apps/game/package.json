@@ -1,5 +1,5 @@
 {
-  "name": "mi-juego",
+  "name": "game",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mi-usuario/rapier-engine": "workspace:*"
+    "@francodelportdev/rapier-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "~7.0.2",

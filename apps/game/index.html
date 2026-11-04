@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rapier Engine Demo</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Push the boxes off the platform</h1>
+        <p>A demo of <code>@francodelportdev/rapier-engine</code>, a 2D engine built on Rapier physics.</p>
+      </header>
+
+      <canvas id="game" width="800" height="450"></canvas>
+
+      <ul class="controls">
+        <li><kbd>←</kbd> <kbd>→</kbd> Move the player</li>
+        <li><kbd>Space</kbd> Kick the first box upwards</li>
+      </ul>
+
+      <section>
+        <h2>How it's built</h2>
+        <ol class="steps">
+          <li>
+            <h3>Create the game</h3>
+            <p><code>await Game.create(canvas)</code> loads Rapier, which is WebAssembly, and then creates the physics world. That's why it's <code>async</code> and you can't use <code>new Game()</code>.</p>
+          </li>
+          <li>
+            <h3>Add the entities</h3>
+            <p>Each entity creates its own body in the physics world. <code>addEntity()</code> adds it to the game loop so that it gets updated and drawn. Units are meters, with the Y axis pointing up and the origin at the center of the canvas.</p>
+            <table>
+              <thead><tr><th>Entity</th><th>Body type</th><th>Behavior</th></tr></thead>
+              <tbody>
+                <tr><td><code>Ground</code></td><td><code>fixed</code></td><td>Never moves. Its top surface is at y = -4.5.</td></tr>
+                <tr><td><code>Box</code></td><td><code>dynamic</code></td><td>Affected by gravity, collisions and impulses.</td></tr>
+                <tr><td><code>Player</code></td><td><code>kinematic</code></td><td>Moved by code with ←/→. It pushes the boxes, and nothing pushes it.</td></tr>
+              </tbody>
+            </table>
+          </li>
+          <li>
+            <h3>Add your own controls</h3>
+            <p><code>box.applyImpulse(0, 5)</code> changes the box's velocity instantly. The box weighs 1 kg, so an impulse of 5 N·s adds 5 m/s upwards.</p>
+          </li>
+          <li>
+            <h3>Start the loop</h3>
+            <p>Every frame, <code>game.start()</code> runs <code>update()</code> on every entity, then <code>world.step()</code>, and then <code>draw()</code>.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <div class="code-header">
+          <h2>Full source: <code>src/main.ts</code></h2>
+          <button id="copy" type="button">Copy</button>
+        </div>
+        <pre><code id="source"></code></pre>
+        <p class="hint">To use it in your own project, run <code>bun add @francodelportdev/rapier-engine</code>, add <code>&lt;canvas id="game"&gt;</code> to your HTML, and paste this code.</p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/docs.ts"></script>
+  </body>
+</html>
