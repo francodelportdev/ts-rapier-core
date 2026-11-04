@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "dev": "bun run --filter mi-juego dev",
+    "dev": "bun run --filter game dev",
     "build": "bun run --filter '*' build"
   },
   "devDependencies": {
