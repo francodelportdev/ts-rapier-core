@@ -91,6 +91,7 @@ button:hover { border-color: var(--accent); }
 .state-label[data-state="jump"] { background: #38a169; }
 .state-label[data-state="fall"] { background: #d69e2e; color: var(--bg); }
 .state-label[data-state="dash"] { background: #d53f8c; }
+.state-label[data-state="wallSlide"] { background: #805ad5; }
 .event-log { margin: 0; padding: 0; list-style: none; font: 0.8rem ui-monospace, monospace; color: var(--muted); }
 .event-log li:first-child { color: var(--text); }
 @media (max-width: 760px) { .event-log { display: none; } }
