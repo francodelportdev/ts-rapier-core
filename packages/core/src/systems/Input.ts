@@ -1,4 +1,4 @@
-/** Estado global del teclado (Singleton). Las teclas se identifican por `KeyboardEvent.code`. */
+/** Global keyboard state (Singleton). Keys are identified by `KeyboardEvent.code`. */
 export class Input {
   private static instance: Input | null = null;
   private readonly keys = new Map<string, boolean>();
@@ -6,7 +6,7 @@ export class Input {
   private constructor() {
     window.addEventListener("keydown", (e: KeyboardEvent) => this.keys.set(e.code, true));
     window.addEventListener("keyup", (e: KeyboardEvent) => this.keys.set(e.code, false));
-    // Evita teclas "pegadas" al perder el foco de la ventana.
+    // Prevent "stuck" keys when the window loses focus.
     window.addEventListener("blur", () => this.keys.clear());
   }
 

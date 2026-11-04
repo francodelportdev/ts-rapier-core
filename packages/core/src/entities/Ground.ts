@@ -15,7 +15,7 @@ export class Ground extends Entity {
 
   public override update(): void {}
 
-  public override draw(ctx: CanvasRenderingContext2D, escala: number, centroX: number, centroY: number): void {
-    this.drawCuboid(ctx, HALF_W, HALF_H, "#4a5568", escala, centroX, centroY);
+  public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
+    this.drawCuboid(ctx, HALF_W, HALF_H, "#4a5568", scale, centerX, centerY);
   }
 }

@@ -1,8 +1,8 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 
 /**
- * Base de toda entidad física. Trabaja en metros (Rapier, eje Y hacia arriba);
- * la conversión a píxeles (eje Y hacia abajo) ocurre solo en `draw` vía `toCanvas`.
+ * Base class for every physics entity. Works in meters (Rapier, Y axis up);
+ * conversion to pixels (Y axis down) happens only in `draw` via `toCanvas`.
  */
 export abstract class Entity {
   protected body: RAPIER.RigidBody;
@@ -17,25 +17,25 @@ export abstract class Entity {
   protected abstract createBody(): RAPIER.RigidBody;
   protected abstract createCollider(): RAPIER.Collider;
   public abstract update(): void;
-  public abstract draw(ctx: CanvasRenderingContext2D, escala: number, centroX: number, centroY: number): void;
+  public abstract draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void;
 
-  /** Metros (mundo) → píxeles (canvas). */
-  protected toCanvas(x: number, y: number, escala: number, centroX: number, centroY: number): { px: number; py: number } {
-    return { px: centroX + x * escala, py: centroY - y * escala };
+  /** Meters (world) → pixels (canvas). */
+  protected toCanvas(x: number, y: number, scale: number, centerX: number, centerY: number): { px: number; py: number } {
+    return { px: centerX + x * scale, py: centerY - y * scale };
   }
 
-  /** Dibuja un rectángulo centrado en el cuerpo, rotado según su ángulo. */
+  /** Draws a rectangle centered on the body, rotated by its angle. */
   protected drawCuboid(
     ctx: CanvasRenderingContext2D, halfW: number, halfH: number, color: string,
-    escala: number, centroX: number, centroY: number,
+    scale: number, centerX: number, centerY: number,
   ): void {
     const t = this.body.translation();
-    const { px, py } = this.toCanvas(t.x, t.y, escala, centroX, centroY);
-    const w = halfW * 2 * escala;
-    const h = halfH * 2 * escala;
+    const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
+    const w = halfW * 2 * scale;
+    const h = halfH * 2 * scale;
     ctx.save();
     ctx.translate(px, py);
-    ctx.rotate(-this.body.rotation()); // Y invertido en canvas → rotación invertida
+    ctx.rotate(-this.body.rotation()); // canvas Y is flipped → flip rotation
     ctx.fillStyle = color;
     ctx.fillRect(-w / 2, -h / 2, w, h);
     ctx.restore();

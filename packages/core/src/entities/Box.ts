@@ -5,8 +5,8 @@ const HALF = 0.5;
 
 export class Box extends Entity {
   constructor(world: RAPIER.World, x = 0, y = 5) {
-    // createBody() se ejecuta dentro de super(), antes de inicializar campos propios;
-    // por eso la posición se aplica justo después.
+    // createBody() runs inside super(), before subclass fields are initialized,
+    // so the position is applied right after.
     super(world);
     this.body.setTranslation({ x, y }, true);
   }
@@ -25,7 +25,7 @@ export class Box extends Entity {
 
   public override update(): void {}
 
-  public override draw(ctx: CanvasRenderingContext2D, escala: number, centroX: number, centroY: number): void {
-    this.drawCuboid(ctx, HALF, HALF, "#ed8936", escala, centroX, centroY);
+  public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
+    this.drawCuboid(ctx, HALF, HALF, "#ed8936", scale, centerX, centerY);
   }
 }

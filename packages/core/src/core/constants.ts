@@ -1,2 +1,2 @@
-/** Píxeles por metro: convierte unidades físicas de Rapier a píxeles del canvas. */
-export const ESCALA = 30;
+/** Pixels per meter: converts Rapier physics units to canvas pixels. */
+export const SCALE = 30;
