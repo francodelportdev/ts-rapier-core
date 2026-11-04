@@ -1,0 +1,15 @@
+{
+  "name": "ts-rapier-core",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@dimforge/rapier2d": "^0.21.0"
+  }
+}
