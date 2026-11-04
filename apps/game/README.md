@@ -15,7 +15,7 @@ bun run dev
 
 ## How it's built
 
-The whole demo is two files: [`index.html`](index.html) and [`src/main.ts`](src/main.ts).
+The demo itself is [`src/main.ts`](src/main.ts) plus the `<canvas>` in [`index.html`](index.html). The rest of the page (this walkthrough and the source viewer) is rendered by [`src/docs.ts`](src/docs.ts) and isn't needed to run the game.
 
 ### 1. A canvas to draw on
 
