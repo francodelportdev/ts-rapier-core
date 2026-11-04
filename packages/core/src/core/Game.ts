@@ -7,12 +7,14 @@ import { SCALE } from "./constants";
  * so it is constructed with `await Game.create(canvas)`.
  */
 export class Game {
+  private readonly canvas: HTMLCanvasElement;
   private readonly world: RAPIER.World;
   private readonly ctx: CanvasRenderingContext2D;
   private entities: Entity[] = [];
   private rafId: number | null = null;
 
-  private constructor(private readonly canvas: HTMLCanvasElement) {
+  private constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
     const ctx = canvas.getContext("2d");
     if (ctx === null) throw new Error("Could not get 2D canvas context");
     this.ctx = ctx;
