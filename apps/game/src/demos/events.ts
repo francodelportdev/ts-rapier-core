@@ -34,7 +34,9 @@ function addLine(text: string): void {
   while (logList.children.length > 8) logList.lastElementChild?.remove();
 }
 
-player.on("jump", ({ airJump, jumpNumber }) => addLine(`jump #${jumpNumber}${airJump ? " (air)" : ""}`));
+player.on("jump", ({ airJump, wallJump, jumpNumber }) =>
+  addLine(`jump #${jumpNumber}${wallJump ? " (wall)" : airJump ? " (air)" : ""}`),
+);
 player.on("land", ({ fallSpeed }) => addLine(`land at ${fallSpeed.toFixed(1)} m/s${fallSpeed > 15 ? " (hard!)" : ""}`));
 player.on("dash", ({ direction, inAir }) => addLine(`dash ${direction > 0 ? "→" : "←"}${inAir ? " (air)" : ""}`));
 player.on("respawn", ({ fell }) => addLine(fell ? "respawn (fell off)" : "respawn"));

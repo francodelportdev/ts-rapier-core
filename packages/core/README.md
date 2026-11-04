@@ -149,16 +149,17 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 | `jumpBuffer` | `0.1` | Seconds a jump press is remembered before landing. |
 | `maxJumps` | `1` | Jumps available before landing. `2` gives a double jump. |
 | `dash` | `false` | `true`, or `{ speed = 20, duration = 0.15, cooldown = 0.4 }`. A horizontal burst with gravity paused. It's available on the ground and once per jump in the air. |
+| `wallJump` | `false` | `true`, or `{ slideSpeed = 3, pushSpeed = 10, jumpHeight = jumpHeight, controlLock = 0.15, coyoteTime = 0.1 }`. In the air, pushing into a wall slides down it at up to `slideSpeed`, and jumping pushes away from it. The arrow keys are ignored for `controlLock` seconds after a wall jump. Walls are fixed or kinematic bodies, not dynamic ones. A wall jump counts as the ground jump, so a double jump is still available. |
 | `respawnBelow` | `-15` | Falling below this Y sends the player back to its start position. |
 | `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump` and `dash`. You can override one action without the others. |
 
 Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`.
 
-Methods: `isGrounded()`, `isDashing()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
+Methods: `isGrounded()`, `isDashing()`, `isWallSliding()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
 
 #### State
 
-`getState()` returns `"idle" | "run" | "jump" | "fall" | "dash"` and is updated once per physics step. Losses of ground contact shorter than 0.05 s don't count as `"fall"`, which keeps the state from flickering on spawn or over bumps.
+`getState()` returns `"idle" | "run" | "jump" | "fall" | "dash" | "wallSlide"` and is updated once per physics step. Losses of ground contact shorter than 0.05 s don't count as `"fall"`, which keeps the state from flickering on spawn or over bumps.
 
 #### Events
 
@@ -172,9 +173,10 @@ off(); // unsubscribe. once() and off() are also available.
 | Event | Payload | When |
 |---|---|---|
 | `stateChange` | `{ from: PlayerState; to: PlayerState }` | The state changed. |
-| `jump` | `{ airJump: boolean; jumpNumber: number }` | A jump started. `airJump` is true for jumps in the air. |
+| `jump` | `{ airJump: boolean; wallJump: boolean; jumpNumber: number }` | A jump started. `airJump` is true for extra jumps in the air, and `wallJump` for jumps off a wall. |
 | `land` | `{ fallSpeed: number }` | The player touched the ground after at least 0.05 s in the air. The speed is in m/s. |
 | `dash` | `{ direction: 1 \| -1; inAir: boolean }` | A dash started. |
+| `wallSlideStart` / `wallSlideEnd` | `{ side: 1 \| -1 }` | Started or stopped sliding down a wall. `side` is the wall's side. |
 | `respawn` | `{ fell: boolean }` | The player went back to its start position. `fell` is true for falls below `respawnBelow`, and false for `respawn()` calls. |
 
 Listeners run synchronously, inside the physics step.
@@ -257,7 +259,8 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 
 | File | Covers |
 |---|---|
-| `player.test.ts` | Movement and keys, box pushing, jump height, variable jump, double jump, ceilings, coyote time, jump buffer, dash and cooldown, respawn |
+| `player.test.ts` | Movement and keys, walls stopping the player, box pushing, jump height, variable jump, double jump, ceilings, coyote time, jump buffer, dash and cooldown, respawn |
+| `wall-jump.test.ts` | Wall slide (speed cap, needs pushing, ends on landing, boxes aren't walls), wall jump, control lock, wall coyote time, keeping the double jump, climbing a shaft |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

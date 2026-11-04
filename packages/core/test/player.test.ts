@@ -75,6 +75,19 @@ describe("Player: movement", () => {
     expect(player.getVelocity().x).toBeGreaterThan(0);
   });
 
+  test("a wall stops it, so turning away is immediate", () => {
+    const world = createWorld();
+    const player = new Player(world);
+    const entities = [new Ground(world), new Platform(world, { x: 2, y: -2, width: 1, height: 4 }), player];
+    keys.down("ArrowRight");
+    simulate(world, entities, 30); // pressed against the wall (face at x = 1.5)
+    expect(player.getVelocity().x).toBe(0);
+    keys.up("ArrowRight");
+    keys.down("ArrowLeft");
+    simulate(world, entities, 3);
+    expect(player.getPosition().x).toBeLessThan(0.99);
+  });
+
   test("pushes dynamic boxes", () => {
     const world = createWorld();
     const box = new Box(world, 2, -4);
@@ -161,8 +174,8 @@ describe("Player: jump", () => {
     const doubleTop = press(double);
     expect(doubleTop).toBeGreaterThan(singleTop + 1.5);
     expect(jumps).toEqual([
-      { airJump: false, jumpNumber: 1 },
-      { airJump: true, jumpNumber: 2 },
+      { airJump: false, wallJump: false, jumpNumber: 1 },
+      { airJump: true, wallJump: false, jumpNumber: 2 },
     ]);
   });
 
@@ -227,7 +240,7 @@ describe("Player: coyote time and jump buffer", () => {
     simulate(world, entities, 3); // 0.05 s < coyoteTime 0.1 s
     keys.down("Space");
     simulate(world, entities, 2);
-    expect(jumps).toEqual([{ airJump: false, jumpNumber: 1 }]);
+    expect(jumps).toEqual([{ airJump: false, wallJump: false, jumpNumber: 1 }]);
     expect(player.getVelocity().y).toBeGreaterThan(10);
   });
 
@@ -271,7 +284,7 @@ describe("Player: coyote time and jump buffer", () => {
   }
 
   test("pressing jump just before landing jumps on landing (jump buffer)", () => {
-    expect(dropAndPress(3)).toEqual([{ airJump: false, jumpNumber: 1 }]); // 0.05 s early
+    expect(dropAndPress(3)).toEqual([{ airJump: false, wallJump: false, jumpNumber: 1 }]); // 0.05 s early
   });
 
   test("pressing jump too early before landing does nothing", () => {

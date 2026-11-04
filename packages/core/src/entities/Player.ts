@@ -4,18 +4,25 @@ import { Input } from "../systems/Input";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 
 /** What the player is doing. Updated once per physics step. */
-export type PlayerState = "idle" | "run" | "jump" | "fall" | "dash";
+export type PlayerState = "idle" | "run" | "jump" | "fall" | "dash" | "wallSlide";
 
 /** Events emitted by `Player`, with their payloads. Velocities are in m/s, positions in meters. */
 export interface PlayerEvents {
   /** The state changed (for example, from "run" to "jump"). */
   stateChange: { from: PlayerState; to: PlayerState };
-  /** A jump started. `airJump` is true for jumps that started in the air (double jump). */
-  jump: { airJump: boolean; jumpNumber: number };
+  /**
+   * A jump started. `airJump` is true for extra jumps in the air (double jump),
+   * `wallJump` for jumps off a wall.
+   */
+  jump: { airJump: boolean; wallJump: boolean; jumpNumber: number };
   /** The player touched the ground after being in the air. `fallSpeed` is the downward speed at impact. */
   land: { fallSpeed: number };
   /** A dash started. `direction` is 1 (right) or -1 (left). */
   dash: { direction: 1 | -1; inAir: boolean };
+  /** The player started sliding down a wall. `side` is the wall's side: 1 = right, -1 = left. */
+  wallSlideStart: { side: 1 | -1 };
+  /** The player stopped sliding down a wall (it jumped, landed, let go or the wall ended). */
+  wallSlideEnd: { side: 1 | -1 };
   /** The player went back to its start position. `fell` is true if it fell below `respawnBelow`. */
   respawn: { fell: boolean };
 }
@@ -35,6 +42,22 @@ export interface DashOptions {
   duration?: number;
   /** Minimum time between dashes, in seconds. Default: 0.4. */
   cooldown?: number;
+}
+
+export interface WallJumpOptions {
+  /** Fastest fall while sliding down a wall, in m/s. Default: 3. */
+  slideSpeed?: number;
+  /** Horizontal speed away from the wall at the start of a wall jump, in m/s. Default: 10. */
+  pushSpeed?: number;
+  /** Height of a wall jump, in meters. Default: the player's `jumpHeight`. */
+  jumpHeight?: number;
+  /**
+   * After a wall jump, the arrow keys are ignored for this long, in seconds, so the player
+   * can't steer straight back into the same wall. Default: 0.15.
+   */
+  controlLock?: number;
+  /** Time after leaving a wall during which a wall jump still works, in seconds. Default: 0.1. */
+  coyoteTime?: number;
 }
 
 export interface PlayerOptions {
@@ -75,6 +98,11 @@ export interface PlayerOptions {
 
   /** Enables the dash. `true` uses the defaults. Default: false. */
   dash?: boolean | DashOptions;
+  /**
+   * Enables wall sliding and wall jumping. `true` uses the defaults. Default: false.
+   * Walls are fixed or kinematic bodies; dynamic bodies (like boxes) don't count.
+   */
+  wallJump?: boolean | WallJumpOptions;
 
   keys?: Partial<PlayerKeys>;
 }
@@ -86,13 +114,15 @@ const DEFAULT_KEYS: PlayerKeys = {
   dash: ["ShiftLeft", "ShiftRight", "KeyX"],
 };
 
-type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "keys">> & {
+type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys">> & {
   dash: Required<DashOptions> | null;
+  wallJump: Required<WallJumpOptions> | null;
   keys: PlayerKeys;
 };
 
 function resolveOptions(o: PlayerOptions): ResolvedOptions {
   const dash = o.dash === true ? {} : o.dash || null;
+  const wallJump = o.wallJump === true ? {} : o.wallJump || null;
   return {
     x: o.x ?? 0,
     y: o.y ?? -3.5,
@@ -116,6 +146,13 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
       duration: dash.duration ?? 0.15,
       cooldown: dash.cooldown ?? 0.4,
     },
+    wallJump: wallJump && {
+      slideSpeed: wallJump.slideSpeed ?? 3,
+      pushSpeed: wallJump.pushSpeed ?? 10,
+      jumpHeight: wallJump.jumpHeight ?? o.jumpHeight ?? 3,
+      controlLock: wallJump.controlLock ?? 0.15,
+      coyoteTime: wallJump.coyoteTime ?? 0.1,
+    },
     keys: { ...DEFAULT_KEYS, ...o.keys },
   };
 }
@@ -125,6 +162,9 @@ const CHARACTER_MASS = 10;
 
 /** Shortest time in the air, in seconds, that counts as falling (and as landing afterwards). */
 const MIN_AIR_TIME = 0.05;
+
+/** How far beside the player to look for a wall, in meters. */
+const WALL_PROBE = 0.05;
 
 /** Moves `current` towards `target` by at most `maxDelta`. */
 function approach(current: number, target: number, maxDelta: number): number {
@@ -154,6 +194,14 @@ export class Player extends Entity<ResolvedOptions> {
   private dashCooldownTimer = 0;
   private airDashUsed = false;
   private dashFromGround = false;
+  /** Side of the wall being slid on (1 = right, -1 = left), or 0. */
+  private wallSlideSide: 0 | 1 | -1 = 0;
+  /** Side of the last wall slid on, for wall coyote time. */
+  private lastWallSide: 1 | -1 = 1;
+  private wallCoyoteTimer = 0;
+  private controlLockTimer = 0;
+  /** Reused shape for wall probes (half extents set per probe). */
+  private wallProbe: RAPIER.Cuboid | null = null;
   private state: PlayerState = "idle";
   /** Seconds since the player last touched the ground. */
   private airTime = 0;
@@ -176,6 +224,11 @@ export class Player extends Entity<ResolvedOptions> {
   /** True while a dash is in progress. */
   public isDashing(): boolean {
     return this.dashTimer > 0;
+  }
+
+  /** True while sliding down a wall. */
+  public isWallSliding(): boolean {
+    return this.wallSlideSide !== 0;
   }
 
   /** What the player is doing right now. */
@@ -237,6 +290,9 @@ export class Player extends Entity<ResolvedOptions> {
     this.rising = false;
     this.grounded = false;
     this.airTime = 0;
+    this.controlLockTimer = 0;
+    this.wallCoyoteTimer = 0;
+    this.setWallSlide(0);
   }
 
   public override update(): void {
@@ -250,7 +306,11 @@ export class Player extends Entity<ResolvedOptions> {
     }
 
     // --- Read input ---------------------------------------------------------
-    const dir = (this.input.isAnyPressed(keys.right) ? 1 : 0) - (this.input.isAnyPressed(keys.left) ? 1 : 0);
+    const inputDir = (this.input.isAnyPressed(keys.right) ? 1 : 0) - (this.input.isAnyPressed(keys.left) ? 1 : 0);
+    // Right after a wall jump, the arrow keys are ignored so the player can't steer back into the wall.
+    this.controlLockTimer = Math.max(0, this.controlLockTimer - dt);
+    const locked = this.controlLockTimer > 0;
+    const dir = locked ? 0 : inputDir;
     const jumpDown = this.input.isAnyPressed(keys.jump);
     const dashDown = this.input.isAnyPressed(keys.dash);
     const jumpPressed = jumpDown && !this.jumpHeld; // true only on the step the key goes down
@@ -263,6 +323,7 @@ export class Player extends Entity<ResolvedOptions> {
     this.coyoteTimer = this.grounded ? o.coyoteTime : Math.max(0, this.coyoteTimer - dt);
     this.jumpBufferTimer = jumpPressed ? o.jumpBuffer : Math.max(0, this.jumpBufferTimer - dt);
     this.dashCooldownTimer = Math.max(0, this.dashCooldownTimer - dt);
+    this.wallCoyoteTimer = Math.max(0, this.wallCoyoteTimer - dt);
     if (this.grounded) {
       this.jumpsUsed = 0;
       this.airDashUsed = false;
@@ -284,16 +345,46 @@ export class Player extends Entity<ResolvedOptions> {
       this.vx = this.facing * o.dash.speed;
       this.vy = this.dashFromGround ? -1 : 0;
       if (this.dashTimer === 0) this.vx = this.facing * o.speed; // exit at normal top speed
+      this.setWallSlide(0); // dashing ends a wall slide
     } else {
       // --- Horizontal movement ----------------------------------------------
-      const control = this.grounded ? 1 : o.airControl;
-      const rate = (dir !== 0 ? o.acceleration : o.deceleration) * control;
-      this.vx = approach(this.vx, dir * o.speed, rate * dt);
+      if (!locked) {
+        const control = this.grounded ? 1 : o.airControl;
+        const rate = (dir !== 0 ? o.acceleration : o.deceleration) * control;
+        this.vx = approach(this.vx, dir * o.speed, rate * dt);
+      }
+
+      // --- Wall slide -------------------------------------------------------
+      // Sliding: in the air, falling, touching a wall and pushing towards it.
+      const wall = o.wallJump && !this.grounded ? this.touchingWall() : 0;
+      const sliding = o.wallJump !== null && wall !== 0 && dir === wall && this.vy <= 0;
+      if (sliding) {
+        this.lastWallSide = wall;
+        this.wallCoyoteTimer = o.wallJump!.coyoteTime;
+      }
+      this.setWallSlide(sliding ? wall : 0);
 
       // --- Jump -------------------------------------------------------------
       const canGroundJump = this.coyoteTimer > 0 && this.jumpsUsed === 0;
+      // A wall touched (or slid on moments ago) beats an air jump, so the double jump is kept for later.
+      const wallSide = wall !== 0 ? wall : this.wallCoyoteTimer > 0 ? this.lastWallSide : 0;
+      const canWallJump = o.wallJump !== null && !canGroundJump && wallSide !== 0;
       const canAirJump = !canGroundJump && this.jumpsUsed < o.maxJumps && (this.jumpsUsed > 0 || o.maxJumps > 1);
-      if (this.jumpBufferTimer > 0 && (canGroundJump || canAirJump)) {
+
+      if (this.jumpBufferTimer > 0 && canWallJump && o.wallJump) {
+        // Up and away from the wall, with the arrow keys locked for a moment.
+        this.vy = Math.sqrt(2 * o.gravity * o.wallJump.jumpHeight);
+        this.vx = -wallSide * o.wallJump.pushSpeed;
+        this.facing = wallSide === 1 ? -1 : 1;
+        this.controlLockTimer = o.wallJump.controlLock;
+        this.jumpsUsed = 1; // counts as the ground jump: a double jump is still available
+        this.jumpBufferTimer = 0;
+        this.coyoteTimer = 0;
+        this.wallCoyoteTimer = 0;
+        this.rising = true;
+        this.setWallSlide(0);
+        this.events.emit("jump", { airJump: false, wallJump: true, jumpNumber: 1 });
+      } else if (this.jumpBufferTimer > 0 && (canGroundJump || canAirJump)) {
         // v = √(2·g·h) reaches exactly `jumpHeight`.
         this.vy = Math.sqrt(2 * o.gravity * o.jumpHeight);
         // Walking off a ledge without jumping spends the ground jump.
@@ -301,7 +392,7 @@ export class Player extends Entity<ResolvedOptions> {
         this.jumpBufferTimer = 0;
         this.coyoteTimer = 0;
         this.rising = true;
-        this.events.emit("jump", { airJump: !canGroundJump, jumpNumber: this.jumpsUsed });
+        this.events.emit("jump", { airJump: !canGroundJump, wallJump: false, jumpNumber: this.jumpsUsed });
       }
 
       // Variable jump height: releasing the key early cuts the rise (once per jump).
@@ -311,7 +402,9 @@ export class Player extends Entity<ResolvedOptions> {
       }
 
       // --- Gravity ----------------------------------------------------------
-      this.vy = Math.max(this.vy - o.gravity * dt, -o.maxFallSpeed);
+      // Sliding down a wall caps the fall speed at `slideSpeed`.
+      const maxFall = this.isWallSliding() && o.wallJump ? o.wallJump.slideSpeed : o.maxFallSpeed;
+      this.vy = Math.max(this.vy - o.gravity * dt, -maxFall);
     }
 
     // --- Move with collisions -----------------------------------------------
@@ -324,10 +417,13 @@ export class Player extends Entity<ResolvedOptions> {
     const prevAirTime = this.airTime;
     this.airTime = this.grounded ? 0 : this.airTime + dt;
 
-    // Hitting a ceiling stops the rise. (Horizontal speed is kept, so the player
-    // keeps pushing dynamic bodies instead of restarting from zero every step.)
+    // Hitting a ceiling stops the rise, and hitting a wall stops the horizontal speed, so
+    // turning away from a wall is immediate. Dynamic bodies don't stop it: pushing a box keeps
+    // full speed instead of restarting from zero every step.
     if (desired.y > 0 && moved.y < desired.y - 1e-4) this.vy = 0;
+    if (this.hitStaticWall()) this.vx = 0;
     if (this.grounded && this.vy < 0) this.vy = 0;
+    if (this.grounded) this.setWallSlide(0);
     if (this.vy === 0) this.rising = false;
 
     // --- State and events ---------------------------------------------------
@@ -342,8 +438,57 @@ export class Player extends Entity<ResolvedOptions> {
     this.world.removeCharacterController(this.controller);
   }
 
+  /** True if the last movement ran into a fixed or kinematic body in the direction of `vx`. */
+  private hitStaticWall(): boolean {
+    for (let i = 0; i < this.controller.numComputedCollisions(); i++) {
+      const hit = this.controller.computedCollision(i);
+      const body = hit?.collider?.parent();
+      if (!hit || !body || body.isDynamic()) continue;
+      // normal1 points out of the obstacle: a wall on the right has a normal pointing left.
+      if (Math.abs(hit.normal1.x) > 0.7 && Math.sign(hit.normal1.x) === -Math.sign(this.vx)) return true;
+    }
+    return false;
+  }
+
+  /** Side of a wall right next to the player (1 = right, -1 = left), or 0. */
+  private touchingWall(): 0 | 1 | -1 {
+    const { halfWidth, halfHeight } = this.options;
+    const t = this.body.translation();
+    // A thin box beside each side, a bit shorter than the player so floors and ceilings don't count.
+    this.wallProbe ??= new RAPIER.Cuboid(WALL_PROBE / 2, halfHeight * 0.8);
+    const sides: readonly (1 | -1)[] = [this.facing, this.facing === 1 ? -1 : 1]; // facing side first
+    for (const side of sides) {
+      const position = { x: t.x + side * (halfWidth + WALL_PROBE / 2), y: t.y };
+      let hit = false;
+      this.world.intersectionsWithShape(
+        position,
+        0,
+        this.wallProbe,
+        () => {
+          hit = true;
+          return false; // one hit is enough
+        },
+        RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+        undefined,
+        undefined,
+        this.body,
+      );
+      if (hit) return side;
+    }
+    return 0;
+  }
+
+  private setWallSlide(side: 0 | 1 | -1): void {
+    if (side === this.wallSlideSide) return;
+    const previous = this.wallSlideSide;
+    this.wallSlideSide = side;
+    if (previous !== 0) this.events.emit("wallSlideEnd", { side: previous });
+    if (side !== 0) this.events.emit("wallSlideStart", { side });
+  }
+
   private computeState(): PlayerState {
     if (this.isDashing()) return "dash";
+    if (this.isWallSliding()) return "wallSlide";
     if (this.vy > 0) return "jump";
     // Brief losses of ground contact (spawning, the end of a dash, small bumps) don't count as falling.
     if (this.grounded || this.airTime < MIN_AIR_TIME) return Math.abs(this.vx) > 0.1 ? "run" : "idle";
