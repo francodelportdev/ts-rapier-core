@@ -4,12 +4,15 @@ import RAPIER from "@dimforge/rapier2d-compat";
  * Base class for every physics entity. Works in meters (Rapier, Y axis up);
  * conversion to pixels (Y axis down) happens only in `draw` via `toCanvas`.
  */
-export abstract class Entity {
+export abstract class Entity<TOptions extends object = object> {
   protected body: RAPIER.RigidBody;
   protected world: RAPIER.World;
+  /** Constructor options. Set before `createBody()` runs, so it is safe to read there. */
+  protected readonly options: TOptions;
 
-  constructor(world: RAPIER.World) {
+  constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
     this.world = world;
+    this.options = options;
     this.body = this.createBody();
     this.createCollider();
   }

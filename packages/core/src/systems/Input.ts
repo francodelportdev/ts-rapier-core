@@ -1,7 +1,13 @@
-/** Global keyboard state (Singleton). Keys are identified by `KeyboardEvent.code`. */
+/**
+ * Global keyboard state (Singleton). Keys are identified by `KeyboardEvent.code`.
+ *
+ * When several games share a page, `Game` enables input only while its canvas has focus,
+ * so a key press moves only the focused game.
+ */
 export class Input {
   private static instance: Input | null = null;
   private readonly keys = new Map<string, boolean>();
+  private enabled = true;
 
   private constructor() {
     window.addEventListener("keydown", (e: KeyboardEvent) => this.keys.set(e.code, true));
@@ -16,6 +22,16 @@ export class Input {
   }
 
   public isPressed(code: string): boolean {
-    return this.keys.get(code) ?? false;
+    return this.enabled && (this.keys.get(code) ?? false);
+  }
+
+  /** True if any of the given keys is pressed. */
+  public isAnyPressed(codes: readonly string[]): boolean {
+    return codes.some((code) => this.isPressed(code));
+  }
+
+  /** While disabled, every key reads as not pressed. */
+  public setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
   }
 }

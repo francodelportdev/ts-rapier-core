@@ -7,59 +7,213 @@
     <title>Rapier Engine Demo</title>
   </head>
   <body>
-    <main>
-      <header>
-        <h1>Push the boxes off the platform</h1>
-        <p>A demo of <code>@francodelportdev/rapier-engine</code>, a 2D engine built on Rapier physics.</p>
-      </header>
+    <div class="layout">
+      <nav class="sidebar" aria-label="Sections">
+        <a class="brand" href="#overview">rapier-engine</a>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li class="group">Player</li>
+          <li><a href="#player">Move &amp; jump</a></li>
+          <li><a href="#double-jump">Double jump</a></li>
+          <li><a href="#dash">Dash</a></li>
+        </ul>
+      </nav>
 
-      <canvas id="game" width="800" height="450"></canvas>
+      <main>
+        <!-- ============================== Overview ============================== -->
+        <section id="overview">
+          <h1>Push the boxes off the platform</h1>
+          <p class="lead">A demo of <code>@francodelportdev/rapier-engine</code>, a 2D engine built on Rapier physics.</p>
 
-      <ul class="controls">
-        <li><kbd>←</kbd> <kbd>→</kbd> Move the player</li>
-        <li><kbd>Space</kbd> Kick the first box upwards</li>
-      </ul>
+          <div class="demo">
+            <canvas id="game" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+            <li><kbd>Space</kbd> Jump</li>
+            <li><kbd>E</kbd> Kick the first box upwards</li>
+          </ul>
 
-      <section>
-        <h2>How it's built</h2>
-        <ol class="steps">
-          <li>
-            <h3>Create the game</h3>
-            <p><code>await Game.create(canvas)</code> loads Rapier, which is WebAssembly, and then creates the physics world. That's why it's <code>async</code> and you can't use <code>new Game()</code>.</p>
-          </li>
-          <li>
-            <h3>Add the entities</h3>
-            <p>Each entity creates its own body in the physics world. <code>addEntity()</code> adds it to the game loop so that it gets updated and drawn. Units are meters, with the Y axis pointing up and the origin at the center of the canvas.</p>
-            <table>
-              <thead><tr><th>Entity</th><th>Body type</th><th>Behavior</th></tr></thead>
-              <tbody>
-                <tr><td><code>Ground</code></td><td><code>fixed</code></td><td>Never moves. Its top surface is at y = -4.5.</td></tr>
-                <tr><td><code>Box</code></td><td><code>dynamic</code></td><td>Affected by gravity, collisions and impulses.</td></tr>
-                <tr><td><code>Player</code></td><td><code>kinematic</code></td><td>Moved by code with ←/→. It pushes the boxes, and nothing pushes it.</td></tr>
-              </tbody>
-            </table>
-          </li>
-          <li>
-            <h3>Add your own controls</h3>
-            <p><code>box.applyImpulse(0, 5)</code> changes the box's velocity instantly. The box weighs 1 kg, so an impulse of 5 N·s adds 5 m/s upwards.</p>
-          </li>
-          <li>
-            <h3>Start the loop</h3>
-            <p>Every frame, <code>game.start()</code> runs <code>update()</code> on every entity, then <code>world.step()</code>, and then <code>draw()</code>.</p>
-          </li>
-        </ol>
-      </section>
+          <h2>How it's built</h2>
+          <ol class="steps">
+            <li>
+              <h3>Create the game</h3>
+              <p><code>await Game.create(canvas)</code> loads Rapier, which is WebAssembly, and then creates the physics world. That's why it's <code>async</code> and you can't use <code>new Game()</code>.</p>
+            </li>
+            <li>
+              <h3>Add the entities</h3>
+              <p>Each entity creates its own body in the physics world. <code>addEntity()</code> adds it to the game loop so that it gets updated and drawn. Units are meters, with the Y axis pointing up and the origin at the center of the canvas.</p>
+              <table>
+                <thead><tr><th>Entity</th><th>Body type</th><th>Behavior</th></tr></thead>
+                <tbody>
+                  <tr><td><code>Ground</code> / <code>Platform</code></td><td><code>fixed</code></td><td>Never moves.</td></tr>
+                  <tr><td><code>Box</code></td><td><code>dynamic</code></td><td>Affected by gravity, collisions and impulses.</td></tr>
+                  <tr><td><code>Player</code></td><td><code>kinematic</code></td><td>Moved by code. It pushes the boxes, and nothing pushes it.</td></tr>
+                </tbody>
+              </table>
+            </li>
+            <li>
+              <h3>Add your own controls</h3>
+              <p><code>box.applyImpulse(0, 5)</code> changes the box's velocity instantly. The box weighs 1 kg, so an impulse of 5 N·s adds 5 m/s upwards.</p>
+            </li>
+            <li>
+              <h3>Start the loop</h3>
+              <p><code>game.start()</code> runs physics at a fixed 60 steps per second, whatever your screen's refresh rate. Each step calls <code>update()</code> on every entity and then <code>world.step()</code>. Each frame then calls <code>draw()</code>.</p>
+            </li>
+          </ol>
 
-      <section>
-        <div class="code-header">
-          <h2>Full source: <code>src/main.ts</code></h2>
-          <button id="copy" type="button">Copy</button>
-        </div>
-        <pre><code id="source"></code></pre>
-        <p class="hint">To use it in your own project, run <code>bun add @francodelportdev/rapier-engine</code>, add <code>&lt;canvas id="game"&gt;</code> to your HTML, and paste this code.</p>
-      </section>
-    </main>
+          <div class="code-header">
+            <h2>Full source: <code>src/main.ts</code></h2>
+            <button type="button" data-copy="main">Copy</button>
+          </div>
+          <pre><code data-source="main"></code></pre>
+          <p class="hint">To use it in your own project, run <code>bun add @francodelportdev/rapier-engine</code>, add <code>&lt;canvas id="game"&gt;</code> to your HTML, and paste this code.</p>
+        </section>
+
+        <!-- ============================== Player ============================== -->
+        <section id="player">
+          <p class="eyebrow">Player</p>
+          <h1>Move &amp; jump</h1>
+          <p class="lead"><code>Player</code> is a platformer character. Rapier's kinematic character controller handles collisions: it detects the ground, steps over small bumps and pushes dynamic bodies out of the way.</p>
+
+          <div class="demo">
+            <canvas id="player-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> Move</li>
+            <li><kbd>Space</kbd>, <kbd>↑</kbd> or <kbd>W</kbd> Jump (hold to jump higher)</li>
+          </ul>
+
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li>
+              <h3>Acceleration, not instant speed</h3>
+              <p>Each step, the horizontal speed moves towards <code>speed</code> at <code>acceleration</code> m/s², and back to 0 at <code>deceleration</code> m/s². In the air, both are multiplied by <code>airControl</code>, so you can steer a jump without stopping dead.</p>
+            </li>
+            <li>
+              <h3>Gravity and jump</h3>
+              <p>A kinematic body ignores the world's gravity, so the player applies its own (<code>gravity</code>, 40 m/s² by default, for snappy jumps). The jump speed is <code>√(2 · gravity · jumpHeight)</code>, which is exactly the speed needed to reach <code>jumpHeight</code>.</p>
+            </li>
+            <li>
+              <h3>Variable height</h3>
+              <p>If you release the key while still rising, the upward speed is multiplied by <code>jumpCut</code> once. A tap gives a short hop, and holding the key gives the full jump.</p>
+            </li>
+            <li>
+              <h3>Coyote time and jump buffer</h3>
+              <p>Two small timers make jumping feel fair. <strong>Coyote time</strong> lets you jump for <code>coyoteTime</code> seconds after walking off a ledge. The <strong>jump buffer</strong> remembers a press for <code>jumpBuffer</code> seconds, so pressing just before landing still jumps.</p>
+            </li>
+          </ol>
+
+          <h2>Options</h2>
+          <p>All of them are optional. Pass them as <code>new Player(world, { ... })</code>.</p>
+          <table>
+            <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>x</code>, <code>y</code></td><td><code>0</code>, <code>-3.5</code></td><td>Start position, in meters. The default stands on <code>Ground</code>.</td></tr>
+              <tr><td><code>halfWidth</code>, <code>halfHeight</code></td><td><code>0.5</code>, <code>1</code></td><td>Size of the player's box (half extents).</td></tr>
+              <tr><td><code>speed</code></td><td><code>8</code></td><td>Top horizontal speed, m/s.</td></tr>
+              <tr><td><code>acceleration</code></td><td><code>80</code></td><td>m/s² on the ground while a direction key is pressed.</td></tr>
+              <tr><td><code>deceleration</code></td><td><code>60</code></td><td>m/s² on the ground with no key pressed.</td></tr>
+              <tr><td><code>airControl</code></td><td><code>0.6</code></td><td>Multiplier for acceleration and deceleration in the air.</td></tr>
+              <tr><td><code>gravity</code></td><td><code>40</code></td><td>m/s², pulling down.</td></tr>
+              <tr><td><code>maxFallSpeed</code></td><td><code>25</code></td><td>m/s.</td></tr>
+              <tr><td><code>jumpHeight</code></td><td><code>3</code></td><td>Meters, for a full jump.</td></tr>
+              <tr><td><code>jumpCut</code></td><td><code>0.5</code></td><td>Fraction of upward speed kept when the key is released early.</td></tr>
+              <tr><td><code>coyoteTime</code></td><td><code>0.1</code></td><td>Seconds.</td></tr>
+              <tr><td><code>jumpBuffer</code></td><td><code>0.1</code></td><td>Seconds.</td></tr>
+              <tr><td><code>maxJumps</code></td><td><code>1</code></td><td>See <a href="#double-jump">Double jump</a>.</td></tr>
+              <tr><td><code>dash</code></td><td><code>false</code></td><td>See <a href="#dash">Dash</a>.</td></tr>
+              <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position.</td></tr>
+              <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/player.ts</code></h2>
+            <button type="button" data-copy="player">Copy</button>
+          </div>
+          <pre><code data-source="player"></code></pre>
+        </section>
+
+        <!-- ============================== Double jump ============================== -->
+        <section id="double-jump">
+          <p class="eyebrow">Player</p>
+          <h1>Double jump</h1>
+          <p class="lead">Set <code>maxJumps: 2</code> and the player can jump once more in mid-air. The platform here is too high for a single jump.</p>
+
+          <div class="demo">
+            <canvas id="double-jump-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+            <li><kbd>Space</kbd> Jump, then <kbd>Space</kbd> again in the air</li>
+          </ul>
+
+          <h2>How it works</h2>
+          <ul class="notes">
+            <li><code>maxJumps</code> is the number of jumps available before landing. <code>1</code> is a normal jump, <code>2</code> is a double jump, and <code>3</code> or more lets you keep jumping.</li>
+            <li>Every jump in the air resets the upward speed to the full jump speed, so it reaches the same height as a jump from the ground.</li>
+            <li>Walking off a ledge without jumping uses up the ground jump, so you only get the air jumps. Within <a href="#player">coyote time</a>, a jump still counts as a ground jump.</li>
+            <li>Landing restores every jump.</li>
+          </ul>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/double-jump.ts</code></h2>
+            <button type="button" data-copy="double-jump">Copy</button>
+          </div>
+          <pre><code data-source="double-jump"></code></pre>
+        </section>
+
+        <!-- ============================== Dash ============================== -->
+        <section id="dash">
+          <p class="eyebrow">Player</p>
+          <h1>Dash</h1>
+          <p class="lead">A short horizontal burst in the direction the player is facing. The gap here is too wide for a jump, so jump and then dash in the air.</p>
+
+          <div class="demo">
+            <canvas id="dash-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+            <li><kbd>Space</kbd> Jump</li>
+            <li><kbd>Shift</kbd> or <kbd>X</kbd> Dash</li>
+          </ul>
+
+          <h2>How it works</h2>
+          <ul class="notes">
+            <li>The dash is off by default. Turn it on with <code>dash: true</code> to use the defaults, or pass an object to tune it.</li>
+            <li>During the dash, the horizontal speed is fixed at <code>dash.speed</code> and gravity is paused, so the player moves in a straight line. When it ends, the player continues at normal top speed.</li>
+            <li>You can dash any time on the ground, and once per jump in the air. <code>cooldown</code> sets the minimum time between dashes.</li>
+            <li>The player turns lighter green while dashing, and its eye shows which way it's facing.</li>
+          </ul>
+
+          <table>
+            <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>dash.speed</code></td><td><code>20</code></td><td>m/s during the dash.</td></tr>
+              <tr><td><code>dash.duration</code></td><td><code>0.15</code></td><td>Seconds. The distance covered is <code>speed × duration</code>, 3 m by default.</td></tr>
+              <tr><td><code>dash.cooldown</code></td><td><code>0.4</code></td><td>Seconds before the next dash.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/dash.ts</code></h2>
+            <button type="button" data-copy="dash">Copy</button>
+          </div>
+          <pre><code data-source="dash"></code></pre>
+        </section>
+      </main>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/demos/player.ts"></script>
+    <script type="module" src="/src/demos/double-jump.ts"></script>
+    <script type="module" src="/src/demos/dash.ts"></script>
     <script type="module" src="/src/docs.ts"></script>
   </body>
 </html>
