@@ -1,6 +1,11 @@
 export { Game } from "./core/Game";
 export { Entity } from "./entities/Entity";
 export { Ground } from "./entities/Ground";
+export { Platform } from "./entities/Platform";
+export type { PlatformOptions } from "./entities/Platform";
 export { Box } from "./entities/Box";
 export { Player } from "./entities/Player";
+export type { PlayerOptions, PlayerKeys, DashOptions, PlayerState, PlayerEvents } from "./entities/Player";
 export { Input } from "./systems/Input";
+export { EventEmitter } from "./systems/EventEmitter";
+export type { Listener } from "./systems/EventEmitter";

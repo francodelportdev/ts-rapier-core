@@ -47,24 +47,25 @@ game.start();
 | `static async create(canvas: HTMLCanvasElement): Promise<Game>` | Runs `RAPIER.init()` and creates the physics world. Use it instead of `new`, because the world can't exist before the WASM loads. |
 | `getWorld(): RAPIER.World` | The Rapier world. Pass it to entity constructors. |
 | `addEntity(e: Entity): void` | Registers an entity for the game loop. |
-| `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. |
+| `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
+| `isFocused(): boolean` | True while the canvas has keyboard focus. |
 
-Every frame, the loop:
-1. calls `update()` on every entity
-2. advances the physics with `world.step()` (a fixed step of 1/60 s)
-3. clears the canvas and calls `draw()` on every entity
+Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the screen's refresh rate. A 144 Hz screen runs some frames with no step, and a slow frame runs several steps. Each step calls `update()` on every entity and then `world.step()`. Each frame then clears the canvas and calls `draw()` on every entity.
+
+**Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
 
 ### `Entity` (abstract)
 
 The base class for anything that has a physics body.
 
 ```ts
-abstract class Entity {
+abstract class Entity<TOptions extends object = object> {
   protected body: RAPIER.RigidBody;
   protected world: RAPIER.World;
+  protected readonly options: TOptions;
 
-  constructor(world: RAPIER.World); // calls createBody() and then createCollider()
+  constructor(world: RAPIER.World, options?: TOptions); // sets options, then calls createBody() and createCollider()
 
   protected abstract createBody(): RAPIER.RigidBody;
   protected abstract createCollider(): RAPIER.Collider;
@@ -77,24 +78,93 @@ abstract class Entity {
 }
 ```
 
-> **Warning:** `createBody()` and `createCollider()` run inside `super()`, before the subclass's own fields are initialized. Use module-level constants inside them, not `this.someField`. To configure the body from constructor arguments, change it after `super()`, as `Box` does.
+> **Warning:** `createBody()` and `createCollider()` run inside `super()`, before the subclass's own fields are initialized. Don't read `this.someField` inside them. Pass the configuration as `options` instead: the base class stores it before calling them, so `this.options` is safe to read there. `Platform` works this way.
 
 ### Built-in entities
 
 | Class | Body | Collider (half extents) | Behavior |
 |---|---|---|---|
-| `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A static platform. Its top surface is at y = -4.5. |
+| `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A static floor. Its top surface is at y = -4.5. |
+| `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
 | `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5)`. Has `applyImpulse(x, y)`. |
-| `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | Moves at 6 m/s with ←/→. Pushes dynamic bodies but isn't affected by them. |
+| `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | A platformer character. See [Player](#player). |
+
+### `Player`
+
+```ts
+new Player(world, options?: PlayerOptions)
+```
+
+It moves with Rapier's `KinematicCharacterController`, which resolves collisions, detects the ground, steps over bumps up to 0.3 m and pushes dynamic bodies. It has its own gravity, because kinematic bodies ignore the world's.
+
+| Option | Default | Description |
+|---|---|---|
+| `x`, `y` | `0`, `-3.5` | Start position, in meters. The default stands on `Ground`. |
+| `halfWidth`, `halfHeight` | `0.5`, `1` | Half extents of its box. |
+| `color` | `"#48bb78"` | Fill color. |
+| `speed` | `8` | Top horizontal speed, m/s. |
+| `acceleration` / `deceleration` | `80` / `60` | m/s² on the ground, with and without a direction key pressed. |
+| `airControl` | `0.6` | Multiplier for acceleration and deceleration in the air. |
+| `gravity` | `40` | m/s², pulling down. |
+| `maxFallSpeed` | `25` | m/s. |
+| `jumpHeight` | `3` | Meters, for a full jump. The jump speed is `√(2 · gravity · jumpHeight)`. |
+| `jumpCut` | `0.5` | Fraction of upward speed kept when the jump key is released early (variable jump height). |
+| `coyoteTime` | `0.1` | Seconds after walking off a ledge during which a jump still counts as a ground jump. |
+| `jumpBuffer` | `0.1` | Seconds a jump press is remembered before landing. |
+| `maxJumps` | `1` | Jumps available before landing. `2` gives a double jump. |
+| `dash` | `false` | `true`, or `{ speed = 20, duration = 0.15, cooldown = 0.4 }`. A horizontal burst with gravity paused. It's available on the ground and once per jump in the air. |
+| `respawnBelow` | `-15` | Falling below this Y sends the player back to its start position. |
+| `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump` and `dash`. You can override one action without the others. |
+
+Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`.
+
+Methods: `isGrounded()`, `isDashing()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
+
+#### State
+
+`getState()` returns `"idle" | "run" | "jump" | "fall" | "dash"` and is updated once per physics step. Losses of ground contact shorter than 0.05 s don't count as `"fall"`, which keeps the state from flickering on spawn or over bumps.
+
+#### Events
+
+```ts
+const off = player.on("land", ({ fallSpeed }) => {
+  if (fallSpeed > 15) shakeCamera();
+});
+off(); // unsubscribe. once() and off() are also available.
+```
+
+| Event | Payload | When |
+|---|---|---|
+| `stateChange` | `{ from: PlayerState; to: PlayerState }` | The state changed. |
+| `jump` | `{ airJump: boolean; jumpNumber: number }` | A jump started. `airJump` is true for jumps in the air. |
+| `land` | `{ fallSpeed: number }` | The player touched the ground after at least 0.05 s in the air. The speed is in m/s. |
+| `dash` | `{ direction: 1 \| -1; inAir: boolean }` | A dash started. |
+| `respawn` | `{ fell: boolean }` | The player went back to its start position. `fell` is true for falls below `respawnBelow`, and false for `respawn()` calls. |
+
+Listeners run synchronously, inside the physics step.
+
+### `EventEmitter`
+
+The typed emitter that `Player` uses. It's exported so that your own entities can emit events too:
+
+```ts
+import { EventEmitter } from "@francodelportdev/rapier-engine";
+
+const events = new EventEmitter<{ hit: { damage: number } }>();
+events.on("hit", ({ damage }) => console.log(damage));
+events.emit("hit", { damage: 10 });
+```
 
 ### `Input` (singleton)
 
 ```ts
 const input = Input.getInstance();
-input.isPressed("ArrowLeft"); // boolean, uses KeyboardEvent.code
+input.isPressed("ArrowLeft");             // boolean, uses KeyboardEvent.code
+input.isAnyPressed(["ArrowLeft", "KeyA"]); // true if any of them is pressed
+input.setEnabled(false);                  // every key reads as not pressed
 ```
 
-When the window loses focus, it clears the key state so that no key stays "stuck" pressed.
+When the window loses focus, it clears the key state so that no key stays "stuck" pressed. `Game` calls `setEnabled()` before each step, so input only reaches the game whose canvas has focus.
 
 ## Writing your own entity
 

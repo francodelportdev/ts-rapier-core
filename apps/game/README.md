@@ -1,11 +1,16 @@
-# Demo: push the boxes off the platform
+# Demos
 
-A minimal game made with [`@francodelportdev/rapier-engine`](../../packages/core/README.md). Two boxes fall onto a platform, and you move the player to push them off the edge.
+Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/README.md). Each section of the page has a playable demo, an explanation and its source code. The sidebar links to each section:
 
-| Key | Action |
-|---|---|
-| ← / → | Move the player |
-| Space | Kick the first box upwards |
+| Section | File | What it shows |
+|---|---|---|
+| Overview | [`src/main.ts`](src/main.ts) | Push the boxes off the platform (←/→ to move, Space to jump, E to kick a box). |
+| Player: move & jump | [`src/demos/player.ts`](src/demos/player.ts) | Acceleration, jump, variable height, coyote time, jump buffer. All options written out. |
+| Player: double jump | [`src/demos/double-jump.ts`](src/demos/double-jump.ts) | `maxJumps: 2` |
+| Player: dash | [`src/demos/dash.ts`](src/demos/dash.ts) | `dash: { speed, duration, cooldown }` |
+| Player: state & events | [`src/demos/events.ts`](src/demos/events.ts) | `getState()` and `player.on("jump" \| "land" \| "dash" \| "respawn" \| "stateChange")`, shown in a live HUD. |
+
+Click a demo to give it keyboard focus. Only the focused demo receives keys.
 
 ```bash
 # from the repository root
@@ -15,7 +20,7 @@ bun run dev
 
 ## How it's built
 
-The demo itself is [`src/main.ts`](src/main.ts) plus the `<canvas>` in [`index.html`](index.html). The rest of the page (this walkthrough and the source viewer) is rendered by [`src/docs.ts`](src/docs.ts) and isn't needed to run the game.
+Each demo is one standalone file plus a `<canvas>` in [`index.html`](index.html). The rest of the page (the sidebar highlight, the source viewers and the copy buttons) comes from [`src/docs.ts`](src/docs.ts), which isn't needed to run any demo. The walkthrough below covers the Overview demo.
 
 ### 1. A canvas to draw on
 
@@ -64,14 +69,14 @@ Why the boxes fall but the player doesn't:
 ### 4. Add your own controls
 
 ```ts
-window.addEventListener("keydown", (e) => {
-  if (e.code === "Space") box.applyImpulse(0, 5);
+canvas.addEventListener("keydown", (e) => {
+  if (e.code === "KeyE") box.applyImpulse(0, 5);
 });
 ```
 
 `applyImpulse(x, y)` instantly changes the box's velocity. The impulse is in N·s and the box's mass is 1 kg, so this adds 5 m/s upwards.
 
-The player's arrow-key movement is already built into `Player.update()`, which reads `Input.getInstance().isPressed("ArrowLeft" | "ArrowRight")` every frame.
+The listener is on the canvas, not on `window`, so it only fires while this demo has focus. Moving and jumping are already built into `Player`. See the Player sections of the page.
 
 ### 5. Start the loop
 
@@ -79,7 +84,7 @@ The player's arrow-key movement is already built into `Player.update()`, which r
 game.start();
 ```
 
-Every frame, the engine calls `update()` on every entity, then `world.step()`, and then `draw()`.
+Physics runs at a fixed 60 steps per second. Each step calls `update()` on every entity and then `world.step()`. Each frame then calls `draw()`.
 
 ## Full source
 
@@ -98,5 +103,3 @@ Copy the `<canvas>` into `index.html` and [`src/main.ts`](src/main.ts) into your
 ## Known limitations
 
 - Boxes that fall off the platform are never removed. They keep falling, and the engine keeps simulating them.
-- The player can't jump. A kinematic body ignores gravity, so jumping has to be programmed by hand.
-- Player speed is tied to the physics step (1/60 s per frame), so on screens above 60 Hz, the game runs faster.

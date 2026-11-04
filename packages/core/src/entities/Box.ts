@@ -3,16 +3,19 @@ import { Entity } from "./Entity";
 
 const HALF = 0.5;
 
-export class Box extends Entity {
+interface BoxOptions {
+  x: number;
+  y: number;
+}
+
+export class Box extends Entity<BoxOptions> {
   constructor(world: RAPIER.World, x = 0, y = 5) {
-    // createBody() runs inside super(), before subclass fields are initialized,
-    // so the position is applied right after.
-    super(world);
-    this.body.setTranslation({ x, y }, true);
+    super(world, { x, y });
   }
 
   protected override createBody(): RAPIER.RigidBody {
-    return this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic());
+    const { x, y } = this.options;
+    return this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(x, y));
   }
 
   protected override createCollider(): RAPIER.Collider {
