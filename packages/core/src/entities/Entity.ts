@@ -9,6 +9,7 @@ export abstract class Entity<TOptions extends object = object> {
   protected world: RAPIER.World;
   /** Constructor options. Set before `createBody()` runs, so it is safe to read there. */
   protected readonly options: TOptions;
+  private destroyed = false;
 
   constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
     this.world = world;
@@ -16,6 +17,31 @@ export abstract class Entity<TOptions extends object = object> {
     this.body = this.createBody();
     this.createCollider();
   }
+
+  /** True once `destroy()` has run. A destroyed entity must not be updated or drawn. */
+  public get isDestroyed(): boolean {
+    return this.destroyed;
+  }
+
+  /** Center of the body, in meters. */
+  public getPosition(): { x: number; y: number } {
+    const t = this.body.translation();
+    return { x: t.x, y: t.y };
+  }
+
+  /**
+   * Removes the body and its colliders from the physics world, freeing their memory.
+   * Usually called by `game.removeEntity()`. Calling it twice has no effect.
+   */
+  public destroy(): void {
+    if (this.destroyed) return;
+    this.onDestroy();
+    this.world.removeRigidBody(this.body); // also removes the colliders attached to it
+    this.destroyed = true;
+  }
+
+  /** Override to free extra Rapier objects (for example, a character controller). */
+  protected onDestroy(): void {}
 
   protected abstract createBody(): RAPIER.RigidBody;
   protected abstract createCollider(): RAPIER.Collider;

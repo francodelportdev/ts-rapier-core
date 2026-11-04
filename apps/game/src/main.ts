@@ -20,6 +20,8 @@ game.addEntity(new Player(world)); // kinematic: moved by code (←/→, Space t
 const box = new Box(world, 0, 5); // dynamic: gravity, collisions and impulses affect it
 game.addEntity(box);
 game.addEntity(new Box(world, 1, 8));
+// Boxes pushed off the platform are removed automatically once they fall below y = -30
+// (the game's kill plane), so they stop using CPU and memory.
 
 // E: kick the first box upwards.
 // The box weighs 1 kg, so an impulse of 5 N·s adds 5 m/s upwards.

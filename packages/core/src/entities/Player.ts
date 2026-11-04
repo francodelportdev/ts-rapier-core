@@ -338,6 +338,10 @@ export class Player extends Entity<ResolvedOptions> {
     this.body.setNextKinematicTranslation({ x: t.x + moved.x, y: t.y + moved.y });
   }
 
+  protected override onDestroy(): void {
+    this.world.removeCharacterController(this.controller);
+  }
+
   private computeState(): PlayerState {
     if (this.isDashing()) return "dash";
     if (this.vy > 0) return "jump";
