@@ -28,7 +28,7 @@ game.start();
 
 ## Coordinates and units
 
-- **Physics** works in **meters**, with the Y axis pointing **up** and the origin at the center of the canvas. Gravity is `(0, -9.81)`.
+- **Physics** works in **meters**, with the Y axis pointing **up**. Gravity is `(0, -9.81)`. By default, the camera shows the origin at the center of the canvas (see [`Camera`](#camera)).
 - **Drawing** works in **pixels**, with the Y axis pointing **down**. The conversion happens only inside `draw()`:
 
   ```
@@ -36,7 +36,7 @@ game.start();
   py = centerY - y * scale
   ```
 
-- `SCALE = 30` pixels per meter. On an 800×450 canvas, the visible world is about 26.7 × 15 m.
+- `SCALE = 30` pixels per meter at zoom 1. On an 800×450 canvas, the visible world is about 26.7 × 15 m. `draw()` receives the camera's `scale`, `centerX` and `centerY`, so entities follow the camera without any extra code.
 
 ## API
 
@@ -57,9 +57,34 @@ game.start();
 
 Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the screen's refresh rate. A 144 Hz screen runs some frames with no step, and a slow frame runs several steps. Each step calls `update()` on every entity and then `world.step()`. Each frame then clears the canvas and calls `draw()` on every entity.
 
-**Options:** `killPlaneY` (default `-30`). Entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
+**Options:**
+- `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
+- `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
+
+### `Camera`
+
+Every game has one, at `game.camera`. It decides which part of the world appears on the canvas.
+
+```ts
+game.camera.follow(player, { smoothing: 0.15, deadZone: { width: 3, height: 2 }, offset: { x: 0, y: 1.5 } });
+game.camera.setBounds({ minX: -12, maxX: 68, minY: -8, maxY: 16 });
+player.on("land", ({ fallSpeed }) => { if (fallSpeed > 16) game.camera.shake(0.3); });
+player.on("respawn", () => game.camera.snapToTarget());
+```
+
+| Member | Description |
+|---|---|
+| `follow(target, options?)` | Follows an entity, or stops with `null`. `smoothing` is a time constant in seconds (default `0.15`, and `0` follows instantly). `deadZone` is a box in meters where the target moves without moving the camera (default `2 × 1.5`). `offset` shifts the followed point. |
+| `setBounds(bounds \| null)` | Keeps the view inside `{ minX, maxX, minY, maxY }`. On an axis where the level is smaller than the view, the camera centers on it. |
+| `x`, `y`, `zoom` | The world point at the center of the canvas, and the zoom (`1` = 30 px/m). You can read and write them. |
+| `moveTo(x, y)` / `snapToTarget()` | Jump without smoothing. |
+| `shake(intensity, duration = 0.3)` | Offsets the view randomly by up to `intensity` meters, fading out. A weaker shake doesn't interrupt a stronger one. |
+| `screenToWorld(px, py)` / `worldToScreen(x, y)` | Convert between canvas pixels and world meters. |
+| `getVisibleBounds()` | The part of the world on screen, in meters. |
+
+The camera updates once per physics step, after `world.step()`. If its target is destroyed, it stops following and stays where it is.
 
 ### `Entity` (abstract)
 

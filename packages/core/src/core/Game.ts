@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier2d-compat";
 import type { Entity } from "../entities/Entity";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { Input } from "../systems/Input";
+import { Camera } from "./Camera";
 import { SCALE } from "./constants";
 
 /** Keys that would otherwise scroll the page while a game canvas has focus. */
@@ -17,6 +18,11 @@ export interface GameOptions {
    * that fall out of the level stop using CPU and memory. `null` disables it. Default: -30.
    */
   killPlaneY?: number | null;
+  /**
+   * Draws a grid in world space behind the entities, which makes camera movement easy to see.
+   * `true` draws a line every 1 m. Default: false.
+   */
+  grid?: boolean | { size?: number; color?: string };
 }
 
 /** Why an entity was removed. */
@@ -41,6 +47,9 @@ export class Game {
   private readonly input = Input.getInstance();
   private readonly killPlaneY: number | null;
   private readonly events = new EventEmitter<GameEvents>();
+  private readonly grid: { size: number; color: string } | null;
+  /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
+  public readonly camera = new Camera(SCALE);
   private entities: Entity[] = [];
   /** Entities to remove after the current step (removing mid-step would break the loop). */
   private readonly pendingRemovals = new Map<Entity, RemoveReason>();
@@ -55,6 +64,8 @@ export class Game {
     this.ctx = ctx;
     this.world = new RAPIER.World({ x: 0.0, y: -9.81 });
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
+    const grid = options.grid === true ? {} : options.grid || null;
+    this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
     canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }));
@@ -117,6 +128,8 @@ export class Game {
       this.canvas.focus({ preventScroll: true });
     }
     this.lastTime = null;
+    this.camera.update(0, this.canvas.width, this.canvas.height);
+    this.camera.snapToTarget();
     this.rafId = requestAnimationFrame(this.loop);
   }
 
@@ -130,6 +143,7 @@ export class Game {
     this.input.setEnabled(this.isFocused());
     for (const e of this.entities) e.update();
     this.world.step();
+    this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
 
     if (this.killPlaneY !== null) {
       for (const e of this.entities) {
@@ -158,6 +172,28 @@ export class Game {
     }
   }
 
+  /** Lines every `size` meters, covering only the visible part of the world. */
+  private drawGrid(size: number, color: string): void {
+    const ctx = this.ctx;
+    const view = this.camera.getVisibleBounds();
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (let x = Math.floor(view.minX / size) * size; x <= view.maxX; x += size) {
+      const { px } = this.camera.worldToScreen(x, 0);
+      ctx.moveTo(Math.round(px) + 0.5, 0);
+      ctx.lineTo(Math.round(px) + 0.5, this.canvas.height);
+    }
+    for (let y = Math.floor(view.minY / size) * size; y <= view.maxY; y += size) {
+      const { py } = this.camera.worldToScreen(0, y);
+      ctx.moveTo(0, Math.round(py) + 0.5);
+      ctx.lineTo(this.canvas.width, Math.round(py) + 0.5);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
   private readonly loop = (time: number): void => {
     const frameTime = this.lastTime === null ? 0 : Math.min((time - this.lastTime) / 1000, MAX_FRAME_TIME);
     this.lastTime = time;
@@ -173,7 +209,9 @@ export class Game {
 
     const { width, height } = this.canvas;
     this.ctx.clearRect(0, 0, width, height);
-    for (const e of this.entities) e.draw(this.ctx, SCALE, width / 2, height / 2);
+    const { scale, centerX, centerY } = this.camera.getViewport();
+    if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
+    for (const e of this.entities) e.draw(this.ctx, scale, centerX, centerY);
 
     this.rafId = requestAnimationFrame(this.loop);
   };
