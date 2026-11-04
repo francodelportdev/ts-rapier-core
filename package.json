@@ -2,10 +2,15 @@
   "name": "ts-rapier-core",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "bun run --filter game dev",
-    "build": "bun run --filter '*' build"
+    "build": "bun run --filter '*' build",
+    "test": "bun run --filter @francodelportdev/rapier-engine test",
+    "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {
     "@types/bun": "latest",

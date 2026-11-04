@@ -15,6 +15,8 @@ Requires [Bun](https://bun.com).
 bun install
 bun run dev      # starts the demo at http://localhost:5173
 bun run build    # builds every workspace
+bun run test     # runs the engine's tests
+bun run typecheck
 ```
 
 ## License
