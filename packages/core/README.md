@@ -44,14 +44,20 @@ game.start();
 
 | Member | Description |
 |---|---|
-| `static async create(canvas: HTMLCanvasElement): Promise<Game>` | Runs `RAPIER.init()` and creates the physics world. Use it instead of `new`, because the world can't exist before the WASM loads. |
+| `static async create(canvas: HTMLCanvasElement, options?: GameOptions): Promise<Game>` | Runs `RAPIER.init()` and creates the physics world. Use it instead of `new`, because the world can't exist before the WASM loads. |
 | `getWorld(): RAPIER.World` | The Rapier world. Pass it to entity constructors. |
-| `addEntity(e: Entity): void` | Registers an entity for the game loop. |
+| `addEntity(e: Entity): void` | Registers an entity for the game loop. Throws if the entity was already destroyed. |
+| `removeEntity(e: Entity): void` | Takes the entity out of the loop and frees its physics body. It's safe to call anywhere, because the removal waits until the current step ends. Calling it twice has no effect. |
+| `getEntities(): readonly Entity[]` | The entities currently in the game. |
+| `getBodyCount(): number` | How many rigid bodies the physics world has. Useful to check for leaks. |
+| `on("entityRemoved", ({ entity, reason }) => …)` | Runs after each removal. `reason` is `"manual"` or `"killPlane"`. Returns a function that unsubscribes. `off()` is also available. |
 | `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
 | `isFocused(): boolean` | True while the canvas has keyboard focus. |
 
 Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the screen's refresh rate. A 144 Hz screen runs some frames with no step, and a slow frame runs several steps. Each step calls `update()` on every entity and then `world.step()`. Each frame then clears the canvas and calls `draw()` on every entity.
+
+**Options:** `killPlaneY` (default `-30`). Entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
 
@@ -71,6 +77,11 @@ abstract class Entity<TOptions extends object = object> {
   protected abstract createCollider(): RAPIER.Collider;
   public abstract update(): void;
   public abstract draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void;
+
+  get isDestroyed(): boolean;
+  getPosition(): { x: number; y: number };
+  destroy(): void;               // removes the body and its colliders (game.removeEntity() calls it)
+  protected onDestroy(): void;   // override to free extra Rapier objects
 
   // helpers
   protected toCanvas(x, y, scale, centerX, centerY): { px: number; py: number };
