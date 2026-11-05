@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
 import { Input } from "../systems/Input";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
+import { isOneWay, oneWayBlocks } from "../systems/oneWay";
 
 /** What the player is doing. Updated once per physics step. */
 export type PlayerState = "idle" | "run" | "jump" | "fall" | "dash" | "wallSlide";
@@ -23,6 +24,8 @@ export interface PlayerEvents {
   wallSlideStart: { side: 1 | -1 };
   /** The player stopped sliding down a wall (it jumped, landed, let go or the wall ended). */
   wallSlideEnd: { side: 1 | -1 };
+  /** The player dropped through a one-way platform (↓ + jump while standing on it). */
+  dropThrough: Record<string, never>;
   /** The player went back to its start position. `fell` is true if it fell below `respawnBelow`. */
   respawn: { fell: boolean };
 }
@@ -33,6 +36,8 @@ export interface PlayerKeys {
   right: readonly string[];
   jump: readonly string[];
   dash: readonly string[];
+  /** Held together with jump to drop through a one-way platform. */
+  down: readonly string[];
 }
 
 export interface DashOptions {
@@ -98,6 +103,11 @@ export interface PlayerOptions {
    * surfaces count as walls (they stop it, and it can wall slide on them). Default: 50.
    */
   maxSlope?: number;
+  /**
+   * After ↓ + jump on a one-way platform, one-way platforms are ignored for this long,
+   * in seconds, so the player falls through instead of landing on the same one. Default: 0.25.
+   */
+  dropThroughTime?: number;
   /** Falling below this Y (meters) sends the player back to its start position. Default: -15. */
   respawnBelow?: number;
 
@@ -117,6 +127,7 @@ const DEFAULT_KEYS: PlayerKeys = {
   right: ["ArrowRight", "KeyD"],
   jump: ["Space", "ArrowUp", "KeyW"],
   dash: ["ShiftLeft", "ShiftRight", "KeyX"],
+  down: ["ArrowDown", "KeyS"],
 };
 
 type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys">> & {
@@ -147,6 +158,7 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
     maxJumps: o.maxJumps ?? 1,
     respawnBelow: o.respawnBelow ?? -15,
     maxSlope: o.maxSlope ?? 50,
+    dropThroughTime: o.dropThroughTime ?? 0.25,
     dash: dash && {
       speed: dash.speed ?? 20,
       duration: dash.duration ?? 0.15,
@@ -209,6 +221,27 @@ export class Player extends Entity<ResolvedOptions> {
   /** Reused shapes for wall and ground probes. */
   private wallProbe: RAPIER.Cuboid | null = null;
   private groundProbe: RAPIER.Cuboid | null = null;
+  /** True while standing on a one-way platform. */
+  private onOneWay = false;
+  /** While above 0, one-way platforms are ignored (dropping through). */
+  private dropTimer = 0;
+  /** The player's bottom edge before this step's move, for the one-way filter. */
+  private filterBounds = { left: 0, right: 0, bottom: 0 };
+  /**
+   * Which colliders block the player: everything, except one-way platforms it's below or
+   * beside (or all of them while dropping through).
+   *
+   * Filters run inside Rapier's WebAssembly code, where calling Rapier again fails silently,
+   * so this only reads plain JavaScript data (see systems/oneWay.ts and `filterBounds`).
+   */
+  private readonly solidFilter = (collider: RAPIER.Collider): boolean => {
+    if (!isOneWay(this.world, collider)) return true;
+    if (this.dropTimer > 0) return false;
+    const { left, right, bottom } = this.filterBounds;
+    return oneWayBlocks(this.world, collider, left, right, bottom);
+  };
+  /** One-way platforms are never walls. */
+  private readonly wallFilter = (collider: RAPIER.Collider): boolean => !isOneWay(this.world, collider);
   /** Surfaces whose normal points up less than this (cos of maxSlope) are walls, not slopes. */
   private minWallNormalY = 0;
   private state: PlayerState = "idle";
@@ -238,6 +271,11 @@ export class Player extends Entity<ResolvedOptions> {
   /** True while a dash is in progress. */
   public isDashing(): boolean {
     return this.dashTimer > 0;
+  }
+
+  /** True while standing on a one-way platform (so ↓ + jump would drop through it). */
+  public isOnOneWayPlatform(): boolean {
+    return this.grounded && this.onOneWay;
   }
 
   /** True while sliding down a wall. */
@@ -306,6 +344,7 @@ export class Player extends Entity<ResolvedOptions> {
     this.airTime = 0;
     this.controlLockTimer = 0;
     this.wallCoyoteTimer = 0;
+    this.dropTimer = 0;
     this.setWallSlide(0);
   }
 
@@ -338,6 +377,7 @@ export class Player extends Entity<ResolvedOptions> {
     this.jumpBufferTimer = jumpPressed ? o.jumpBuffer : Math.max(0, this.jumpBufferTimer - dt);
     this.dashCooldownTimer = Math.max(0, this.dashCooldownTimer - dt);
     this.wallCoyoteTimer = Math.max(0, this.wallCoyoteTimer - dt);
+    this.dropTimer = Math.max(0, this.dropTimer - dt);
     if (this.grounded) {
       this.jumpsUsed = 0;
       this.airDashUsed = false;
@@ -385,7 +425,15 @@ export class Player extends Entity<ResolvedOptions> {
       const canWallJump = o.wallJump !== null && !canGroundJump && wallSide !== 0;
       const canAirJump = !canGroundJump && this.jumpsUsed < o.maxJumps && (this.jumpsUsed > 0 || o.maxJumps > 1);
 
-      if (this.jumpBufferTimer > 0 && canWallJump && o.wallJump) {
+      const dropping = this.grounded && this.onOneWay && this.input.isAnyPressed(keys.down);
+      if (this.jumpBufferTimer > 0 && dropping) {
+        // ↓ + jump on a one-way platform: fall through it instead of jumping.
+        this.dropTimer = o.dropThroughTime;
+        this.jumpBufferTimer = 0;
+        this.coyoteTimer = 0;
+        this.jumpsUsed = 1; // like walking off a ledge: the ground jump is spent
+        this.events.emit("dropThrough", {});
+      } else if (this.jumpBufferTimer > 0 && canWallJump && o.wallJump) {
         // Up and away from the wall, with the arrow keys locked for a moment.
         this.vy = Math.sqrt(2 * o.gravity * o.wallJump.jumpHeight);
         this.vx = -wallSide * o.wallJump.pushSpeed;
@@ -424,7 +472,13 @@ export class Player extends Entity<ResolvedOptions> {
     // --- Move with collisions -----------------------------------------------
     const collider = this.body.collider(0);
     const desired = { x: this.vx * dt, y: this.vy * dt };
-    this.controller.computeColliderMovement(collider, desired);
+    const start = this.body.translation();
+    this.filterBounds = {
+      left: start.x - o.halfWidth,
+      right: start.x + o.halfWidth,
+      bottom: start.y - o.halfHeight,
+    };
+    this.controller.computeColliderMovement(collider, desired, undefined, undefined, this.solidFilter);
     const moved = this.controller.computedMovement();
     const fallSpeed = Math.max(0, -this.vy);
     // The controller also reports "grounded" when a corner of the box rests on a steep surface,
@@ -484,7 +538,9 @@ export class Player extends Entity<ResolvedOptions> {
       undefined,
       undefined,
       this.body,
+      this.solidFilter,
     );
+    this.onOneWay = hit !== null && isOneWay(this.world, hit.collider);
     // For shape casts, normal1 is the outward normal of the surface that was hit.
     return hit !== null && hit.normal1.y >= this.minWallNormalY - 1e-3;
   }
@@ -509,6 +565,7 @@ export class Player extends Entity<ResolvedOptions> {
         undefined,
         undefined,
         this.body,
+        this.wallFilter,
       );
       // For shape casts, normal1 is the outward normal of the surface that was hit.
       if (hit !== null && hit.normal1.y < this.minWallNormalY - 1e-3) return side;

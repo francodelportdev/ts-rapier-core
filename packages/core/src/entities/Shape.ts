@@ -1,10 +1,9 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import { registerOneWay, toWorld, unregisterOneWay } from "../systems/oneWay";
 
-export interface Point {
-  x: number;
-  y: number;
-}
+import type { Point } from "../systems/oneWay";
+export type { Point };
 
 /** The geometry of a `Shape`. Sizes are in meters; points are relative to the shape's position. */
 export type Geometry =
@@ -52,6 +51,12 @@ export interface ShapeOptions {
   restitution?: number;
   /** Default: gray for fixed, orange for dynamic, blue for kinematic. */
   color?: string;
+  /**
+   * One-way platform: the player stands on it from above, but passes through it from below
+   * and the sides, and drops through it with ↓ + jump. Other bodies always collide with it.
+   * Only for fixed bodies (it throws otherwise). Default: false.
+   */
+  oneWay?: boolean;
 }
 
 const DEFAULT_COLORS: Record<BodyType, string> = {
@@ -59,6 +64,8 @@ const DEFAULT_COLORS: Record<BodyType, string> = {
   dynamic: "#ed8936",
   kinematic: "#4299e1",
 };
+
+const ONE_WAY_COLOR = "#718096";
 
 /** Polyline drawing thickness, in meters (the collider itself has no thickness). */
 const LINE_WIDTH = 0.15;
@@ -93,6 +100,7 @@ export class Shape extends Entity<ShapeOptions> {
     if (options.geometry.type === "polyline" && type === "dynamic") {
       throw new Error("A polyline has no inside, so it can't be dynamic. Use a polygon instead.");
     }
+    if (options.oneWay && type !== "fixed") throw new Error("Only fixed shapes can be one-way platforms");
     super(world, options);
   }
 
@@ -131,7 +139,53 @@ export class Shape extends Entity<ShapeOptions> {
       // Use the bouncier of the two surfaces (Rapier averages them by default), so a ball with
       // restitution 1 bounces back to its height even on a ground with 0.
       .setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Max);
-    return this.world.createCollider(desc, this.body);
+    const collider = this.world.createCollider(desc, this.body);
+    if (this.options.oneWay) {
+      const { x, y, angle = 0, geometry } = this.options;
+      registerOneWay(this.world, collider, toWorld(this.localOutline(collider), x, y, angle), geometry.type !== "polyline");
+    }
+    return collider;
+  }
+
+  protected override onDestroy(): void {
+    if (this.options.oneWay) unregisterOneWay(this.world, this.body.collider(0));
+  }
+
+  /** The shape's outline in local coordinates (circles and capsules as polygons). */
+  private localOutline(collider: RAPIER.Collider): Point[] {
+    const g = this.options.geometry;
+    const arc = (cx: number, cy: number, r: number, from: number, to: number): Point[] =>
+      Array.from({ length: 9 }, (_, i) => {
+        const a = from + ((to - from) * i) / 8;
+        return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r };
+      });
+    switch (g.type) {
+      case "box":
+        return [
+          { x: -g.width / 2, y: -g.height / 2 },
+          { x: g.width / 2, y: -g.height / 2 },
+          { x: g.width / 2, y: g.height / 2 },
+          { x: -g.width / 2, y: g.height / 2 },
+        ];
+      case "circle":
+        return arc(0, 0, g.radius, 0, Math.PI * 2).slice(0, 8);
+      case "capsule":
+        return [...arc(0, g.height / 2, g.radius, 0, Math.PI), ...arc(0, -g.height / 2, g.radius, Math.PI, Math.PI * 2)];
+      case "polyline":
+        return [...g.points];
+      case "ramp":
+      case "polygon":
+        return this.hullPoints(collider);
+    }
+  }
+
+  /** Vertices of the convex hull Rapier built, in local coordinates. */
+  private hullPoints(collider: RAPIER.Collider): Point[] {
+    const shape = collider.shape;
+    const vertices = shape instanceof RAPIER.ConvexPolygon ? shape.vertices : new Float32Array();
+    const points: Point[] = [];
+    for (let i = 0; i + 1 < vertices.length; i += 2) points.push({ x: vertices[i]!, y: vertices[i + 1]! });
+    return points;
   }
 
   private colliderDesc(): RAPIER.ColliderDesc {
@@ -163,7 +217,7 @@ export class Shape extends Entity<ShapeOptions> {
 
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
     const g = this.options.geometry;
-    const color = this.options.color ?? DEFAULT_COLORS[this.options.body ?? "fixed"];
+    const color = this.options.color ?? (this.options.oneWay ? ONE_WAY_COLOR : DEFAULT_COLORS[this.options.body ?? "fixed"]);
     const t = this.body.translation();
     const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
 
@@ -207,11 +261,7 @@ export class Shape extends Entity<ShapeOptions> {
       case "ramp":
       case "polygon": {
         // Draw the hull Rapier actually built, so the picture matches the collisions.
-        const shape = this.body.collider(0).shape;
-        const vertices = shape instanceof RAPIER.ConvexPolygon ? shape.vertices : new Float32Array();
-        const points: Point[] = [];
-        for (let i = 0; i + 1 < vertices.length; i += 2) points.push({ x: vertices[i]!, y: vertices[i + 1]! });
-        this.tracePath(ctx, points);
+        this.tracePath(ctx, this.hullPoints(this.body.collider(0)));
         ctx.closePath();
         ctx.fill();
         break;

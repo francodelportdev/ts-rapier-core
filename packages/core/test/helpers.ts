@@ -1,3 +1,4 @@
+import { afterEach } from "bun:test";
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Game, Input, type Entity } from "../src";
 import { dispatchWindowEvent, fakeDocument } from "./setup";
@@ -19,8 +20,19 @@ export const keys = {
   },
 };
 
+/** Worlds created by this test, freed after it so WebAssembly memory doesn't keep growing. */
+const worlds: RAPIER.World[] = [];
+const games: Game[] = [];
+
+afterEach(() => {
+  for (const game of games.splice(0)) game.stop();
+  for (const world of worlds.splice(0)) world.free();
+});
+
 export function createWorld(): RAPIER.World {
-  return new RAPIER.World({ x: 0, y: -9.81 });
+  const world = new RAPIER.World({ x: 0, y: -9.81 });
+  worlds.push(world);
+  return world;
 }
 
 /**
@@ -73,7 +85,10 @@ export function createCanvas(): HTMLCanvasElement {
 /** Creates a game on a fake canvas, with focus reset so `start()` focuses it. */
 export async function createGame(options?: Parameters<typeof Game.create>[1]): Promise<Game> {
   fakeDocument.activeElement = null;
-  return Game.create(createCanvas(), options);
+  const game = await Game.create(createCanvas(), options);
+  games.push(game);
+  worlds.push(game.getWorld());
+  return game;
 }
 
 /** Runs physics steps on a game without animation frames (calls its private step). */
