@@ -1,5 +1,7 @@
 export { Game } from "./core/Game";
 export type { GameOptions, GameEvents, RemoveReason } from "./core/Game";
+export { DebugRenderer, DEBUG_COLORS } from "./core/DebugRenderer";
+export type { DebugStats } from "./core/DebugRenderer";
 export { Camera } from "./core/Camera";
 export type { Bounds, FollowOptions } from "./core/Camera";
 export { Entity } from "./entities/Entity";

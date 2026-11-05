@@ -154,6 +154,15 @@ A `Component` has `onAttach()`, `update(dt)`, `draw(ctx, scale, centerX, centerY
 
 Included: `Health` (`damage`, `heal`, `reset`, `value`, `isDead`, `isInvulnerable`, events `change` and `death`), `Patrol(points, speed)` for kinematic entities, and `Lifetime(seconds)`. `Patrol` doesn't carry a player standing on the entity.
 
+### Debug renderer
+
+```ts
+game.debug.enabled = true;  // or game.debug.toggle()
+game.debug.getStats();      // { bodies, colliders, sensors, sleeping }
+```
+
+Draws what the physics sees, over everything and through the camera. It's off by default. `colliders`, `centers` and `velocities` switch each part on and off. Colors, also exported as `DEBUG_COLORS`: gray for fixed bodies, blue for kinematic, orange for dynamic, dark orange for sleeping, dashed green for sensors, and pink for velocity. Velocity arrows only appear on dynamic bodies, so the player has none.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -406,6 +415,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `sensors.test.ts` | Overlap events, several entities, layers, filters, `follow`, `once`, `setEnabled`, destroyed entities, `Trigger` and `entityOf` |
 | `animation.test.ts` | `Animator` timing, loops, `next` and events, `SpriteSheet`, `Sprite` drawing, `render()`, and `animatePlayer` |
 | `components.test.ts` | Adding and removing, lifecycle, `Health`, `Lifetime` and `Patrol` |
+| `debug.test.ts` | Outlines of each shape, colors, parts on and off, velocity arrows, stats and `Game` integration |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

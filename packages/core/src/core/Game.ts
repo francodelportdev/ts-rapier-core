@@ -4,6 +4,7 @@ import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { Input } from "../systems/Input";
 import { SceneManager } from "../scenes/SceneManager";
 import { Camera } from "./Camera";
+import { DebugRenderer } from "./DebugRenderer";
 import { SCALE } from "./constants";
 
 /** Keys that would otherwise scroll the page while a game canvas has focus. */
@@ -56,6 +57,8 @@ export class Game {
   public readonly camera = new Camera(SCALE);
   /** Switches between scenes, such as a menu and levels. Optional: a game can use none. */
   public readonly scenes = new SceneManager(this);
+  /** Draws colliders, bodies and sensors over the game. Off until you set `enabled`. */
+  public readonly debug: DebugRenderer;
   private entities: Entity[] = [];
   /** Entities to remove after the current step (removing mid-step would break the loop). */
   private readonly pendingRemovals = new Map<Entity, RemoveReason>();
@@ -72,6 +75,7 @@ export class Game {
     if (ctx === null) throw new Error("Could not get 2D canvas context");
     this.ctx = ctx;
     this.world = new RAPIER.World({ x: 0.0, y: -9.81 });
+    this.debug = new DebugRenderer(this.world);
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
     this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
@@ -273,6 +277,7 @@ export class Game {
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
     for (const e of this.entities) e.render(this.ctx, scale, centerX, centerY);
     this.scenes.draw(this.ctx, width, height);
+    this.debug.draw(this.ctx, scale, centerX, centerY);
 
     this.events.emit("frame", {});
     if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
