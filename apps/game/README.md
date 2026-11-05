@@ -19,6 +19,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Engine: animations | [`src/demos/animations.ts`](src/demos/animations.ts) | `SpriteSheet`, `Animator`, `Sprite` and `animatePlayer()`, with a sheet drawn by code. |
 | Engine: components | [`src/demos/components.ts`](src/demos/components.ts) | `Health`, `Patrol` and `Lifetime`, plus two components written in the demo. |
 | Engine: debug renderer | [`src/demos/debug.ts`](src/demos/debug.ts) | `game.debug`, with every kind of body and two invisible sensors. All demos also have a "debug view" switch. |
+| Engine: mouse & touch | [`src/demos/pointer.ts`](src/demos/pointer.ts) | `game.pointer` and `game.touch`: drop balls, drag boxes, and on-screen buttons. |
 | Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.

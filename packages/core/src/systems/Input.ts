@@ -12,11 +12,8 @@ export class Input {
   private enabled = true;
 
   private constructor() {
-    window.addEventListener("keydown", (e: KeyboardEvent) => {
-      this.keys.set(e.code, true);
-      this.taps.add(e.code);
-    });
-    window.addEventListener("keyup", (e: KeyboardEvent) => this.keys.set(e.code, false));
+    window.addEventListener("keydown", (e: KeyboardEvent) => this.press(e.code));
+    window.addEventListener("keyup", (e: KeyboardEvent) => this.release(e.code));
     // Prevent "stuck" keys when the window loses focus.
     window.addEventListener("blur", () => {
       this.keys.clear();
@@ -38,6 +35,16 @@ export class Input {
   /** True if any of the given keys is pressed. */
   public isAnyPressed(codes: readonly string[]): boolean {
     return codes.some((code) => this.isPressed(code));
+  }
+
+  /** Holds a key from code, as if it were pressed on the keyboard. On-screen buttons use it. */
+  public press(code: string): void {
+    this.keys.set(code, true);
+    this.taps.add(code);
+  }
+
+  public release(code: string): void {
+    this.keys.set(code, false);
   }
 
   /** Called by `Game` after each step of the focused game: a tap lasts for one step. */

@@ -41,6 +41,8 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
     }
   });
 
+  game.touch.addButton({ key: "ArrowDown", label: "↓", x: -116, y: -42 }); // ↓ + jump on a touch screen
+
   game.start();
   return { game, player };
 }

@@ -77,6 +77,9 @@ export function createCanvas(): HTMLCanvasElement {
     width: 800,
     height: 450,
     tabIndex: -1,
+    style: {} as Record<string, string>,
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 450 }),
+    setPointerCapture(): void {},
     listeners: [] as { type: string; signal?: AbortSignal; handler: (e: unknown) => void }[],
     addEventListener(type: string, handler: (e: unknown) => void, options?: { signal?: AbortSignal }): void {
       canvas.listeners.push({ type, handler, signal: options?.signal });
@@ -87,6 +90,14 @@ export function createCanvas(): HTMLCanvasElement {
     getContext: () => ({ fillStyle: "", clearRect(): void {}, fillRect(): void {}, save(): void {}, restore(): void {} }),
   };
   return canvas as unknown as HTMLCanvasElement;
+}
+
+/** Sends a pointer event to a canvas made by `createCanvas()`. */
+export function firePointer(canvas: HTMLCanvasElement, type: string, x: number, y: number, pointerId = 1, pointerType = "mouse"): void {
+  const { listeners } = canvas as unknown as { listeners: { type: string; signal?: AbortSignal; handler: (e: unknown) => void }[] };
+  for (const l of listeners) {
+    if (l.type === type && !l.signal?.aborted) l.handler({ clientX: x, clientY: y, pointerId, pointerType });
+  }
 }
 
 /** Creates a game on a fake canvas, with focus reset so `start()` focuses it. */

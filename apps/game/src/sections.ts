@@ -130,6 +130,11 @@ export const SECTIONS: Section[] = [
     controls: () => [],
   },
   {
+    id: "pointer", title: "Mouse & touch", group: "Engine", file: "src/demos/pointer.ts",
+    load: () => import("./demos/pointer"), source: () => import("./demos/pointer.ts?raw"), content: () => import("./content/pointer.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

@@ -52,13 +52,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   showCurrent();
 
   const dropped: Shape[] = [];
-  canvas.addEventListener("pointerdown", (e) => {
-    // Mouse position → canvas pixels (the canvas may be scaled by CSS) → world meters.
-    const rect = canvas.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width) * canvas.width;
-    const py = ((e.clientY - rect.top) / rect.height) * canvas.height;
-    const { x, y } = game.camera.screenToWorld(px, py);
-
+  game.pointer.on("down", ({ worldX: x, worldY: y }) => {
     const { geometry, restitution, color } = SHAPES[current]!;
     const shape = new Shape(world, { x, y, angle: Math.random() * Math.PI, body: "dynamic", geometry, restitution, color });
     game.addEntity(shape);

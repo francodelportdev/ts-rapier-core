@@ -171,6 +171,19 @@ game.debug.getStats();      // { bodies, colliders, sensors, sleeping }
 
 Draws what the physics sees, over everything and through the camera. It's off by default. `colliders`, `centers` and `velocities` switch each part on and off. Colors, also exported as `DEBUG_COLORS`: gray for fixed bodies, blue for kinematic, orange for dynamic, dark orange for sleeping, dashed green for sensors, and pink for velocity. Velocity arrows only appear on dynamic bodies, so the player has none.
 
+### Mouse and touch
+
+```ts
+game.pointer.on("down", ({ worldX, worldY }) => spawn(worldX, worldY));
+game.pointer.world;   // { x, y } in meters, following the camera
+
+game.touch.enabled = true;  // on-screen ←, → and jump, shown on the first touch
+```
+
+`game.pointer` treats mouse and fingers alike: `x`, `y`, `world`, `isDown`, `wasPressed()`, `wasReleased()`, `getActive()` for several fingers, and the events `down`, `move` and `up` with `{ id, type, x, y, worldX, worldY }`. A finger on the canvas doesn't scroll the page.
+
+`game.touch` draws buttons that press keyboard keys, so `Player` works unchanged. `setButtons([{ key, label, x, y, radius? }])` replaces them and `addButton()` adds one, with negative positions counting from the right or bottom edge. `alwaysVisible` shows them before the first touch. `Input.press(code)` and `release(code)` hold a key from code.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -427,6 +440,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `components.test.ts` | Adding and removing, lifecycle, `Health`, `Lifetime` and `Patrol` |
 | `debug.test.ts` | Outlines of each shape, colors, parts on and off, velocity arrows, stats and `Game` integration |
 | `regressions.test.ts` | Quick taps, scene listeners, validation, moving platforms and other fixed bugs |
+| `pointer.test.ts` | Positions, CSS scaling, edges, several fingers, events, and on-screen buttons moving the player |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

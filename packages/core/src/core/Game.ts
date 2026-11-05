@@ -2,6 +2,8 @@ import RAPIER from "@dimforge/rapier2d-compat";
 import type { Entity } from "../entities/Entity";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { Input } from "../systems/Input";
+import { Pointer } from "../systems/Pointer";
+import { TouchControls } from "../systems/TouchControls";
 import { SceneManager } from "../scenes/SceneManager";
 import { Camera } from "./Camera";
 import { DebugRenderer } from "./DebugRenderer";
@@ -71,6 +73,10 @@ export class Game {
   public readonly scenes = new SceneManager(this);
   /** Draws colliders, bodies and sensors over the game. Off until you set `enabled`. */
   public readonly debug: DebugRenderer;
+  /** Mouse and touch on the canvas, with positions in pixels and in meters. */
+  public readonly pointer: Pointer;
+  /** On-screen buttons for touch screens. Off until you set `enabled`. */
+  public readonly touch: TouchControls;
   private entities: Entity[] = [];
   /** Entities to remove after the current step (removing mid-step would break the loop). */
   private readonly pendingRemovals = new Map<Entity, RemoveReason>();
@@ -106,6 +112,8 @@ export class Game {
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
     const { signal } = this.listeners;
+    this.pointer = new Pointer(canvas, this.camera, signal);
+    this.touch = new TouchControls(canvas, this.input, this.pointer);
     canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }), { signal });
     canvas.addEventListener(
       "keydown",
@@ -244,6 +252,7 @@ export class Game {
     this.destroyed = true;
     this.stop();
     this.listeners.abort();
+    this.touch.releaseAll();
     this.clear(); // destroys the entities, so their components get onDetach()
     this.world.free();
   }
@@ -251,7 +260,10 @@ export class Game {
   /** Runs one physics step: update every entity, step the world, then apply removals. */
   private step(): void {
     this.input.setEnabled(this.isFocused());
-    if (this.scenes.tick(this.world.timestep)) return; // frozen during a fade out
+    if (this.scenes.tick(this.world.timestep)) {
+      this.pointer.endStep();
+      return; // frozen during a fade out
+    }
     this.whileBusy(() => {
       this.scenes.update();
       for (const e of this.entities) {
@@ -270,6 +282,7 @@ export class Game {
     });
     if (this.destroyed) return;
     if (this.isFocused()) this.input.endStep();
+    this.pointer.endStep();
     this.flushRemovals();
     this.scenes.flushInstant();
   }
@@ -384,6 +397,7 @@ export class Game {
       }
     }
     this.scenes.draw(this.ctx, width, height);
+    this.touch.draw(this.ctx);
     this.debug.draw(this.ctx, scale, centerX, centerY);
   }
 }
