@@ -1,4 +1,5 @@
 import RAPIER from "@dimforge/rapier2d-compat";
+import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 
 /**
  * Base class for every physics entity. Works in meters (Rapier, Y axis up);
@@ -10,12 +11,27 @@ export abstract class Entity<TOptions extends object = object> {
   /** Constructor options. Set before `createBody()` runs, so it is safe to read there. */
   protected readonly options: TOptions;
   private destroyed = false;
+  private collision: CollisionFilter = { layers: ALL_LAYERS, mask: ALL_LAYERS };
 
   constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
     this.world = world;
     this.options = options;
     this.body = this.createBody();
     this.createCollider();
+    const { collision } = options as { collision?: CollisionFilter };
+    if (collision !== undefined) this.setCollision(collision);
+  }
+
+  /** Changes what this entity is and what it collides with. It can be called at any time. */
+  public setCollision(filter: CollisionFilter): void {
+    this.collision = filter;
+    const groups = toInteractionGroups(filter);
+    for (let i = 0; i < this.body.numColliders(); i++) this.body.collider(i).setCollisionGroups(groups);
+    this.body.wakeUp(); // a sleeping body wouldn't notice its new contacts
+  }
+
+  public getCollision(): CollisionFilter {
+    return this.collision;
   }
 
   /** True once `destroy()` has run. A destroyed entity must not be updated or drawn. */

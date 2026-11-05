@@ -105,6 +105,11 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
+    id: "layers", title: "Collision layers", group: "Engine", file: "src/demos/layers.ts",
+    load: () => import("./demos/layers"), source: () => import("./demos/layers.ts?raw"), content: () => import("./content/layers.html?raw"),
+    controls: () => [],
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

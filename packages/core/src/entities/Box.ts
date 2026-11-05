@@ -1,16 +1,18 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import type { CollisionFilter } from "../systems/layers";
 
 const HALF = 0.5;
 
 interface BoxOptions {
   x: number;
   y: number;
+  collision?: CollisionFilter;
 }
 
 export class Box extends Entity<BoxOptions> {
-  constructor(world: RAPIER.World, x = 0, y = 5) {
-    super(world, { x, y });
+  constructor(world: RAPIER.World, x = 0, y = 5, collision?: CollisionFilter) {
+    super(world, { x, y, collision });
   }
 
   protected override createBody(): RAPIER.RigidBody {

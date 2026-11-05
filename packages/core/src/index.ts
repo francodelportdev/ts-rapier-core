@@ -19,6 +19,8 @@ export type { SceneEvents, GoOptions } from "./scenes/SceneManager";
 export { LevelScene, validateLevel } from "./scenes/Level";
 export type { LevelData, LevelArea, LevelStats, LevelSceneOptions } from "./scenes/Level";
 export { Input } from "./systems/Input";
+export { ALL_LAYERS, defineLayers, toInteractionGroups } from "./systems/layers";
+export type { CollisionFilter, Layers } from "./systems/layers";
 export { isOneWay } from "./systems/oneWay";
 export { EventEmitter } from "./systems/EventEmitter";
 export type { Listener } from "./systems/EventEmitter";

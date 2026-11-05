@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PROSE } from "./prose";
 import { SECTIONS, type Section } from "./sections";
-import type { Control, Demo } from "./ui";
+import type { Control, Demo, Toggle } from "./ui";
 
 const sectionFromHash = (): Section => SECTIONS.find((s) => s.id === location.hash.slice(1)) ?? SECTIONS[0]!;
 
@@ -70,6 +70,24 @@ function Slider({ control, onRelease }: { control: Control; onRelease: () => voi
   );
 }
 
+function Switch({ toggle, onRelease }: { toggle: Toggle; onRelease: () => void }) {
+  const [value, setValue] = useState(toggle.value);
+  return (
+    <label className="flex cursor-pointer items-center gap-2 text-[0.9rem]">
+      <input
+        className="accent-accent"
+        type="checkbox" checked={value}
+        onChange={(e) => {
+          setValue(e.target.checked);
+          toggle.set(e.target.checked);
+          onRelease();
+        }}
+      />
+      {toggle.label}
+    </label>
+  );
+}
+
 /** Runs a demo on its own canvas, and destroys it when the page changes or on reset. */
 function DemoView({ section, onReset }: { section: Section; onReset: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -104,6 +122,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
 
   const focusCanvas = () => canvasRef.current?.focus({ preventScroll: true });
   const controls = demo?.player ? section.controls({ ...demo, player: demo.player }) : [];
+  const toggles = demo?.toggles ?? [];
 
   return (
     <>
@@ -129,7 +148,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
           </div>
         )}
       </div>
-      {controls.length > 0 && (
+      {controls.length + toggles.length > 0 && (
         <div className="mt-4 rounded-lg bg-surface px-4 pt-3 pb-4">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-bold">Tune it live</h2>
@@ -137,6 +156,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
           </div>
           <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-6 gap-y-2">
             {controls.map((c) => <Slider key={c.label} control={c} onRelease={focusCanvas} />)}
+            {toggles.map((t) => <Switch key={t.label} toggle={t} onRelease={focusCanvas} />)}
           </div>
         </div>
       )}

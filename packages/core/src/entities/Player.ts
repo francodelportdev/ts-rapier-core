@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
 import { Input } from "../systems/Input";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
+import { toInteractionGroups, type CollisionFilter } from "../systems/layers";
 import { isOneWay, oneWayBlocks } from "../systems/oneWay";
 
 /** What the player is doing. Updated once per physics step. */
@@ -120,6 +121,8 @@ export interface PlayerOptions {
   wallJump?: boolean | WallJumpOptions;
 
   keys?: Partial<PlayerKeys>;
+  /** What it is and what it collides with. Default: everything. */
+  collision?: CollisionFilter;
 }
 
 const DEFAULT_KEYS: PlayerKeys = {
@@ -155,7 +158,8 @@ export type PlayerTuning = Partial<
   wallJump?: WallJumpOptions;
 };
 
-type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys">> & {
+type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys" | "collision">> & {
+  collision?: CollisionFilter;
   dash: Required<DashOptions> | null;
   wallJump: Required<WallJumpOptions> | null;
   keys: PlayerKeys;
@@ -197,6 +201,7 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
       coyoteTime: wallJump.coyoteTime ?? 0.1,
     },
     keys: { ...DEFAULT_KEYS, ...o.keys },
+    collision: o.collision,
   };
 }
 
@@ -302,7 +307,7 @@ export class Player extends Entity<ResolvedOptions> {
 
   /** The current value of the options that `configure()` can change. */
   public getTuning(): PlayerTuning {
-    const { dash, wallJump, x, y, halfWidth, halfHeight, color, respawnBelow, keys, ...rest } = this.options;
+    const { dash, wallJump, x, y, halfWidth, halfHeight, color, respawnBelow, keys, collision, ...rest } = this.options;
     return { ...rest, ...(dash && { dash: { ...dash } }), ...(wallJump && { wallJump: { ...wallJump } }) };
   }
 
@@ -529,7 +534,7 @@ export class Player extends Entity<ResolvedOptions> {
       right: start.x + o.halfWidth,
       bottom: start.y - o.halfHeight,
     };
-    this.controller.computeColliderMovement(collider, desired, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, undefined, this.solidFilter);
+    this.controller.computeColliderMovement(collider, desired, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups(), this.solidFilter);
     const moved = this.controller.computedMovement();
     const fallSpeed = Math.max(0, -this.vy);
     // The controller also reports "grounded" when a corner of the box rests on a steep surface,
@@ -559,6 +564,11 @@ export class Player extends Entity<ResolvedOptions> {
     this.world.removeCharacterController(this.controller);
   }
 
+  /** The controller and the probes are queries, so they need the player's filter passed in. */
+  private queryGroups(): number {
+    return toInteractionGroups(this.getCollision());
+  }
+
   /** True if the last movement ran into a fixed or kinematic body in the direction of `vx`. */
   private hitStaticWall(): boolean {
     for (let i = 0; i < this.controller.numComputedCollisions(); i++) {
@@ -586,7 +596,7 @@ export class Player extends Entity<ResolvedOptions> {
       0.1, // the snap-to-ground distance is 0.2, but grounded contacts are within the 0.01 m offset
       true,
       RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-      undefined,
+      this.queryGroups(),
       undefined,
       this.body,
       this.solidFilter,
@@ -613,7 +623,7 @@ export class Player extends Entity<ResolvedOptions> {
         WALL_PROBE + 0.01, // the controller keeps a 0.01 m gap
         true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
-        undefined,
+        this.queryGroups(),
         undefined,
         this.body,
         this.wallFilter,
