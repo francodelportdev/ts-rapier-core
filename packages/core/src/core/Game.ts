@@ -196,7 +196,10 @@ export class Game {
     this.input.setEnabled(this.isFocused());
     if (this.scenes.tick(this.world.timestep)) return; // frozen during a fade out
     this.scenes.update();
-    for (const e of this.entities) e.update();
+    for (const e of this.entities) {
+      e.update();
+      e.getSprite()?.animator?.update(this.world.timestep);
+    }
     this.world.step();
     this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
 
@@ -267,7 +270,7 @@ export class Game {
     this.ctx.clearRect(0, 0, width, height);
     const { scale, centerX, centerY } = this.camera.getViewport();
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
-    for (const e of this.entities) e.draw(this.ctx, scale, centerX, centerY);
+    for (const e of this.entities) e.render(this.ctx, scale, centerX, centerY);
     this.scenes.draw(this.ctx, width, height);
 
     this.events.emit("frame", {});

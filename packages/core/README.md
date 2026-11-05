@@ -111,6 +111,28 @@ A `Sensor` takes any `Shape` geometry except a polyline. It detects moving entit
 
 `new Trigger(world, { x, y, width, height, target, color?, round?, once? })` is a `Sensor` that watches one entity. `entityOf(world, collider)` returns a collider's entity.
 
+### Animations
+
+```ts
+const sheet = await loadSpriteSheet("/hero.png", 32, 32);
+const animator = new Animator({
+  idle: { frames: [0, 1, 2, 3], fps: 4 },
+  run: { frames: [4, 5, 6, 7], fps: 12 },
+  attack: { frames: [8, 9], fps: 12, loop: false, next: "idle" },
+}, "idle");
+const sprite = new Sprite({ sheet, animator, width: 2, height: 2 });
+
+entity.setSprite(sprite);          // any entity: replaces draw()
+animatePlayer(player, sprite);     // or: clips follow the player's state and facing
+```
+
+- `SpriteSheet`: cuts an image into frames, numbered left to right and top to bottom. `loadSpriteSheet()` loads it from a URL.
+- `Animator`: `play(name, { restart? })`, `pause()`, `resume()`, `speed`, `clip`, `frame`, `frameIndex`, `isFinished`, and the events `change`, `end` and `frame`. `Game` advances it every physics step.
+- `Sprite`: `sheet`, `width` and `height` in meters, `animator`, `frame`, `offsetX`, `offsetY`, `flipX` and `smooth`. It turns with the body. The collider doesn't change.
+- `animatePlayer(player, sprite, clips?)`: plays the clip named like each state, or the name in `clips`. A state without a clip plays `"idle"`. It returns a function that stops following.
+
+Entities now have `setSprite()`, `getSprite()` and `render()`, which `Game` calls instead of `draw()`.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -361,6 +383,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `scenes.test.ts` | Scene changes, deferral, fades, restart, `Trigger`, `LevelScene` (coins, goal, hazards, falling, per-level options) and validation |
 | `layers.test.ts` | `defineLayers`, both masks having to agree, runtime changes, and the player respecting its filter |
 | `sensors.test.ts` | Overlap events, several entities, layers, filters, `follow`, `once`, `setEnabled`, destroyed entities, `Trigger` and `entityOf` |
+| `animation.test.ts` | `Animator` timing, loops, `next` and events, `SpriteSheet`, `Sprite` drawing, `render()`, and `animatePlayer` |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
