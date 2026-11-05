@@ -55,9 +55,15 @@ game.start();
 | `stop(): void` | Stops the loop. |
 | `isFocused(): boolean` | True while the canvas has keyboard focus. |
 | `destroy(): void` | Stops the game for good: ends the loop, removes its canvas listeners and frees the physics world. Don't use the game or its entities afterwards. |
+| `clear(): void` | Removes every entity and resets the camera, gravity and kill plane. |
+| `on("error", ({ error }) => …)` | Runs when game code throws during a step, a draw or a listener. |
 | `on("frame", () => …)` | Runs after each drawn frame, for work such as updating a HUD. It stops with the game. |
 
 Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the screen's refresh rate. A 144 Hz screen runs some frames with no step, and a slow frame runs several steps. Each step calls `update()` on every entity and then `world.step()`. Each frame then clears the canvas and calls `draw()` on every entity.
+
+**Safety:** physics objects are never freed during a step or a draw. `removeEntity()`, `entity.destroy()`, `clear()` and `destroy()` are safe from listeners and `update()`: they wait for the step or draw to end. In a running game, `entity.destroy()` is the same as `removeEntity()`, so `isDestroyed` may turn true a moment later.
+
+**Errors:** if game code throws, the game keeps running. The error goes to the `error` event and to `console.error`, without repeating the same message.
 
 **Options:**
 - `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
