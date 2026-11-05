@@ -1,4 +1,5 @@
 import RAPIER from "@dimforge/rapier2d-compat";
+import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 
 /**
@@ -18,6 +19,7 @@ export abstract class Entity<TOptions extends object = object> {
     this.options = options;
     this.body = this.createBody();
     this.createCollider();
+    for (let i = 0; i < this.body.numColliders(); i++) registerEntity(world, this.body.collider(i), this as unknown as Entity);
     const { collision } = options as { collision?: CollisionFilter };
     if (collision !== undefined) this.setCollision(collision);
   }
@@ -52,6 +54,7 @@ export abstract class Entity<TOptions extends object = object> {
   public destroy(): void {
     if (this.destroyed) return;
     this.onDestroy();
+    for (let i = 0; i < this.body.numColliders(); i++) unregisterEntity(this.world, this.body.collider(i));
     this.world.removeRigidBody(this.body); // also removes the colliders attached to it
     this.destroyed = true;
   }

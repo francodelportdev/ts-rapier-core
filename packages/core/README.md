@@ -96,7 +96,20 @@ new Platform(world, { x: 0, y: -5, width: 20, collision: layers.filter("world", 
 new Player(world, { collision: layers.filter("player", ["world", "enemy"]) });
 ```
 
-A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform` and `Shape` take a `collision` option, and `Box` takes it as its fourth argument. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. `Trigger` doesn't use layers.
+A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform` and `Shape` take a `collision` option, and `Box` takes it as its fourth argument. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. A `Sensor` detects by layer too.
+
+### Sensors and triggers
+
+```ts
+const plate = new Sensor(world, { x: 2, y: -4.25, geometry: { type: "box", width: 2, height: 0.5 } });
+plate.on("enter", ({ entity }) => {});
+plate.on("exit", ({ entity }) => {});
+game.addEntity(plate); // it checks during update()
+```
+
+A `Sensor` takes any `Shape` geometry except a polyline. It detects moving entities through real collider overlap. Options: `x`, `y`, `angle`, `geometry`, `collision`, `follow`, `offset`, `filter`, `detectFixed`, `once` and `color`. Methods: `getInside()`, `isOccupied()` and `setEnabled(on)`. Destroying an entity inside fires `exit`, and sensors never detect each other.
+
+`new Trigger(world, { x, y, width, height, target, color?, round?, once? })` is a `Sensor` that watches one entity. `entityOf(world, collider)` returns a collider's entity.
 
 ### Scenes and levels
 
@@ -125,7 +138,7 @@ Each change calls `onExit()` and then `game.clear()`, which removes every entity
 
 `new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Required fields are checked with `validateLevel()`, which throws an error naming the level.
 
-`new Trigger(world, { x, y, width, height, target, targetHalfWidth?, targetHalfHeight?, color?, round? })` is an area nothing collides with. It emits `enter` and `exit` for its target.
+Goals, hazards and coins are built with [`Trigger`](#sensors-and-triggers).
 
 ### `Entity` (abstract)
 
@@ -347,6 +360,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `one-way.test.ts` | Jumping up through, side pass-through, standing on the edge, drop-through and its timer, rotated one-way shapes, not being walls, cleanup on destroy, dynamic bodies colliding |
 | `scenes.test.ts` | Scene changes, deferral, fades, restart, `Trigger`, `LevelScene` (coins, goal, hazards, falling, per-level options) and validation |
 | `layers.test.ts` | `defineLayers`, both masks having to agree, runtime changes, and the player respecting its filter |
+| `sensors.test.ts` | Overlap events, several entities, layers, filters, `follow`, `once`, `setEnabled`, destroyed entities, `Trigger` and `entityOf` |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
