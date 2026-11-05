@@ -1,0 +1,16 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
+<h1>Double jump</h1>
+<p class="text-muted">Set <code>maxJumps: 2</code> and the player can jump once more in mid-air. The platform here is too high for a single jump.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump, then <kbd>Space</kbd> again in the air</li>
+</ul>
+
+<h2>How it works</h2>
+<ul class="my-4 list-disc pl-5 text-muted [&>li]:mb-2">
+  <li><code>maxJumps</code> is the number of jumps available before landing. <code>1</code> is a normal jump, <code>2</code> is a double jump, and <code>3</code> or more lets you keep jumping.</li>
+  <li>Every jump in the air resets the upward speed to the full jump speed, so it reaches the same height as a jump from the ground.</li>
+  <li>Walking off a ledge without jumping uses up the ground jump, so you only get the air jumps. Within <a href="#player">coyote time</a>, a jump still counts as a ground jump.</li>
+  <li>Landing restores every jump.</li>
+</ul>

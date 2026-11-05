@@ -130,6 +130,31 @@ const DEFAULT_KEYS: PlayerKeys = {
   down: ["ArrowDown", "KeyS"],
 };
 
+/** The options `player.configure()` can change while the game runs. */
+export type PlayerTuning = Partial<
+  Pick<
+    PlayerOptions,
+    | "speed"
+    | "acceleration"
+    | "deceleration"
+    | "airControl"
+    | "gravity"
+    | "maxFallSpeed"
+    | "jumpHeight"
+    | "jumpCut"
+    | "coyoteTime"
+    | "jumpBuffer"
+    | "maxJumps"
+    | "maxSlope"
+    | "dropThroughTime"
+  >
+> & {
+  /** Ignored if the player was created without a dash. */
+  dash?: DashOptions;
+  /** Ignored if the player was created without wall jumps. */
+  wallJump?: WallJumpOptions;
+};
+
 type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys">> & {
   dash: Required<DashOptions> | null;
   wallJump: Required<WallJumpOptions> | null;
@@ -256,7 +281,33 @@ export class Player extends Entity<ResolvedOptions> {
     this.controller.enableAutostep(0.3, 0.2, false);
     this.controller.setApplyImpulsesToDynamicBodies(true);
     this.controller.setCharacterMass(CHARACTER_MASS);
-    // Climb slopes up to maxSlope, and don't slide down them while standing still.
+    this.applyMaxSlope();
+  }
+
+  /**
+   * Changes options while the game runs. Only the given values change, and they apply from
+   * the next physics step.
+   *
+   * ```ts
+   * player.configure({ speed: 12, dash: { cooldown: 0.1 } });
+   * ```
+   */
+  public configure(tuning: PlayerTuning): void {
+    const { dash, wallJump, ...rest } = tuning;
+    Object.assign(this.options, rest);
+    if (dash && this.options.dash) Object.assign(this.options.dash, dash);
+    if (wallJump && this.options.wallJump) Object.assign(this.options.wallJump, wallJump);
+    if (rest.maxSlope !== undefined) this.applyMaxSlope();
+  }
+
+  /** The current value of the options that `configure()` can change. */
+  public getTuning(): PlayerTuning {
+    const { dash, wallJump, x, y, halfWidth, halfHeight, color, respawnBelow, keys, ...rest } = this.options;
+    return { ...rest, ...(dash && { dash: { ...dash } }), ...(wallJump && { wallJump: { ...wallJump } }) };
+  }
+
+  /** Climb slopes up to maxSlope, and don't slide down them while standing still. */
+  private applyMaxSlope(): void {
     const maxSlope = (this.options.maxSlope * Math.PI) / 180;
     this.controller.setMaxSlopeClimbAngle(maxSlope);
     this.controller.setMinSlopeSlideAngle(maxSlope);

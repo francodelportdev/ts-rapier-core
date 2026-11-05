@@ -1,0 +1,46 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
+<h1>Camera</h1>
+<p class="text-muted">Every game has a <code>game.camera</code>. It decides which part of the world appears on the canvas, so levels can be wider than the screen.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump (×2)</li>
+  <li><kbd>Shift</kbd> Dash</li>
+  <li><kbd>-</kbd> <kbd>=</kbd> Zoom</li>
+</ul>
+
+<h2>How it works</h2>
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
+  <li>
+    <h3>Follow</h3>
+    <p><code>camera.follow(player, options)</code> moves the view towards the player every physics step. With <strong>smoothing</strong>, it covers about 63% of the remaining distance in <code>smoothing</code> seconds, so it eases in without overshooting. Inside the <strong>dead zone</strong>, a box around the center of the screen, the player moves freely without dragging the view, which avoids constant small jitter.</p>
+  </li>
+  <li>
+    <h3>Bounds</h3>
+    <p><code>camera.setBounds({ minX, maxX, minY, maxY })</code> keeps the view inside the level, so the camera stops at the edges instead of showing empty space. If the level is smaller than the screen on an axis, the camera centers on it.</p>
+  </li>
+  <li>
+    <h3>Zoom and shake</h3>
+    <p><code>camera.zoom</code> scales everything, where 1 is 30 px per meter. <code>camera.shake(intensity, duration)</code> jolts the view by up to <code>intensity</code> meters and fades out. This demo shakes on hard landings, using the player's <a href="#events"><code>land</code> event</a>.</p>
+  </li>
+  <li>
+    <h3>Entities don't change</h3>
+    <p>The game passes the camera's <code>scale</code>, <code>centerX</code> and <code>centerY</code> to <code>draw()</code>, so the usual <code>px = centerX + x · scale</code> already accounts for the camera. Your own entities work with it as they are.</p>
+  </li>
+</ol>
+
+<h2>API</h2>
+<table>
+  <thead><tr><th>Member</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>follow(target, { smoothing, deadZone, offset })</code></td><td>Follow an entity, or pass <code>null</code> to stop. Defaults: <code>0.15</code> s, <code>2 × 1.5</code> m and <code>(0, 0)</code>.</td></tr>
+    <tr><td><code>setBounds(bounds | null)</code></td><td>Keep the view inside a rectangle, in meters.</td></tr>
+    <tr><td><code>x</code>, <code>y</code>, <code>zoom</code></td><td>The world point at the center of the canvas, and the zoom. You can read and write them.</td></tr>
+    <tr><td><code>moveTo(x, y)</code></td><td>Jump to a point, without smoothing.</td></tr>
+    <tr><td><code>snapToTarget()</code></td><td>Jump to the followed entity, for example after a respawn.</td></tr>
+    <tr><td><code>shake(intensity, duration = 0.3)</code></td><td>Shake by up to <code>intensity</code> meters, fading out.</td></tr>
+    <tr><td><code>screenToWorld(px, py)</code> / <code>worldToScreen(x, y)</code></td><td>Convert between canvas pixels and world meters, for example for mouse input.</td></tr>
+    <tr><td><code>getVisibleBounds()</code></td><td>The part of the world on screen, in meters.</td></tr>
+  </tbody>
+</table>
+<p class="mt-3 text-[0.9rem] text-muted">If the camera stops following an entity because it was <a href="#remove">removed</a>, the camera stays where it is. <code>Game.create(canvas, { grid: true })</code> draws a 1 m grid in world space, which makes the camera's movement visible.</p>

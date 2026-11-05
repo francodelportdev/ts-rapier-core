@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { Box, Ground, Player, type GameEvents } from "../src";
-import { createGame, createWorld, keys, stepGame } from "./helpers";
+import { createGame, createWorld, freed, keys, stepGame } from "./helpers";
 
 beforeEach(() => keys.reset());
 
@@ -145,5 +145,33 @@ describe("Game: input focus", () => {
     expect(playerB.getVelocity().x).toBeGreaterThan(0);
     a.stop();
     b.stop();
+  });
+});
+
+describe("Game: destroy", () => {
+  test("stops the loop, aborts canvas listeners and frees the world once", async () => {
+    const game = await createGame();
+    const world = game.getWorld();
+    game.addEntity(new Box(world));
+    game.start();
+    const canvas = game["canvas"] as unknown as { listeners: { signal?: AbortSignal }[] };
+    freed.add(world);
+    game.destroy();
+    expect(game["rafId"]).toBeNull();
+    expect(canvas.listeners.length).toBeGreaterThan(0);
+    expect(canvas.listeners.every((l) => l.signal?.aborted)).toBe(true);
+    expect(game.getEntities()).toHaveLength(0);
+    expect(() => game.destroy()).not.toThrow();
+    game.start(); // a destroyed game can't restart
+    expect(game["rafId"]).toBeNull();
+  });
+
+  test("a frame listener can destroy the game", async () => {
+    const game = await createGame();
+    freed.add(game.getWorld());
+    game.on("frame", () => game.destroy());
+    game.start();
+    game["loop"](0);
+    expect(game["rafId"]).toBeNull();
   });
 });

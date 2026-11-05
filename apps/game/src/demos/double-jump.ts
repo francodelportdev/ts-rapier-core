@@ -1,19 +1,21 @@
 /**
  * Double jump: `maxJumps: 2` allows one extra jump in the air.
- * Explanation: the "double-jump" section of the docs page (index.html#double-jump).
+ * Explanation: the "double-jump" page of the docs.
  */
 import { Game, Ground, Platform, Player } from "@francodelportdev/rapier-engine";
+import type { Demo } from "../ui";
 
-const canvas = document.querySelector<HTMLCanvasElement>("#double-jump-demo");
-if (canvas === null) throw new Error("Missing <canvas id=\"double-jump-demo\">");
+export default async function demo(canvas: HTMLCanvasElement): Promise<Demo> {
+  const game = await Game.create(canvas);
+  const world = game.getWorld();
 
-const game = await Game.create(canvas);
-const world = game.getWorld();
+  game.addEntity(new Ground(world));
+  // Top surface 4.5 m above the ground: too high for one 3 m jump, easy with two.
+  game.addEntity(new Platform(world, { x: 4, y: -0.25, width: 5 }));
 
-game.addEntity(new Ground(world));
-// Top surface 4.5 m above the ground: too high for one 3 m jump, easy with two.
-game.addEntity(new Platform(world, { x: 4, y: -0.25, width: 5 }));
+  const player = new Player(world, { x: -4, maxJumps: 2 });
+  game.addEntity(player);
 
-game.addEntity(new Player(world, { x: -4, maxJumps: 2 }));
-
-game.start();
+  game.start();
+  return { game, player };
+}

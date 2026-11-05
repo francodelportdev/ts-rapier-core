@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { Box, Ground, Platform, Player, type PlayerEvents } from "../src";
+import { Box, Ground, Platform, Player, Shape, type PlayerEvents } from "../src";
 import { createWorld, keys, simulate, simulateUntil } from "./helpers";
 
 beforeEach(() => keys.reset());
@@ -377,5 +377,42 @@ describe("Player: respawn", () => {
     player.respawn();
     expect(player.getPosition().x).toBe(0);
     expect(player.getVelocity()).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe("Player: configure", () => {
+  test("changes speed and jump height while running", () => {
+    const { world, player, entities } = setup();
+    player.configure({ speed: 3, jumpHeight: 1 });
+    keys.down("ArrowRight");
+    simulate(world, entities, 30);
+    expect(player.getVelocity().x).toBeCloseTo(3, 5);
+    const start = player.getPosition().y;
+    const top = maxHeight(player, (track) => {
+      keys.down("Space");
+      simulate(world, entities, 40, track);
+    });
+    expect(top - start).toBeLessThan(1.05);
+  });
+
+  test("merges dash options and ignores them if the dash is off", () => {
+    const on = setup({ dash: true });
+    on.player.configure({ dash: { speed: 5 } });
+    expect(on.player.getTuning().dash).toEqual({ speed: 5, duration: 0.15, cooldown: 0.4 });
+    const off = setup();
+    off.player.configure({ dash: { speed: 5 } });
+    expect(off.player.getTuning().dash).toBeUndefined();
+  });
+
+  test("maxSlope updates the controller", () => {
+    const world = createWorld();
+    const ramp = new Shape(world, { x: 5, y: -4.5, geometry: { type: "ramp", width: 6, height: 3.46 } }); // 30°
+    const player = new Player(world);
+    const entities = [new Ground(world), ramp, player];
+    simulate(world, entities, 10);
+    player.configure({ maxSlope: 20 });
+    keys.down("ArrowRight");
+    simulate(world, entities, 60);
+    expect(player.getPosition().y).toBeLessThan(-3.2);
   });
 });

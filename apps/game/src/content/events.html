@@ -1,0 +1,46 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
+<h1>State &amp; events</h1>
+<p class="text-muted">The player reports what it's doing, so your game can play sounds, switch animations or update the UI without changing the engine.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump (twice for a double jump)</li>
+  <li><kbd>Shift</kbd> Dash</li>
+  <li><kbd>R</kbd> Respawn</li>
+</ul>
+
+<h2>State</h2>
+<p><code>player.getState()</code> returns one of these values. It's updated once per physics step.</p>
+<table>
+  <thead><tr><th>State</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><code>"idle"</code></td><td>On the ground and not moving.</td></tr>
+    <tr><td><code>"run"</code></td><td>On the ground and moving.</td></tr>
+    <tr><td><code>"jump"</code></td><td>In the air, going up.</td></tr>
+    <tr><td><code>"fall"</code></td><td>In the air, going down.</td></tr>
+    <tr><td><code>"dash"</code></td><td>During a dash.</td></tr>
+    <tr><td><code>"wallSlide"</code></td><td>Sliding down a wall (see <a href="#wall-jump">Wall jump</a>).</td></tr>
+  </tbody>
+</table>
+<p class="mt-3 text-[0.9rem] text-muted">Very short losses of ground contact, under 0.05 s (for example when spawning or going over a bump), don't count as <code>"fall"</code>. Without this, the state would flicker. Other getters: <code>isGrounded()</code>, <code>isDashing()</code>, <code>getVelocity()</code> (m/s) and <code>getFacing()</code> (1 or -1).</p>
+
+<h2>Events</h2>
+<p><code>player.on(event, listener)</code> subscribes and returns a function that unsubscribes. There's also <code>once()</code> and <code>off()</code>. The payloads are fully typed.</p>
+<table>
+  <thead><tr><th>Event</th><th>Payload</th><th>When</th></tr></thead>
+  <tbody>
+    <tr><td><code>stateChange</code></td><td><code>{ from, to }</code></td><td>The state changed.</td></tr>
+    <tr><td><code>jump</code></td><td><code>{ airJump, wallJump, jumpNumber }</code></td><td>A jump started. <code>airJump</code> is true for extra jumps in the air, and <code>wallJump</code> for jumps off a wall.</td></tr>
+    <tr><td><code>land</code></td><td><code>{ fallSpeed }</code></td><td>The player touched the ground after being in the air. Useful for dust particles or fall damage.</td></tr>
+    <tr><td><code>dash</code></td><td><code>{ direction, inAir }</code></td><td>A dash started.</td></tr>
+    <tr><td><code>dropThrough</code></td><td><code>{}</code></td><td>The player dropped through a one-way platform (see <a href="#one-way">One-way platforms</a>).</td></tr>
+    <tr><td><code>wallSlideStart</code> / <code>wallSlideEnd</code></td><td><code>{ side }</code></td><td>Started or stopped sliding down a wall. <code>side</code> is 1 for a wall on the right and -1 for one on the left.</td></tr>
+    <tr><td><code>respawn</code></td><td><code>{ fell }</code></td><td>The player went back to its start position. <code>fell</code> is true if it fell below <code>respawnBelow</code>, and false if you called <code>respawn()</code>.</td></tr>
+  </tbody>
+</table>
+<pre><code>const off = player.on("land", ({ fallSpeed }) =&gt; {
+  if (fallSpeed &gt; 15) shakeCamera();
+});
+
+off(); // stop listening</code></pre>
+<p class="mt-3 text-[0.9rem] text-muted">Listeners run synchronously, inside the physics step. Keep them short, and do heavy work (such as loading assets) elsewhere.</p>

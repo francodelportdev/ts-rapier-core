@@ -31,6 +31,8 @@ export type RemoveReason = "manual" | "killPlane";
 export interface GameEvents {
   /** An entity was removed from the game and its body freed. */
   entityRemoved: { entity: Entity; reason: RemoveReason };
+  /** A frame was drawn. Use it for per-frame work such as updating a HUD; it stops with the game. */
+  frame: Record<string, never>;
 }
 
 /**
@@ -56,6 +58,9 @@ export class Game {
   private rafId: number | null = null;
   private lastTime: number | null = null;
   private accumulator = 0;
+  private destroyed = false;
+  /** Removes the canvas listeners on `destroy()`. */
+  private readonly listeners = new AbortController();
 
   private constructor(canvas: HTMLCanvasElement, options: GameOptions) {
     this.canvas = canvas;
@@ -68,10 +73,15 @@ export class Game {
     this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
-    canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }));
-    canvas.addEventListener("keydown", (e) => {
-      if (SCROLL_KEYS.has(e.code)) e.preventDefault();
-    });
+    const { signal } = this.listeners;
+    canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }), { signal });
+    canvas.addEventListener(
+      "keydown",
+      (e) => {
+        if (SCROLL_KEYS.has(e.code)) e.preventDefault();
+      },
+      { signal },
+    );
   }
 
   public static async create(canvas: HTMLCanvasElement, options: GameOptions = {}): Promise<Game> {
@@ -123,7 +133,7 @@ export class Game {
 
   /** Starts the loop. Focuses the canvas if nothing else on the page has focus. */
   public start(): void {
-    if (this.rafId !== null) return;
+    if (this.rafId !== null || this.destroyed) return;
     if (document.activeElement === null || document.activeElement === document.body) {
       this.canvas.focus({ preventScroll: true });
     }
@@ -136,6 +146,21 @@ export class Game {
   public stop(): void {
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.rafId = null;
+  }
+
+  /**
+   * Stops the game for good: ends the loop, removes its canvas listeners and frees the physics
+   * world with everything in it. Don't use the game or its entities afterwards. Calling it
+   * twice has no effect.
+   */
+  public destroy(): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+    this.stop();
+    this.listeners.abort();
+    this.entities = [];
+    this.pendingRemovals.clear();
+    this.world.free();
   }
 
   /** Runs one physics step: update every entity, step the world, then apply removals. */
@@ -213,6 +238,7 @@ export class Game {
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
     for (const e of this.entities) e.draw(this.ctx, scale, centerX, centerY);
 
-    this.rafId = requestAnimationFrame(this.loop);
+    this.events.emit("frame", {});
+    if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
   };
 }
