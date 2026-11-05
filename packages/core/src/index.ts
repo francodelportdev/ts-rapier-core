@@ -7,6 +7,8 @@ export { Ground } from "./entities/Ground";
 export { Platform } from "./entities/Platform";
 export type { PlatformOptions } from "./entities/Platform";
 export { Box } from "./entities/Box";
+export { Shape } from "./entities/Shape";
+export type { ShapeOptions, Geometry, BodyType, Point } from "./entities/Shape";
 export { Player } from "./entities/Player";
 export type { PlayerOptions, PlayerKeys, DashOptions, WallJumpOptions, PlayerState, PlayerEvents } from "./entities/Player";
 export { Input } from "./systems/Input";

@@ -123,7 +123,36 @@ abstract class Entity<TOptions extends object = object> {
 | `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A static floor. Its top surface is at y = -4.5. |
 | `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
 | `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5)`. Has `applyImpulse(x, y)`. |
+| `Shape` | any | any | Any geometry and body type. See [Shape](#shape). |
 | `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | A platformer character. See [Player](#player). |
+
+### `Shape`
+
+```ts
+new Shape(world, { x: 4, y: -4.5, geometry: { type: "ramp", width: 6, height: 2 } });                        // fixed ramp
+new Shape(world, { x: 0, y: 5, body: "dynamic", restitution: 0.6, geometry: { type: "circle", radius: 0.5 } }); // bouncy ball
+```
+
+| `geometry` | Description |
+|---|---|
+| `{ type: "box", width, height }` | A rectangle, centered on the position. |
+| `{ type: "circle", radius }` | A circle. |
+| `{ type: "capsule", radius, height }` | A vertical segment of `height` with half-circles at both ends. |
+| `{ type: "ramp", width, height, rises? }` | A right triangle whose bottom edge is centered on the position. `rises` is `"right"` (the default) or `"left"`. |
+| `{ type: "polygon", points }` | A convex polygon. Rapier uses the convex hull of the points. It needs 3 or more points that aren't all on one line. |
+| `{ type: "polyline", points }` | Connected segments for terrain. It can be concave, but it has no inside, so it can't be dynamic (it throws). |
+
+| Option | Default | Description |
+|---|---|---|
+| `x`, `y` | required | Position, in meters. Points are relative to it. |
+| `angle` | `0` | Radians, counterclockwise. |
+| `body` | `"fixed"` | `"fixed"`, `"dynamic"` or `"kinematic"`. |
+| `density` | `1` | Mass per square meter. |
+| `friction` | `0.5` | 0 is ice and 1 is rubber. |
+| `restitution` | `0` | Bounciness. When two surfaces touch, the bouncier one wins (`CoefficientCombineRule.Max`). |
+| `color` | by body type | Gray for fixed, orange for dynamic and blue for kinematic. |
+
+Methods: `applyImpulse(x, y)`, `applyTorqueImpulse(torque)` and `getAngle()`. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
 
 ### `Player`
 
@@ -150,6 +179,7 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 | `maxJumps` | `1` | Jumps available before landing. `2` gives a double jump. |
 | `dash` | `false` | `true`, or `{ speed = 20, duration = 0.15, cooldown = 0.4 }`. A horizontal burst with gravity paused. It's available on the ground and once per jump in the air. |
 | `wallJump` | `false` | `true`, or `{ slideSpeed = 3, pushSpeed = 10, jumpHeight = jumpHeight, controlLock = 0.15, coyoteTime = 0.1 }`. In the air, pushing into a wall slides down it at up to `slideSpeed`, and jumping pushes away from it. The arrow keys are ignored for `controlLock` seconds after a wall jump. Walls are fixed or kinematic bodies, not dynamic ones. A wall jump counts as the ground jump, so a double jump is still available. |
+| `maxSlope` | `50` | Steepest walkable slope, in degrees. The player walks up and stands on slopes up to this angle without sliding. Steeper surfaces count as walls: the player can't stand on them or jump up them, and can wall slide on them. |
 | `respawnBelow` | `-15` | Falling below this Y sends the player back to its start position. |
 | `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump` and `dash`. You can override one action without the others. |
 
@@ -261,6 +291,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 |---|---|
 | `player.test.ts` | Movement and keys, walls stopping the player, box pushing, jump height, variable jump, double jump, ceilings, coyote time, jump buffer, dash and cooldown, respawn |
 | `wall-jump.test.ts` | Wall slide (speed cap, needs pushing, ends on landing, boxes aren't walls), wall jump, control lock, wall coyote time, keeping the double jump, climbing a shaft |
+| `shapes.test.ts` | Each geometry type, ramps, invalid polygons, body types, bounce, rolling and friction, impulses, the player on slopes (climbing, `maxSlope`, standing still, walking down, steep surfaces) |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

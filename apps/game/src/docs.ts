@@ -8,8 +8,9 @@ import wallJump from "./demos/wall-jump.ts?raw";
 import events from "./demos/events.ts?raw";
 import remove from "./demos/remove.ts?raw";
 import camera from "./demos/camera.ts?raw";
+import shapes from "./demos/shapes.ts?raw";
 
-const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash, "wall-jump": wallJump, events, remove, camera };
+const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash, "wall-jump": wallJump, events, remove, camera, shapes };
 
 // --- Source viewers ---------------------------------------------------------
 for (const el of document.querySelectorAll<HTMLElement>("[data-source]")) {
