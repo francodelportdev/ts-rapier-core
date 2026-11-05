@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import type { CollisionFilter } from "../systems/layers";
 import { registerOneWay, toWorld, unregisterOneWay } from "../systems/oneWay";
 
 import type { Point } from "../systems/oneWay";
@@ -57,6 +58,8 @@ export interface ShapeOptions {
    * Only for fixed bodies (it throws otherwise). Default: false.
    */
   oneWay?: boolean;
+  /** What it is and what it collides with. Default: everything. */
+  collision?: CollisionFilter;
 }
 
 const DEFAULT_COLORS: Record<BodyType, string> = {

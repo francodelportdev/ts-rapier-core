@@ -88,6 +88,16 @@ player.on("respawn", () => game.camera.snapToTarget());
 
 The camera updates once per physics step, after `world.step()`. If its target is destroyed, it stops following and stays where it is.
 
+### Collision layers
+
+```ts
+const layers = defineLayers(["world", "player", "enemy"]); // up to 16
+new Platform(world, { x: 0, y: -5, width: 20, collision: layers.filter("world", ["player", "enemy"]) });
+new Player(world, { collision: layers.filter("player", ["world", "enemy"]) });
+```
+
+A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform` and `Shape` take a `collision` option, and `Box` takes it as its fourth argument. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. `Trigger` doesn't use layers.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -336,6 +346,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `shapes.test.ts` | Each geometry type, ramps, invalid polygons, body types, bounce, rolling and friction, impulses, the player on slopes (climbing, `maxSlope`, standing still, walking down, steep surfaces) |
 | `one-way.test.ts` | Jumping up through, side pass-through, standing on the edge, drop-through and its timer, rotated one-way shapes, not being walls, cleanup on destroy, dynamic bodies colliding |
 | `scenes.test.ts` | Scene changes, deferral, fades, restart, `Trigger`, `LevelScene` (coins, goal, hazards, falling, per-level options) and validation |
+| `layers.test.ts` | `defineLayers`, both masks having to agree, runtime changes, and the player respecting its filter |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

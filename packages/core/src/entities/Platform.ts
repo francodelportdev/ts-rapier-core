@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import type { CollisionFilter } from "../systems/layers";
 import { registerOneWay, unregisterOneWay } from "../systems/oneWay";
 
 export interface PlatformOptions {
@@ -19,6 +20,8 @@ export interface PlatformOptions {
    * Default: false.
    */
   oneWay?: boolean;
+  /** What it is and what it collides with. Default: everything. */
+  collision?: CollisionFilter;
 }
 
 /** A static, axis-aligned rectangle to stand on. */

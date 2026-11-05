@@ -12,6 +12,15 @@ export interface DemoUI {
 export interface Demo {
   game: Game;
   player?: Player;
+  /** On/off switches for the "Tune it live" panel. */
+  toggles?: Toggle[];
+}
+
+/** One switch of the "Tune it live" panel. */
+export interface Toggle {
+  label: string;
+  value: boolean;
+  set(value: boolean): void;
 }
 
 /** One slider of the "Tune it live" panel. */
