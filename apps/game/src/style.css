@@ -27,7 +27,7 @@ body { font: 16px/1.6 system-ui, sans-serif; }
 .sidebar li a.active { color: var(--accent); background: var(--surface); }
 
 main { max-width: 800px; width: 100%; padding: 32px 32px 64px; }
-section + section { margin-top: 80px; padding-top: 48px; border-top: 1px solid var(--surface); }
+
 
 @media (max-width: 760px) {
   .layout { grid-template-columns: minmax(0, 1fr); }
@@ -95,3 +95,13 @@ button:hover { border-color: var(--accent); }
 .event-log { margin: 0; padding: 0; list-style: none; font: 0.8rem ui-monospace, monospace; color: var(--muted); }
 .event-log li:first-child { color: var(--text); }
 @media (max-width: 760px) { .event-log { display: none; } }
+
+/* --- Live tuning ------------------------------------------------------------- */
+.tuning { margin-top: 16px; padding: 12px 16px 16px; background: var(--surface); border-radius: 8px; }
+.tuning-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.tuning-header h2 { margin: 0; font-size: 1rem; }
+.tuning button { background: var(--bg); }
+.sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 24px; }
+.slider span { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; }
+.slider output { color: var(--muted); white-space: nowrap; }
+.slider input { width: 100%; accent-color: var(--accent); }

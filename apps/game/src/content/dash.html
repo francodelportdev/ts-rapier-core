@@ -1,0 +1,26 @@
+<p class="eyebrow">Player</p>
+<h1>Dash</h1>
+<p class="lead">A short horizontal burst in the direction the player is facing. The gap here is too wide for a jump, so jump and then dash in the air.</p>
+<!-- demo -->
+<ul class="controls">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump</li>
+  <li><kbd>Shift</kbd> or <kbd>X</kbd> Dash</li>
+</ul>
+
+<h2>How it works</h2>
+<ul class="notes">
+  <li>The dash is off by default. Turn it on with <code>dash: true</code> to use the defaults, or pass an object to tune it.</li>
+  <li>During the dash, the horizontal speed is fixed at <code>dash.speed</code> and gravity is paused, so the player moves in a straight line. When it ends, the player continues at normal top speed.</li>
+  <li>You can dash any time on the ground, and once per jump in the air. <code>cooldown</code> sets the minimum time between dashes.</li>
+  <li>The player turns lighter green while dashing, and its eye shows which way it's facing.</li>
+</ul>
+
+<table>
+  <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>dash.speed</code></td><td><code>20</code></td><td>m/s during the dash.</td></tr>
+    <tr><td><code>dash.duration</code></td><td><code>0.15</code></td><td>Seconds. The distance covered is <code>speed × duration</code>, 3 m by default.</td></tr>
+    <tr><td><code>dash.cooldown</code></td><td><code>0.4</code></td><td>Seconds before the next dash.</td></tr>
+  </tbody>
+</table>

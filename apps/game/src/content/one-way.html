@@ -1,0 +1,26 @@
+<p class="eyebrow">Player</p>
+<h1>One-way platforms</h1>
+<p class="lead">You jump up through them from below and stand on them from above. Hold <kbd>↓</kbd> and jump to drop through. Climb the tower, then compare with the solid platform on the right, which blocks you from below.</p>
+<!-- demo -->
+<ul class="controls">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump up through a platform</li>
+  <li><kbd>↓</kbd> + <kbd>Space</kbd> Drop through</li>
+</ul>
+
+<h2>How it works</h2>
+<ol class="steps">
+  <li>
+    <h3>Mark a platform as one-way</h3>
+    <p>Add <code>oneWay: true</code> to a <code>Platform</code>, or to any fixed <a href="#shapes"><code>Shape</code></a>, including tilted ones. One-way platforms are drawn in a lighter gray, and a <code>Platform</code> also gets a bright top edge.</p>
+  </li>
+  <li>
+    <h3>Solid only from above</h3>
+    <p>For the player, a one-way platform is solid only when the player's bottom edge is above the platform's top surface, at the left side, the center or the right side of the player. Coming from below or the side, the player passes through. One-way platforms are never walls for <a href="#wall-jump">wall slides</a>.</p>
+  </li>
+  <li>
+    <h3>Drop through</h3>
+    <p>Pressing jump while holding <kbd>↓</kbd> (<code>keys.down</code>) on a one-way platform drops through it instead of jumping. For <code>dropThroughTime</code> seconds (0.25 by default), every one-way platform is ignored, so the player doesn't land back on the same one. Dropping uses up the ground jump, just like walking off a ledge. The <code>dropThrough</code> event fires.</p>
+  </li>
+</ol>
+<p class="hint">Only the player passes through. Other bodies, such as boxes or dynamic shapes, always collide with one-way platforms. <code>player.isOnOneWayPlatform()</code> tells you whether ↓ + jump would drop through.</p>

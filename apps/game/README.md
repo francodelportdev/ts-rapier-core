@@ -4,7 +4,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 
 | Section | File | What it shows |
 |---|---|---|
-| Overview | [`src/main.ts`](src/main.ts) | Push the boxes off the platform (←/→ to move, Space to jump, E to kick a box). |
+| Overview | [`src/demos/overview.ts`](src/demos/overview.ts) | Push the boxes off the platform (←/→ to move, Space to jump, E to kick a box). |
 | Player: move & jump | [`src/demos/player.ts`](src/demos/player.ts) | Acceleration, jump, variable height, coyote time, jump buffer. All options written out. |
 | Player: double jump | [`src/demos/double-jump.ts`](src/demos/double-jump.ts) | `maxJumps: 2` |
 | Player: dash | [`src/demos/dash.ts`](src/demos/dash.ts) | `dash: { speed, duration, cooldown }` |
@@ -15,7 +15,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Engine: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |
 | Engine: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
 
-Click a demo to give it keyboard focus. Only the focused demo receives keys.
+The demo takes keyboard focus when its page opens. If it loses focus, click it.
 
 ```bash
 # from the repository root
@@ -25,75 +25,17 @@ bun run dev
 
 ## How it's built
 
-Each demo is one standalone file plus a `<canvas>` in [`index.html`](index.html). The rest of the page (the sidebar highlight, the source viewers and the copy buttons) comes from [`src/docs.ts`](src/docs.ts), which isn't needed to run any demo. The walkthrough below covers the Overview demo.
+The site is a React app. [`src/sections.ts`](src/sections.ts) lists every page: its demo, its text and its sliders.
 
-### 1. A canvas to draw on
+| Path | What it is |
+|---|---|
+| `src/demos/*.ts` | One function per demo. It receives a canvas, and returns its `game` and `player`. No React in here. |
+| `src/content/*.html` | The text of each page. `<!-- demo -->` marks where the demo goes. |
+| `src/App.tsx` | Sidebar, hash routing (`#player`), the demo's lifecycle, the sliders and the source viewer. |
 
-```html
-<canvas id="game" width="800" height="450"></canvas>
-<script type="module" src="/src/main.ts"></script>
-```
+Only the open page runs a game: leaving a page calls `game.destroy()`. The "Tune it live" sliders call `player.configure()`, so changes apply immediately, and **Reset** restarts the demo with its defaults.
 
-The engine draws with the world origin at the center of the canvas, at 30 px per meter. On an 800×450 canvas, you can see about ±13 m horizontally and ±7.5 m vertically.
-
-### 2. Create the game
-
-```ts
-import { Box, Game, Ground, Player } from "@francodelportdev/rapier-engine";
-
-const canvas = document.querySelector<HTMLCanvasElement>("#game");
-if (canvas === null) throw new Error('Missing <canvas id="game">');
-
-const game = await Game.create(canvas);
-const world = game.getWorld();
-```
-
-`Game.create` is `async` because Rapier is WebAssembly, and it has to load (`RAPIER.init()`) before a physics world can exist. Top-level `await` works because Vite outputs modern ES modules.
-
-### 3. Add the entities
-
-```ts
-game.addEntity(new Ground(world));          // static platform, 20 m wide, top at y = -4.5
-game.addEntity(new Player(world));          // kinematic, standing on the ground
-
-const box = new Box(world, 0, 5);           // dynamic, falls from y = 5
-game.addEntity(box);
-game.addEntity(new Box(world, 1, 8));       // a second box, higher and to the right
-```
-
-Each entity creates its own Rapier body and collider in its constructor, so creating the entity is enough to add it to the physics world. `addEntity` registers it in the game loop, so that it gets updated and drawn every frame.
-
-Why the boxes fall but the player doesn't:
-
-| Entity | Rapier body type | Effect |
-|---|---|---|
-| `Ground` | `fixed` | Never moves. |
-| `Box` | `dynamic` | Affected by gravity, collisions and impulses. |
-| `Player` | `kinematicPositionBased` | Moves only where the code tells it to. It pushes dynamic bodies, and nothing pushes it. |
-
-### 4. Add your own controls
-
-```ts
-canvas.addEventListener("keydown", (e) => {
-  if (e.code === "KeyE") box.applyImpulse(0, 5);
-});
-```
-
-`applyImpulse(x, y)` instantly changes the box's velocity. The impulse is in N·s and the box's mass is 1 kg, so this adds 5 m/s upwards.
-
-The listener is on the canvas, not on `window`, so it only fires while this demo has focus. Moving and jumping are already built into `Player`. See the Player sections of the page.
-
-### 5. Start the loop
-
-```ts
-game.start();
-```
-
-Physics runs at a fixed 60 steps per second. Each step calls `update()` on every entity and then `world.step()`. Each frame then calls `draw()`.
-
-## Full source
-
-[`src/main.ts`](src/main.ts) is the complete demo, with comments that explain each step. Copy it as it is.
+To add a page, write its demo and its content file, then add an entry to `SECTIONS`.
 
 ## Using it outside this repo
 
@@ -103,5 +45,5 @@ cd my-game
 bun add @francodelportdev/rapier-engine
 ```
 
-Copy the `<canvas>` into `index.html` and [`src/main.ts`](src/main.ts) into your `src/main.ts`. You don't need any Vite configuration.
+Add a `<canvas>` to `index.html` and paste the body of a demo function, such as [`src/demos/overview.ts`](src/demos/overview.ts), into your `src/main.ts`. You don't need any Vite configuration.
 

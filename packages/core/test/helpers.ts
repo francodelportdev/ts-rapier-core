@@ -23,10 +23,12 @@ export const keys = {
 /** Worlds created by this test, freed after it so WebAssembly memory doesn't keep growing. */
 const worlds: RAPIER.World[] = [];
 const games: Game[] = [];
+/** Worlds a test already freed through `game.destroy()`. */
+export const freed = new WeakSet<RAPIER.World>();
 
 afterEach(() => {
   for (const game of games.splice(0)) game.stop();
-  for (const world of worlds.splice(0)) world.free();
+  for (const world of worlds.splice(0)) if (!freed.has(world)) world.free();
 });
 
 export function createWorld(): RAPIER.World {
@@ -73,11 +75,14 @@ export function createCanvas(): HTMLCanvasElement {
     width: 800,
     height: 450,
     tabIndex: -1,
-    addEventListener(): void {},
+    listeners: [] as { type: string; signal?: AbortSignal; handler: (e: unknown) => void }[],
+    addEventListener(type: string, handler: (e: unknown) => void, options?: { signal?: AbortSignal }): void {
+      canvas.listeners.push({ type, handler, signal: options?.signal });
+    },
     focus(): void {
       fakeDocument.activeElement = canvas;
     },
-    getContext: () => ({}),
+    getContext: () => ({ clearRect(): void {} }),
   };
   return canvas as unknown as HTMLCanvasElement;
 }

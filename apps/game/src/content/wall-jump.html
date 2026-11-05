@@ -1,0 +1,41 @@
+<p class="eyebrow">Player</p>
+<h1>Wall jump</h1>
+<p class="lead">In the air, push into a wall to slide down it slowly, then jump off to the other side. Climb the shaft, and at the top, wall jump off the left wall and double jump over the right one to reach the gold platform.</p>
+<!-- demo -->
+<ul class="controls">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move, and push into a wall to slide</li>
+  <li><kbd>Space</kbd> Jump, or wall jump while sliding. Press again in the air to double jump</li>
+</ul>
+
+<h2>How it works</h2>
+<ol class="steps">
+  <li>
+    <h3>Wall slide</h3>
+    <p>Each step, the player checks for a wall right beside it, using a thin probe 0.05 m wide. If it's in the air, falling and pushing towards the wall, it slides, and its fall speed is capped at <code>slideSpeed</code>. Walls are fixed or kinematic bodies, so boxes don't count.</p>
+  </li>
+  <li>
+    <h3>Wall jump</h3>
+    <p>Jumping while sliding sends the player up (<code>jumpHeight</code>) and away from the wall (<code>pushSpeed</code>). For <code>controlLock</code> seconds, the arrow keys are ignored. Without that, holding towards the wall would steer straight back into it, and you could climb a single wall.</p>
+  </li>
+  <li>
+    <h3>Wall coyote time</h3>
+    <p>For <code>coyoteTime</code> seconds after letting go of a wall, a jump is still a wall jump. This is the same idea as the <a href="#player">ledge coyote time</a>.</p>
+  </li>
+  <li>
+    <h3>Works with the rest</h3>
+    <p>A wall jump counts as the ground jump, so with <code>maxJumps: 2</code> you can still <a href="#double-jump">double jump</a> afterwards. A <a href="#dash">dash</a> ends a slide. The state is <code>"wallSlide"</code> while sliding. The events are <code>wallSlideStart</code> and <code>wallSlideEnd</code>, with the wall's <code>side</code>, and <code>jump</code> with <code>wallJump: true</code> (see <a href="#events">State &amp; events</a>).</p>
+  </li>
+</ol>
+
+<h2>Options</h2>
+<p>Off by default. Turn it on with <code>wallJump: true</code> for the defaults, or pass an object to tune it.</p>
+<table>
+  <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>wallJump.slideSpeed</code></td><td><code>3</code></td><td>Fastest fall while sliding, m/s.</td></tr>
+    <tr><td><code>wallJump.pushSpeed</code></td><td><code>10</code></td><td>Horizontal speed away from the wall, m/s.</td></tr>
+    <tr><td><code>wallJump.jumpHeight</code></td><td>the player's <code>jumpHeight</code></td><td>Meters.</td></tr>
+    <tr><td><code>wallJump.controlLock</code></td><td><code>0.15</code></td><td>Seconds without arrow keys after a wall jump.</td></tr>
+    <tr><td><code>wallJump.coyoteTime</code></td><td><code>0.1</code></td><td>Seconds after leaving a wall that a wall jump still works.</td></tr>
+  </tbody>
+</table>

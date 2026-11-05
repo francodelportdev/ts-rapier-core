@@ -1,0 +1,56 @@
+<p class="eyebrow">Player</p>
+<h1>Move &amp; jump</h1>
+<p class="lead"><code>Player</code> is a platformer character. Rapier's kinematic character controller handles collisions: it detects the ground, steps over small bumps and pushes dynamic bodies out of the way.</p>
+<!-- demo -->
+<ul class="controls">
+  <li><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> Move</li>
+  <li><kbd>Space</kbd>, <kbd>↑</kbd> or <kbd>W</kbd> Jump (hold to jump higher)</li>
+</ul>
+
+<h2>How it works</h2>
+<ol class="steps">
+  <li>
+    <h3>Acceleration, not instant speed</h3>
+    <p>Each step, the horizontal speed moves towards <code>speed</code> at <code>acceleration</code> m/s², and back to 0 at <code>deceleration</code> m/s². In the air, both are multiplied by <code>airControl</code>, so you can steer a jump without stopping dead.</p>
+  </li>
+  <li>
+    <h3>Gravity and jump</h3>
+    <p>A kinematic body ignores the world's gravity, so the player applies its own (<code>gravity</code>, 40 m/s² by default, for snappy jumps). The jump speed is <code>√(2 · gravity · jumpHeight)</code>, which is exactly the speed needed to reach <code>jumpHeight</code>.</p>
+  </li>
+  <li>
+    <h3>Variable height</h3>
+    <p>If you release the key while still rising, the upward speed is multiplied by <code>jumpCut</code> once. A tap gives a short hop, and holding the key gives the full jump.</p>
+  </li>
+  <li>
+    <h3>Coyote time and jump buffer</h3>
+    <p>Two small timers make jumping feel fair. <strong>Coyote time</strong> lets you jump for <code>coyoteTime</code> seconds after walking off a ledge. The <strong>jump buffer</strong> remembers a press for <code>jumpBuffer</code> seconds, so pressing just before landing still jumps.</p>
+  </li>
+</ol>
+
+<h2>Options</h2>
+<p>All of them are optional. Pass them as <code>new Player(world, { ... })</code>.</p>
+<table>
+  <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>x</code>, <code>y</code></td><td><code>0</code>, <code>-3.5</code></td><td>Start position, in meters. The default stands on <code>Ground</code>.</td></tr>
+    <tr><td><code>halfWidth</code>, <code>halfHeight</code></td><td><code>0.5</code>, <code>1</code></td><td>Size of the player's box (half extents).</td></tr>
+    <tr><td><code>speed</code></td><td><code>8</code></td><td>Top horizontal speed, m/s.</td></tr>
+    <tr><td><code>acceleration</code></td><td><code>80</code></td><td>m/s² on the ground while a direction key is pressed.</td></tr>
+    <tr><td><code>deceleration</code></td><td><code>60</code></td><td>m/s² on the ground with no key pressed.</td></tr>
+    <tr><td><code>airControl</code></td><td><code>0.6</code></td><td>Multiplier for acceleration and deceleration in the air.</td></tr>
+    <tr><td><code>gravity</code></td><td><code>40</code></td><td>m/s², pulling down.</td></tr>
+    <tr><td><code>maxFallSpeed</code></td><td><code>25</code></td><td>m/s.</td></tr>
+    <tr><td><code>jumpHeight</code></td><td><code>3</code></td><td>Meters, for a full jump.</td></tr>
+    <tr><td><code>jumpCut</code></td><td><code>0.5</code></td><td>Fraction of upward speed kept when the key is released early.</td></tr>
+    <tr><td><code>coyoteTime</code></td><td><code>0.1</code></td><td>Seconds.</td></tr>
+    <tr><td><code>jumpBuffer</code></td><td><code>0.1</code></td><td>Seconds.</td></tr>
+    <tr><td><code>maxJumps</code></td><td><code>1</code></td><td>See <a href="#double-jump">Double jump</a>.</td></tr>
+    <tr><td><code>dash</code></td><td><code>false</code></td><td>See <a href="#dash">Dash</a>.</td></tr>
+    <tr><td><code>wallJump</code></td><td><code>false</code></td><td>See <a href="#wall-jump">Wall jump</a>.</td></tr>
+    <tr><td><code>dropThroughTime</code></td><td><code>0.25</code></td><td>Seconds that one-way platforms are ignored after ↓ + jump. See <a href="#one-way">One-way platforms</a>.</td></tr>
+    <tr><td><code>maxSlope</code></td><td><code>50</code></td><td>Steepest walkable slope, in degrees. See <a href="#shapes">Geometry</a>.</td></tr>
+    <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position. See <a href="#events">State &amp; events</a> for the <code>respawn</code> event.</td></tr>
+    <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
+  </tbody>
+</table>
+<p class="hint">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>, <code>down: ["ArrowDown", "KeyS"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>
