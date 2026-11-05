@@ -148,6 +148,31 @@ describe("Sensor", () => {
     expect(game.getEntities()).toEqual([sensor]);
   });
 
+  test("setRadius() grows and shrinks what it detects", () => {
+    const world = createWorld();
+    world.gravity.y = 0;
+    const sensor = new Sensor(world, { x: 0, y: 0, geometry: { type: "circle", radius: 1 } });
+    const far = new Box(world, 4, 0);
+    simulate(world, [far, sensor], 2);
+    expect(sensor.isOccupied()).toBe(false);
+    sensor.setRadius(5);
+    simulate(world, [far, sensor], 2);
+    expect(sensor.getInside()).toEqual([far]);
+    expect(sensor.getRadius()).toBe(5);
+    sensor.setRadius(1);
+    simulate(world, [far, sensor], 2);
+    expect(sensor.isOccupied()).toBe(false);
+  });
+
+  test("setRadius() rejects other shapes and invalid values", () => {
+    const world = createWorld();
+    const square = new Sensor(world, { x: 0, y: 0, geometry: box(2, 2) });
+    const circle = new Sensor(world, { x: 0, y: 0, geometry: { type: "circle", radius: 1 } });
+    expect(() => square.setRadius(2)).toThrow(/circular/);
+    expect(() => circle.setRadius(0)).toThrow(/greater/);
+    expect(square.getRadius()).toBeNull();
+  });
+
   test("a polyline can't be a sensor", () => {
     const world = createWorld();
     expect(() => new Sensor(world, { x: 0, y: 0, geometry: { type: "polyline", points: [{ x: 0, y: 0 }, { x: 1, y: 0 }] } })).toThrow(/polyline/);

@@ -121,7 +121,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
   }, [section]);
 
   const focusCanvas = () => canvasRef.current?.focus({ preventScroll: true });
-  const controls = demo?.player ? section.controls({ ...demo, player: demo.player }) : [];
+  const controls = [...(demo?.player ? section.controls({ ...demo, player: demo.player }) : []), ...(demo?.sliders ?? [])];
   const toggles = demo?.toggles ?? [];
 
   return (

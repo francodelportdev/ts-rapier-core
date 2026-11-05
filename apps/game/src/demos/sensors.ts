@@ -66,5 +66,9 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   });
 
   game.start();
-  return { game, player };
+  return {
+    game,
+    player,
+    sliders: [{ label: "radar radius", min: 1, max: 10, step: 0.5, value: 3, unit: "m", set: (radius) => radar.setRadius(radius) }],
+  };
 }

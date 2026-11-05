@@ -36,6 +36,8 @@ export class Sensor extends Shape {
   private readonly events = new EventEmitter<SensorEvents>();
   private readonly inside = new Set<Entity>();
   private enabled = true;
+  /** Replaces `collider.shape` after `setRadius()`, because Rapier caches that one. */
+  private resizedShape: RAPIER.Shape | null = null;
 
   constructor(world: RAPIER.World, options: SensorOptions) {
     if (options.geometry.type === "polyline") throw new Error("A polyline has no inside, so it can't be a sensor");
@@ -61,6 +63,21 @@ export class Sensor extends Shape {
     this.enabled = enabled;
   }
 
+  /** Changes the radius of a circular sensor, in meters, while the game runs. It throws on other shapes. */
+  public setRadius(radius: number): void {
+    if (this.options.geometry.type !== "circle") throw new Error("setRadius() only works on circular sensors");
+    if (!(radius > 0)) throw new Error("The radius must be greater than 0");
+    this.options.geometry = { type: "circle", radius };
+    this.body.collider(0).setRadius(radius);
+    this.resizedShape = new RAPIER.Ball(radius);
+  }
+
+  /** The radius of a circular sensor, or null for other shapes. */
+  public getRadius(): number | null {
+    const { geometry } = this.options;
+    return geometry.type === "circle" ? geometry.radius : null;
+  }
+
   protected override describeCollider(desc: RAPIER.ColliderDesc): RAPIER.ColliderDesc {
     return desc.setSensor(true);
   }
@@ -78,7 +95,7 @@ export class Sensor extends Shape {
       this.world.intersectionsWithShape(
         this.body.translation(),
         this.body.rotation(),
-        this.body.collider(0).shape,
+        this.resizedShape ?? this.body.collider(0).shape,
         (collider) => {
           // Runs inside Rapier: only plain JavaScript here, and events wait until it's over.
           const entity = entityOf(this.world, collider);

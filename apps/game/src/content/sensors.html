@@ -24,7 +24,7 @@ plate.on("exit", ({ entity }) =&gt; console.log("out", entity));</code></pre>
     <tr><td><code>color</code></td><td>invisible</td><td>Draws the area, translucent.</td></tr>
   </tbody>
 </table>
-<p class="mt-3 text-[0.9rem] text-muted">Methods: <code>getInside()</code>, <code>isOccupied()</code> and <code>setEnabled(on)</code>. A sensor only works once it's added to the game, because it checks during <code>update()</code>. Destroying an entity inside it fires <code>exit</code>. Listeners can safely remove entities. Sensors never detect each other.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Methods: <code>getInside()</code>, <code>isOccupied()</code>, <code>setEnabled(on)</code>, and on circular sensors <code>setRadius(r)</code> and <code>getRadius()</code>. A sensor only works once it's added to the game, because it checks during <code>update()</code>. Destroying an entity inside it fires <code>exit</code>. Listeners can safely remove entities. Sensors never detect each other.</p>
 
 <h2>Trigger</h2>
 <p><code>Trigger</code> is the simple case: a rectangle or circle that watches one entity. Level goals, coins and hazards are triggers.</p>

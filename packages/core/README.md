@@ -107,7 +107,7 @@ plate.on("exit", ({ entity }) => {});
 game.addEntity(plate); // it checks during update()
 ```
 
-A `Sensor` takes any `Shape` geometry except a polyline. It detects moving entities through real collider overlap. Options: `x`, `y`, `angle`, `geometry`, `collision`, `follow`, `offset`, `filter`, `detectFixed`, `once` and `color`. Methods: `getInside()`, `isOccupied()` and `setEnabled(on)`. Destroying an entity inside fires `exit`, and sensors never detect each other.
+A `Sensor` takes any `Shape` geometry except a polyline. It detects moving entities through real collider overlap. Options: `x`, `y`, `angle`, `geometry`, `collision`, `follow`, `offset`, `filter`, `detectFixed`, `once` and `color`. Methods: `getInside()`, `isOccupied()`, `setEnabled(on)`, and on circular sensors `setRadius(r)` and `getRadius()`. Destroying an entity inside fires `exit`, and sensors never detect each other.
 
 `new Trigger(world, { x, y, width, height, target, color?, round?, once? })` is a `Sensor` that watches one entity. `entityOf(world, collider)` returns a collider's entity.
 
