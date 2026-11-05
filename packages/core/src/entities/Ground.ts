@@ -1,21 +1,10 @@
-import RAPIER from "@dimforge/rapier2d-compat";
-import { Entity } from "./Entity";
+import type RAPIER from "@dimforge/rapier2d-compat";
+import type { CollisionFilter } from "../systems/layers";
+import { Platform } from "./Platform";
 
-const HALF_W = 10.0;
-const HALF_H = 0.5;
-
-export class Ground extends Entity {
-  protected override createBody(): RAPIER.RigidBody {
-    return this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0.0, -5.0));
-  }
-
-  protected override createCollider(): RAPIER.Collider {
-    return this.world.createCollider(RAPIER.ColliderDesc.cuboid(HALF_W, HALF_H), this.body);
-  }
-
-  public override update(): void {}
-
-  public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
-    this.drawCuboid(ctx, HALF_W, HALF_H, "#4a5568", scale, centerX, centerY);
+/** A shortcut: a 20 m wide `Platform` at y = -5, whose top surface is at y = -4.5. */
+export class Ground extends Platform {
+  constructor(world: RAPIER.World, collision?: CollisionFilter) {
+    super(world, { x: 0, y: -5, width: 20, height: 1, collision });
   }
 }

@@ -27,6 +27,10 @@ export interface GameOptions {
   grid?: boolean | { size?: number; color?: string };
   /** World gravity, in m/s² (positive = down). `clear()` goes back to it. Default: 9.81. */
   gravity?: number;
+  /** Pixels per meter at zoom 1. Default: 30. */
+  scale?: number;
+  /** Canvas color behind everything. Default: transparent. */
+  background?: string;
 }
 
 /** Why an entity was removed. */
@@ -60,8 +64,9 @@ export class Game {
   private scopedListeners: (() => void)[] | null = null;
   private readonly events = new EventEmitter<GameEvents>();
   private readonly grid: { size: number; color: string } | null;
+  private readonly background: string | null;
   /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
-  public readonly camera = new Camera(SCALE);
+  public readonly camera: Camera;
   /** Switches between scenes, such as a menu and levels. Optional: a game can use none. */
   public readonly scenes = new SceneManager(this);
   /** Draws colliders, bodies and sensors over the game. Off until you set `enabled`. */
@@ -90,6 +95,8 @@ export class Game {
     this.defaultGravity = options.gravity ?? 9.81;
     this.world = new RAPIER.World({ x: 0.0, y: -this.defaultGravity });
     this.debug = new DebugRenderer(this.world);
+    this.camera = new Camera(options.scale ?? SCALE);
+    this.background = options.background ?? null;
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
     this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
@@ -171,11 +178,6 @@ export class Game {
     return this.entities;
   }
 
-  /** Number of rigid bodies in the physics world. Useful to check that removed entities were freed. */
-  public getBodyCount(): number {
-    return this.world.bodies.len();
-  }
-
   /** Subscribes to an event. Inside a scene's `onEnter()`, it lasts until the scene ends. */
   public on<K extends keyof GameEvents>(event: K, listener: Listener<GameEvents[K]>): () => void {
     const off = this.events.on(event, listener);
@@ -193,6 +195,13 @@ export class Game {
       this.scopedListeners = null;
     }
     return collected;
+  }
+
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof GameEvents>(event: K, listener: Listener<GameEvents[K]>): () => void {
+    const off = this.events.once(event, listener);
+    this.scopedListeners?.push(off);
+    return off;
   }
 
   public off<K extends keyof GameEvents>(event: K, listener: Listener<GameEvents[K]>): void {
@@ -360,6 +369,10 @@ export class Game {
   private render(): void {
     const { width, height } = this.canvas;
     this.ctx.clearRect(0, 0, width, height);
+    if (this.background !== null) {
+      this.ctx.fillStyle = this.background;
+      this.ctx.fillRect(0, 0, width, height);
+    }
     const { scale, centerX, centerY } = this.camera.getViewport();
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
     for (const e of this.entities) {

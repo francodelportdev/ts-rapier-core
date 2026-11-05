@@ -92,6 +92,15 @@ export class Animator {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** Advances by `dt` seconds. `Game` calls it every physics step for entities with a sprite. */
   public update(dt: number): void {
     if (this.paused || this.finished) return;

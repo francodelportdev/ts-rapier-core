@@ -49,7 +49,6 @@ game.start();
 | `addEntity(e: Entity): void` | Registers an entity for the game loop. Throws if it was destroyed or is already in a game. |
 | `removeEntity(e: Entity): void` | Takes the entity out of the loop and frees its physics body. It's safe to call anywhere, because the removal waits until the current step ends. Calling it twice has no effect. |
 | `getEntities(): readonly Entity[]` | The entities currently in the game. |
-| `getBodyCount(): number` | How many rigid bodies the physics world has. Useful to check for leaks. |
 | `on("entityRemoved", ({ entity, reason }) => …)` | Runs after each removal. `reason` is `"manual"` or `"killPlane"`. Returns a function that unsubscribes. `off()` is also available. |
 | `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
@@ -68,6 +67,8 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 **Options:**
 - `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
 - `gravity` (default `9.81`): world gravity in m/s², positive down. `clear()` goes back to it. The player has its own `gravity` option.
+- `scale` (default `30`): pixels per meter at zoom 1.
+- `background` (default transparent): canvas color behind everything.
 - `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
@@ -233,9 +234,9 @@ abstract class Entity<TOptions extends object = object> {
 
 | Class | Body | Collider (half extents) | Behavior |
 |---|---|---|---|
-| `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A static floor. Its top surface is at y = -4.5. |
+| `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A shortcut for a `Platform`. Its top surface is at y = -4.5. |
 | `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color?, oneWay? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
-| `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5)`. Has `applyImpulse(x, y)`. |
+| `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5, collision?)`. A shortcut for a dynamic `Shape`. |
 | `Shape` | any | any | Any geometry and body type. See [Shape](#shape). |
 | `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | A platformer character. See [Player](#player). |
 
@@ -362,8 +363,7 @@ When the window loses focus, it clears the key state so that no key stays "stuck
 ## Writing your own entity
 
 ```ts
-import RAPIER from "@dimforge/rapier2d-compat";
-import { Entity } from "@francodelportdev/rapier-engine";
+import { Entity, RAPIER } from "@francodelportdev/rapier-engine";
 
 const RADIUS = 0.4;
 
@@ -389,7 +389,9 @@ export class Ball extends Entity {
 }
 ```
 
-Import `RAPIER` from `@dimforge/rapier2d-compat` (the default export). It gives you both values (`RigidBodyDesc`, `ColliderDesc`) and types (`RAPIER.World`). Your entity must use the same Rapier instance as the engine, so let your package manager deduplicate it.
+Import `RAPIER` from the engine. It gives you both values (`RigidBodyDesc`, `ColliderDesc`) and types (`RAPIER.World`), and it's the same instance the engine uses. Importing Rapier separately can load a second copy, which fails.
+
+All objects with events (`Game`, `Player`, `Sensor`, `Health`, `Animator` and `game.scenes`) share `on`, `once` and `off`.
 
 ## Development
 

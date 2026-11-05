@@ -52,7 +52,7 @@ describe("SceneManager", () => {
     expect(log).toEqual(["enter a", "exit a", "enter b"]);
     expect(old.isDestroyed).toBe(true);
     expect(game.getEntities()).toHaveLength(1);
-    expect(game.getBodyCount()).toBe(1);
+    expect(game.debug.getStats().bodies).toBe(1);
     expect(game.camera.zoom).toBe(1);
     expect(game.getWorld().gravity.y).toBeCloseTo(-9.81, 5);
   });

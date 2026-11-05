@@ -237,3 +237,45 @@ describe("Moving platforms", () => {
     expect(player.isGrounded()).toBe(false);
   });
 });
+
+describe("Game options and API", () => {
+  test("scale sets pixels per meter", async () => {
+    const game = await createGame({ scale: 50 });
+    expect(game.camera.scale).toBe(50);
+  });
+
+  test("background paints the canvas each frame", async () => {
+    const game = await createGame({ background: "#123456" });
+    game.start();
+    game["loop"](0);
+    expect(game["ctx"].fillStyle).toBe("#123456");
+  });
+
+  test("RAPIER is exported, the same instance the engine uses", async () => {
+    const { RAPIER } = await import("../src");
+    expect(createWorld()).toBeInstanceOf(RAPIER.World);
+  });
+
+  test("once runs a single time on a sensor", () => {
+    const world = createWorld();
+    world.gravity.y = 0;
+    const sensor = new Sensor(world, { x: 0, y: 0, geometry: { type: "box", width: 2, height: 2 } });
+    let enters = 0;
+    sensor.once("enter", () => enters++);
+    const a = new Box(world, 0, 0);
+    simulate(world, [a, sensor], 2);
+    a.destroy();
+    simulate(world, [sensor], 2);
+    new Box(world, 0, 0);
+    simulate(world, [sensor], 2);
+    expect(enters).toBe(1);
+  });
+
+  test("Ground and Box are a Platform and a Shape", () => {
+    const world = createWorld();
+    expect(new Ground(world).top).toBe(-4.5);
+    const box = new Box(world, 1, 2);
+    expect(box).toBeInstanceOf(Shape);
+    expect(box.getPosition()).toEqual({ x: 1, y: 2 });
+  });
+});

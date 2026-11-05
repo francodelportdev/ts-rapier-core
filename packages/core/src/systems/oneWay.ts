@@ -1,9 +1,6 @@
 import type RAPIER from "@dimforge/rapier2d-compat";
+import type { Point } from "../core/Point";
 
-export interface Point {
-  x: number;
-  y: number;
-}
 
 /**
  * One-way surfaces, per world: collider handle → outline in world space.

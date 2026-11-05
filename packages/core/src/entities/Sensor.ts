@@ -49,6 +49,15 @@ export class Sensor extends Shape {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof SensorEvents>(event: K, listener: Listener<SensorEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof SensorEvents>(event: K, listener: Listener<SensorEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** The entities inside right now. */
   public getInside(): readonly Entity[] {
     return [...this.inside];

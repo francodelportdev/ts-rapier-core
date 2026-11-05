@@ -75,6 +75,15 @@ export class SceneManager {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** @internal Advances fades. Returns true while the physics must stay frozen. */
   public tick(dt: number): boolean {
     if (this.pending !== null && this.pending.fade > 0) {
