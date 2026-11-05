@@ -44,7 +44,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   let frames = 0;
   game.on("frame", () => {
     if (++frames % 60 === 0) spawnBox();
-    ui.status(`${game.getBodyCount()} bodies · ${removed} removed (last: ${lastReason})`);
+    ui.status(`${game.debug.getStats().bodies} bodies · ${removed} removed (last: ${lastReason})`);
   });
 
   game.start();

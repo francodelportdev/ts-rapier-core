@@ -75,6 +75,15 @@ export class SceneManager {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** @internal Advances fades. Returns true while the physics must stay frozen. */
   public tick(dt: number): boolean {
     if (this.pending !== null && this.pending.fade > 0) {
@@ -114,6 +123,7 @@ export class SceneManager {
     this.pending = null;
     const from = this.currentName;
     this.scene?.onExit();
+    this.scene?.runCleanups();
     this.game.clear();
 
     const scene = this.factories.get(next.name)!();
@@ -121,7 +131,8 @@ export class SceneManager {
     this.scene = scene;
     this.currentName = next.name;
     this.lastData = next.data;
-    scene.onEnter(next.data as never);
+    const listeners = this.game.collectListeners(() => scene.onEnter(next.data as never));
+    for (const off of listeners) scene["listen"](off);
     this.game.camera.snapToTarget();
     this.events.emit("change", { from, to: next.name });
   }

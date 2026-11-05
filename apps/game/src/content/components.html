@@ -40,7 +40,7 @@ crate.add(new Spin());</code></pre>
   <thead><tr><th>Component</th><th>Description</th></tr></thead>
   <tbody>
     <tr><td><code>new Health(max, { invulnerableTime })</code></td><td><code>damage(n)</code>, <code>heal(n)</code>, <code>reset()</code>, <code>value</code>, <code>isDead</code> and <code>isInvulnerable</code>. Events <code>change</code> and <code>death</code>. It doesn't remove the entity: you decide what death means.</td></tr>
-    <tr><td><code>new Patrol(points, speed)</code></td><td>Moves a kinematic entity along the points and back. <code>speed</code> can be changed at any time. It doesn't carry the player standing on it.</td></tr>
+    <tr><td><code>new Patrol(points, speed)</code></td><td>Moves a kinematic entity along the points and back. <code>speed</code> can be changed at any time. A player standing on it rides along, so it also works as a moving platform.</td></tr>
     <tr><td><code>new Lifetime(seconds)</code></td><td>Removes the entity after that time. For projectiles and effects.</td></tr>
   </tbody>
 </table>

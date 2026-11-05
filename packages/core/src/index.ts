@@ -1,3 +1,4 @@
+export { default as RAPIER } from "@dimforge/rapier2d-compat";
 export { Game } from "./core/Game";
 export type { GameOptions, GameEvents, RemoveReason } from "./core/Game";
 export { DebugRenderer, DEBUG_COLORS } from "./core/DebugRenderer";
@@ -10,7 +11,8 @@ export { Platform } from "./entities/Platform";
 export type { PlatformOptions } from "./entities/Platform";
 export { Box } from "./entities/Box";
 export { Shape } from "./entities/Shape";
-export type { ShapeOptions, Geometry, BodyType, Point } from "./entities/Shape";
+export type { ShapeOptions, Geometry, BodyType } from "./entities/Shape";
+export type { Point } from "./core/Point";
 export { Player } from "./entities/Player";
 export type { PlayerOptions, PlayerKeys, DashOptions, WallJumpOptions, PlayerTuning, PlayerState, PlayerEvents } from "./entities/Player";
 export { Sensor } from "./entities/Sensor";

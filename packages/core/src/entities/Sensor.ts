@@ -49,6 +49,15 @@ export class Sensor extends Shape {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof SensorEvents>(event: K, listener: Listener<SensorEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof SensorEvents>(event: K, listener: Listener<SensorEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** The entities inside right now. */
   public getInside(): readonly Entity[] {
     return [...this.inside];
@@ -76,6 +85,13 @@ export class Sensor extends Shape {
   public getRadius(): number | null {
     const { geometry } = this.options;
     return geometry.type === "circle" ? geometry.radius : null;
+  }
+
+  protected override onDestroy(): void {
+    const left = [...this.inside];
+    this.inside.clear();
+    for (const entity of left) this.events.emit("exit", { entity });
+    super.onDestroy();
   }
 
   protected override describeCollider(desc: RAPIER.ColliderDesc): RAPIER.ColliderDesc {

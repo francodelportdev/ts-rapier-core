@@ -51,6 +51,7 @@ export function simulate(
     onStep?.(i);
     for (const e of entities) e.update();
     world.step();
+    Input.getInstance().endStep();
   }
 }
 
@@ -65,6 +66,7 @@ export function simulateUntil(
     if (done()) return i;
     for (const e of entities) e.update();
     world.step();
+    Input.getInstance().endStep();
   }
   throw new Error(`Condition not reached after ${maxSteps} steps`);
 }
@@ -82,7 +84,7 @@ export function createCanvas(): HTMLCanvasElement {
     focus(): void {
       fakeDocument.activeElement = canvas;
     },
-    getContext: () => ({ clearRect(): void {}, save(): void {}, restore(): void {} }),
+    getContext: () => ({ fillStyle: "", clearRect(): void {}, fillRect(): void {}, save(): void {}, restore(): void {} }),
   };
   return canvas as unknown as HTMLCanvasElement;
 }

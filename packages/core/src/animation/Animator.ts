@@ -56,6 +56,11 @@ export class Animator {
     if (from !== name) this.events.emit("change", { from, to: name });
   }
 
+  /** Every frame number used by any clip. */
+  public get allFrames(): number[] {
+    return [...new Set(Object.values(this.clips).flatMap((clip) => clip.frames))];
+  }
+
   public pause(): void {
     this.paused = true;
   }
@@ -85,6 +90,15 @@ export class Animator {
 
   public on<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): () => void {
     return this.events.on(event, listener);
+  }
+
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): void {
+    this.events.off(event, listener);
   }
 
   /** Advances by `dt` seconds. `Game` calls it every physics step for entities with a sprite. */

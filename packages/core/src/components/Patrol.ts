@@ -1,7 +1,7 @@
-import type { Point } from "../systems/oneWay";
+import type { Point } from "../core/Point";
 import { Component } from "./Component";
 
-/** Moves a kinematic entity back and forth along a list of points, at `speed` m/s. */
+/** Moves a kinematic entity back and forth along a list of points, at `speed` m/s. A player standing on it rides along. */
 export class Patrol extends Component {
   public speed: number;
   private readonly points: readonly Point[];

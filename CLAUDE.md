@@ -32,7 +32,7 @@ test("hello world", () => {
 
 ## Frontend
 
-Use HTML imports with `Bun.serve()`. Don't use `vite`. HTML imports fully support React, CSS, Tailwind.
+`apps/game` is a Vite + React + Tailwind app, by choice: keep using Vite there. For anything new outside it, use HTML imports with `Bun.serve()`, which fully support React, CSS and Tailwind.
 
 Server:
 

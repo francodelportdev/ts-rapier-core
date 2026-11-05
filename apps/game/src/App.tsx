@@ -97,6 +97,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
   const [demo, setDemo] = useState<Demo | null>(null);
   const [status, setStatus] = useState<{ text: string; state?: string } | null>(null);
   const [log, setLog] = useState<{ id: number; text: string }[]>([]);
+  const [failed, setFailed] = useState<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -117,6 +118,8 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       if (debugView) started.game.debug.enabled = true;
       setDemo(started);
       canvas.focus({ preventScroll: true });
+    }).catch((error: unknown) => {
+      if (!cancelled) setFailed(String(error));
     });
     return () => {
       cancelled = true;
@@ -143,6 +146,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
           ref={canvasRef} width={800} height={450}
           className="peer block h-auto w-full rounded-lg bg-surface outline-2 outline-offset-2 outline-transparent focus:outline-accent"
         />
+        {failed && <p role="alert" className="absolute inset-x-3 top-3 rounded-lg bg-page p-3 text-[0.9rem] text-fg">This demo couldn't start: {failed}</p>}
         <span className="pointer-events-none absolute top-3 right-3 rounded-full bg-page/85 px-2.5 py-1 text-[0.8rem] text-muted peer-focus:hidden">Click to play</span>
         {(status || log.length > 0) && (
           <div className="pointer-events-none absolute top-3 left-3 flex flex-col items-start gap-2">
