@@ -1,107 +1,24 @@
-:root {
-  --bg: #1a202c;
-  --surface: #2d3748;
-  --border: #4a5568;
-  --text: #e2e8f0;
-  --muted: #a0aec0;
-  --accent: #48bb78;
-  --sidebar-width: 220px;
-  color-scheme: dark;
+@import "tailwindcss";
+
+@theme {
+  --color-page: #1a202c;
+  --color-surface: #2d3748;
+  --color-line: #4a5568;
+  --color-fg: #e2e8f0;
+  --color-muted: #a0aec0;
+  --color-accent: #48bb78;
 }
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; scroll-padding-top: 24px; }
-html, body { margin: 0; background: var(--bg); color: var(--text); }
-body { font: 16px/1.6 system-ui, sans-serif; }
 
-/* --- Layout -------------------------------------------------------------- */
-.layout { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
-.sidebar {
-  position: sticky; top: 0; height: 100vh; overflow-y: auto;
-  padding: 32px 16px; border-right: 1px solid var(--surface);
-}
-.sidebar .brand { display: block; margin-bottom: 24px; color: var(--text); font-weight: 700; text-decoration: none; }
-.sidebar ul { list-style: none; margin: 0; padding: 0; }
-.sidebar .group { margin: 20px 0 4px; padding: 0 10px; color: var(--muted); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.sidebar li a { display: block; padding: 6px 10px; border-radius: 6px; color: var(--muted); text-decoration: none; font-size: 0.95rem; }
-.sidebar li a:hover { color: var(--text); background: var(--surface); }
-.sidebar li a.active { color: var(--accent); background: var(--surface); }
-
-main { max-width: 800px; width: 100%; padding: 32px 32px 64px; }
-
-
-@media (max-width: 760px) {
-  .layout { grid-template-columns: minmax(0, 1fr); }
-  .sidebar {
-    position: sticky; z-index: 1; height: auto; padding: 12px 16px;
-    display: flex; align-items: center; gap: 16px; overflow-x: auto;
-    border-right: 0; border-bottom: 1px solid var(--surface); background: var(--bg);
+@layer base {
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+    scroll-padding-top: 72px;
+    @variant md {
+      scroll-padding-top: 24px;
+    }
   }
-  .sidebar .brand { margin: 0; white-space: nowrap; }
-  .sidebar ul { display: flex; gap: 4px; }
-  .sidebar .group { display: none; }
-  .sidebar li a { white-space: nowrap; }
-  main { padding: 24px 16px 48px; }
-  html { scroll-padding-top: 72px; }
+  body {
+    @apply bg-page leading-[1.6] text-fg;
+  }
 }
-
-/* --- Typography ---------------------------------------------------------- */
-h1 { margin: 0 0 4px; font-size: 1.75rem; line-height: 1.25; }
-h2 { font-size: 1.25rem; margin: 40px 0 12px; }
-h3 { font-size: 1rem; margin: 0 0 4px; }
-a { color: var(--accent); }
-.eyebrow { margin: 0 0 4px; color: var(--accent); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.lead, .hint { color: var(--muted); margin: 0; }
-.hint { margin-top: 12px; font-size: 0.9rem; }
-code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--accent); }
-kbd { display: inline-block; min-width: 1.8em; padding: 0 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); color: var(--text); text-align: center; font: 0.85rem ui-monospace, monospace; }
-
-/* --- Demo canvas ---------------------------------------------------------- */
-.demo { position: relative; margin-top: 24px; }
-.demo canvas { display: block; width: 100%; height: auto; background: var(--surface); border-radius: 8px; outline: 2px solid transparent; outline-offset: 2px; }
-.demo canvas:focus { outline-color: var(--accent); }
-.focus-hint {
-  position: absolute; top: 12px; right: 12px; padding: 4px 10px; border-radius: 999px;
-  background: rgb(26 32 44 / 0.85); color: var(--muted); font-size: 0.8rem; pointer-events: none;
-}
-.demo canvas:focus + .focus-hint { display: none; }
-
-.controls { display: flex; gap: 8px 24px; flex-wrap: wrap; list-style: none; padding: 0; color: var(--muted); }
-
-/* --- Content blocks ------------------------------------------------------- */
-.steps { padding-left: 1.25rem; }
-.steps li { margin-bottom: 20px; }
-.steps p { margin: 0; color: var(--muted); }
-.notes { padding-left: 1.25rem; color: var(--muted); }
-.notes li { margin-bottom: 8px; }
-pre { margin: 0; padding: 16px; overflow-x: auto; background: var(--surface); border-radius: 8px; }
-pre code { color: var(--text); font-size: 0.85rem; line-height: 1.5; }
-table { width: 100%; margin-top: 12px; border-collapse: collapse; font-size: 0.9rem; display: block; overflow-x: auto; }
-th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { color: var(--muted); font-weight: 600; }
-td:first-child, td:nth-child(2) { white-space: nowrap; }
-.code-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 40px 0 12px; }
-.code-header h2 { margin: 0; }
-button { flex-shrink: 0; padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit; font-size: 0.9rem; cursor: pointer; }
-button:hover { border-color: var(--accent); }
-
-/* --- State & events HUD ----------------------------------------------------- */
-.hud { position: absolute; top: 12px; left: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; pointer-events: none; }
-.state-label { padding: 2px 10px; border-radius: 999px; background: var(--border); color: var(--text); font: 600 0.85rem ui-monospace, monospace; }
-.state-label[data-state="run"] { background: #3182ce; }
-.state-label[data-state="jump"] { background: #38a169; }
-.state-label[data-state="fall"] { background: #d69e2e; color: var(--bg); }
-.state-label[data-state="dash"] { background: #d53f8c; }
-.state-label[data-state="wallSlide"] { background: #805ad5; }
-.event-log { margin: 0; padding: 0; list-style: none; font: 0.8rem ui-monospace, monospace; color: var(--muted); }
-.event-log li:first-child { color: var(--text); }
-@media (max-width: 760px) { .event-log { display: none; } }
-
-/* --- Live tuning ------------------------------------------------------------- */
-.tuning { margin-top: 16px; padding: 12px 16px 16px; background: var(--surface); border-radius: 8px; }
-.tuning-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.tuning-header h2 { margin: 0; font-size: 1rem; }
-.tuning button { background: var(--bg); }
-.sliders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 24px; }
-.slider span { display: flex; justify-content: space-between; gap: 8px; font-size: 0.85rem; }
-.slider output { color: var(--muted); white-space: nowrap; }
-.slider input { width: 100%; accent-color: var(--accent); }

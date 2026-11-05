@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { PROSE } from "./prose";
 import { SECTIONS, type Section } from "./sections";
 import type { Control, Demo } from "./ui";
 
@@ -17,17 +18,28 @@ function useSection(): Section {
   return section;
 }
 
+const BUTTON = "shrink-0 cursor-pointer rounded-md border border-line px-3.5 py-1.5 text-[0.9rem] text-fg hover:border-accent";
+
 function Sidebar({ current }: { current: Section }) {
   const groups = [...new Set(SECTIONS.map((s) => s.group))];
   return (
-    <nav className="sidebar" aria-label="Sections">
-      <a className="brand" href="#overview">rapier-engine</a>
-      <ul>
+    <nav
+      className="sticky top-0 z-10 flex items-center gap-4 overflow-x-auto border-b border-surface bg-page px-4 py-3 md:block md:h-screen md:overflow-y-auto md:border-r md:border-b-0 md:px-4 md:py-8"
+      aria-label="Sections"
+    >
+      <a className="block font-bold whitespace-nowrap text-fg md:mb-6" href="#overview">rapier-engine</a>
+      <ul className="flex gap-1 md:block">
         {groups.flatMap((group) => [
-          group && <li className="group" key={group}>{group}</li>,
+          group && <li className="mt-5 mb-1 hidden px-2.5 text-xs font-semibold tracking-wider text-muted uppercase md:block" key={group}>{group}</li>,
           ...SECTIONS.filter((s) => s.group === group).map((s) => (
             <li key={s.id}>
-              <a href={`#${s.id}`} className={s === current ? "active" : undefined} aria-current={s === current ? "page" : undefined}>{s.title}</a>
+              <a
+                href={`#${s.id}`}
+                aria-current={s === current ? "page" : undefined}
+                className="block rounded-md px-2.5 py-1.5 text-[0.95rem] whitespace-nowrap text-muted hover:bg-surface hover:text-fg aria-[current=page]:bg-surface aria-[current=page]:text-accent"
+              >
+                {s.title}
+              </a>
             </li>
           )),
         ])}
@@ -39,9 +51,13 @@ function Sidebar({ current }: { current: Section }) {
 function Slider({ control, onRelease }: { control: Control; onRelease: () => void }) {
   const [value, setValue] = useState(control.value);
   return (
-    <label className="slider">
-      <span><code>{control.label}</code><output>{value} {control.unit}</output></span>
+    <label className="block">
+      <span className="flex justify-between gap-2 text-[0.85rem]">
+        <code className="font-mono text-[0.9em] text-accent">{control.label}</code>
+        <output className="whitespace-nowrap text-muted">{value} {control.unit}</output>
+      </span>
       <input
+        className="w-full accent-accent"
         type="range" min={control.min} max={control.max} step={control.step} value={value}
         onChange={(e) => {
           const next = Number(e.target.value);
@@ -91,23 +107,35 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
 
   return (
     <>
-      <div className="demo">
-        <canvas ref={canvasRef} width={800} height={450} />
-        <span className="focus-hint">Click to play</span>
+      <div className="relative mt-6">
+        <canvas
+          ref={canvasRef} width={800} height={450}
+          className="peer block h-auto w-full rounded-lg bg-surface outline-2 outline-offset-2 outline-transparent focus:outline-accent"
+        />
+        <span className="pointer-events-none absolute top-3 right-3 rounded-full bg-page/85 px-2.5 py-1 text-[0.8rem] text-muted peer-focus:hidden">Click to play</span>
         {(status || log.length > 0) && (
-          <div className="hud">
-            {status && <span className="state-label" data-state={status.state}>{status.text}</span>}
-            <ol className="event-log">{log.map((l) => <li key={l.id}>{l.text}</li>)}</ol>
+          <div className="pointer-events-none absolute top-3 left-3 flex flex-col items-start gap-2">
+            {status && (
+              <span
+                data-state={status.state}
+                className="rounded-full bg-line px-2.5 py-0.5 font-mono text-[0.85rem] font-semibold text-fg data-[state=dash]:bg-[#d53f8c] data-[state=fall]:bg-[#d69e2e] data-[state=fall]:text-page data-[state=jump]:bg-[#38a169] data-[state=run]:bg-[#3182ce] data-[state=wallSlide]:bg-[#805ad5]"
+              >
+                {status.text}
+              </span>
+            )}
+            <ol className="hidden font-mono text-[0.8rem] text-muted md:block">
+              {log.map((l) => <li key={l.id} className="first:text-fg">{l.text}</li>)}
+            </ol>
           </div>
         )}
       </div>
       {controls.length > 0 && (
-        <div className="tuning">
-          <div className="tuning-header">
-            <h2>Tune it live</h2>
-            <button type="button" onClick={onReset}>Reset</button>
+        <div className="mt-4 rounded-lg bg-surface px-4 pt-3 pb-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-bold">Tune it live</h2>
+            <button type="button" className={`${BUTTON} bg-page`} onClick={onReset}>Reset</button>
           </div>
-          <div className="sliders">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-x-6 gap-y-2">
             {controls.map((c) => <Slider key={c.label} control={c} onRelease={focusCanvas} />)}
           </div>
         </div>
@@ -133,11 +161,11 @@ function Source({ section }: { section: Section }) {
   };
   return (
     <>
-      <div className="code-header">
-        <h2>Source: <code>{section.file}</code></h2>
-        <button type="button" onClick={() => void copy()}>{copied ?? "Copy"}</button>
+      <div className="mt-10 mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-xl font-bold">Source: <code className="font-mono text-[0.9em] text-accent">{section.file}</code></h2>
+        <button type="button" className={`${BUTTON} bg-surface`} onClick={() => void copy()}>{copied ?? "Copy"}</button>
       </div>
-      <pre><code>{code}</code></pre>
+      <pre className="overflow-x-auto rounded-lg bg-surface p-4"><code className="font-mono text-[0.85rem] leading-normal">{code}</code></pre>
     </>
   );
 }
@@ -152,11 +180,11 @@ function Page({ section }: { section: Section }) {
     });
   }, [section]);
   return (
-    <main>
+    <main className="w-full max-w-[800px] px-4 pt-6 pb-12 md:px-8 md:pt-8 md:pb-16">
       {/* Our own static files from src/content, so rendering them as HTML is safe. */}
-      <div dangerouslySetInnerHTML={{ __html: html[0] }} />
+      <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[0] }} />
       <DemoView key={`${section.id}-${resets}`} section={section} onReset={() => setResets((n) => n + 1)} />
-      <div dangerouslySetInnerHTML={{ __html: html[1] }} />
+      <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[1] }} />
       <Source section={section} />
     </main>
   );
@@ -165,7 +193,7 @@ function Page({ section }: { section: Section }) {
 export function App() {
   const section = useSection();
   return (
-    <div className="layout">
+    <div className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[220px_minmax(0,1fr)]">
       <Sidebar current={section} />
       <Page key={section.id} section={section} />
     </div>

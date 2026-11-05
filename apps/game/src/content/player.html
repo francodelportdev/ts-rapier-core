@@ -1,14 +1,14 @@
-<p class="eyebrow">Player</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
 <h1>Move &amp; jump</h1>
-<p class="lead"><code>Player</code> is a platformer character. Rapier's kinematic character controller handles collisions: it detects the ground, steps over small bumps and pushes dynamic bodies out of the way.</p>
+<p class="text-muted"><code>Player</code> is a platformer character. Rapier's kinematic character controller handles collisions: it detects the ground, steps over small bumps and pushes dynamic bodies out of the way.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> or <kbd>A</kbd> <kbd>D</kbd> Move</li>
   <li><kbd>Space</kbd>, <kbd>↑</kbd> or <kbd>W</kbd> Jump (hold to jump higher)</li>
 </ul>
 
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Acceleration, not instant speed</h3>
     <p>Each step, the horizontal speed moves towards <code>speed</code> at <code>acceleration</code> m/s², and back to 0 at <code>deceleration</code> m/s². In the air, both are multiplied by <code>airControl</code>, so you can steer a jump without stopping dead.</p>
@@ -53,4 +53,4 @@
     <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
   </tbody>
 </table>
-<p class="hint">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>, <code>down: ["ArrowDown", "KeyS"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>, <code>down: ["ArrowDown", "KeyS"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>

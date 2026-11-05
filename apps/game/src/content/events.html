@@ -1,8 +1,8 @@
-<p class="eyebrow">Player</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
 <h1>State &amp; events</h1>
-<p class="lead">The player reports what it's doing, so your game can play sounds, switch animations or update the UI without changing the engine.</p>
+<p class="text-muted">The player reports what it's doing, so your game can play sounds, switch animations or update the UI without changing the engine.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
   <li><kbd>Space</kbd> Jump (twice for a double jump)</li>
   <li><kbd>Shift</kbd> Dash</li>
@@ -22,7 +22,7 @@
     <tr><td><code>"wallSlide"</code></td><td>Sliding down a wall (see <a href="#wall-jump">Wall jump</a>).</td></tr>
   </tbody>
 </table>
-<p class="hint">Very short losses of ground contact, under 0.05 s (for example when spawning or going over a bump), don't count as <code>"fall"</code>. Without this, the state would flicker. Other getters: <code>isGrounded()</code>, <code>isDashing()</code>, <code>getVelocity()</code> (m/s) and <code>getFacing()</code> (1 or -1).</p>
+<p class="mt-3 text-[0.9rem] text-muted">Very short losses of ground contact, under 0.05 s (for example when spawning or going over a bump), don't count as <code>"fall"</code>. Without this, the state would flicker. Other getters: <code>isGrounded()</code>, <code>isDashing()</code>, <code>getVelocity()</code> (m/s) and <code>getFacing()</code> (1 or -1).</p>
 
 <h2>Events</h2>
 <p><code>player.on(event, listener)</code> subscribes and returns a function that unsubscribes. There's also <code>once()</code> and <code>off()</code>. The payloads are fully typed.</p>
@@ -43,4 +43,4 @@
 });
 
 off(); // stop listening</code></pre>
-<p class="hint">Listeners run synchronously, inside the physics step. Keep them short, and do heavy work (such as loading assets) elsewhere.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Listeners run synchronously, inside the physics step. Keep them short, and do heavy work (such as loading assets) elsewhere.</p>

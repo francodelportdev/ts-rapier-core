@@ -1,14 +1,14 @@
-<p class="eyebrow">Player</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
 <h1>Wall jump</h1>
-<p class="lead">In the air, push into a wall to slide down it slowly, then jump off to the other side. Climb the shaft, and at the top, wall jump off the left wall and double jump over the right one to reach the gold platform.</p>
+<p class="text-muted">In the air, push into a wall to slide down it slowly, then jump off to the other side. Climb the shaft, and at the top, wall jump off the left wall and double jump over the right one to reach the gold platform.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move, and push into a wall to slide</li>
   <li><kbd>Space</kbd> Jump, or wall jump while sliding. Press again in the air to double jump</li>
 </ul>
 
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Wall slide</h3>
     <p>Each step, the player checks for a wall right beside it, using a thin probe 0.05 m wide. If it's in the air, falling and pushing towards the wall, it slides, and its fall speed is capped at <code>slideSpeed</code>. Walls are fixed or kinematic bodies, so boxes don't count.</p>

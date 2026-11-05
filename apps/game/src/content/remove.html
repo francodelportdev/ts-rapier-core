@@ -1,14 +1,14 @@
-<p class="eyebrow">Engine</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
 <h1>Removing entities</h1>
-<p class="lead">Rapier keeps simulating every body in the world, even when it's off screen. Removing entities you no longer need frees their CPU time and memory.</p>
+<p class="text-muted">Rapier keeps simulating every body in the world, even when it's off screen. Removing entities you no longer need frees their CPU time and memory.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Push boxes off the edge</li>
   <li><kbd>C</kbd> Clear every box</li>
 </ul>
 
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Kill plane (automatic)</h3>
     <p>Any entity whose center falls below <code>killPlaneY</code> is removed automatically. The default is -30 m, well below the screen. Set it with <code>Game.create(canvas, { killPlaneY: -30 })</code>, or pass <code>null</code> to turn it off. The player respawns at -15 m (<code>respawnBelow</code>), so it never reaches the kill plane.</p>
@@ -22,4 +22,4 @@
     <p><code>game.on("entityRemoved", ({ entity, reason }) =&gt; ...)</code> runs after each removal. <code>reason</code> is <code>"killPlane"</code> or <code>"manual"</code>. Use it to update a score, spawn a replacement, or clean up your own references to the entity.</p>
   </li>
 </ol>
-<p class="hint">A destroyed entity can't be added again, so create a new one instead. <code>game.getBodyCount()</code> returns how many bodies the physics world has, which is handy to confirm that nothing leaks.</p>
+<p class="mt-3 text-[0.9rem] text-muted">A destroyed entity can't be added again, so create a new one instead. <code>game.getBodyCount()</code> returns how many bodies the physics world has, which is handy to confirm that nothing leaks.</p>

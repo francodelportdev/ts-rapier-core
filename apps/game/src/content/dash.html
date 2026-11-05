@@ -1,15 +1,15 @@
-<p class="eyebrow">Player</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
 <h1>Dash</h1>
-<p class="lead">A short horizontal burst in the direction the player is facing. The gap here is too wide for a jump, so jump and then dash in the air.</p>
+<p class="text-muted">A short horizontal burst in the direction the player is facing. The gap here is too wide for a jump, so jump and then dash in the air.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
   <li><kbd>Space</kbd> Jump</li>
   <li><kbd>Shift</kbd> or <kbd>X</kbd> Dash</li>
 </ul>
 
 <h2>How it works</h2>
-<ul class="notes">
+<ul class="my-4 list-disc pl-5 text-muted [&>li]:mb-2">
   <li>The dash is off by default. Turn it on with <code>dash: true</code> to use the defaults, or pass an object to tune it.</li>
   <li>During the dash, the horizontal speed is fixed at <code>dash.speed</code> and gravity is paused, so the player moves in a straight line. When it ends, the player continues at normal top speed.</li>
   <li>You can dash any time on the ground, and once per jump in the air. <code>cooldown</code> sets the minimum time between dashes.</li>

@@ -1,8 +1,8 @@
-<p class="eyebrow">Engine</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
 <h1>Geometry</h1>
-<p class="lead"><code>Shape</code> is a physics body with any geometry: boxes, circles, capsules, ramps, convex polygons and polylines. Use fixed shapes to build levels, and dynamic ones for objects that fall, roll and bounce.</p>
+<p class="text-muted"><code>Shape</code> is a physics body with any geometry: boxes, circles, capsules, ramps, convex polygons and polylines. Use fixed shapes to build levels, and dynamic ones for objects that fall, roll and bounce.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move (walk up the ramp, try the steep slab)</li>
   <li><kbd>Space</kbd> Jump (×2)</li>
   <li><strong>Click</strong> to drop a shape</li>
@@ -36,7 +36,7 @@
     <tr><td><code>color</code></td><td>by body type</td><td>Gray for fixed, orange for dynamic and blue for kinematic.</td></tr>
   </tbody>
 </table>
-<p class="hint">Methods: <code>applyImpulse(x, y)</code>, <code>applyTorqueImpulse(torque)</code> to spin it, and <code>getAngle()</code>.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Methods: <code>applyImpulse(x, y)</code>, <code>applyTorqueImpulse(torque)</code> to spin it, and <code>getAngle()</code>.</p>
 
 <h2>The player on slopes</h2>
 <p>The player walks up and stands on slopes up to <code>maxSlope</code>, which defaults to 50°. It doesn't slide down them while standing still. Anything steeper counts as a wall: the player can't stand on it or jump up it, and with <a href="#wall-jump">wall jump</a> enabled, it can wall slide on it.</p>

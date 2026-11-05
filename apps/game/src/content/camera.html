@@ -1,8 +1,8 @@
-<p class="eyebrow">Engine</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
 <h1>Camera</h1>
-<p class="lead">Every game has a <code>game.camera</code>. It decides which part of the world appears on the canvas, so levels can be wider than the screen.</p>
+<p class="text-muted">Every game has a <code>game.camera</code>. It decides which part of the world appears on the canvas, so levels can be wider than the screen.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
   <li><kbd>Space</kbd> Jump (×2)</li>
   <li><kbd>Shift</kbd> Dash</li>
@@ -10,7 +10,7 @@
 </ul>
 
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Follow</h3>
     <p><code>camera.follow(player, options)</code> moves the view towards the player every physics step. With <strong>smoothing</strong>, it covers about 63% of the remaining distance in <code>smoothing</code> seconds, so it eases in without overshooting. Inside the <strong>dead zone</strong>, a box around the center of the screen, the player moves freely without dragging the view, which avoids constant small jitter.</p>
@@ -43,4 +43,4 @@
     <tr><td><code>getVisibleBounds()</code></td><td>The part of the world on screen, in meters.</td></tr>
   </tbody>
 </table>
-<p class="hint">If the camera stops following an entity because it was <a href="#remove">removed</a>, the camera stays where it is. <code>Game.create(canvas, { grid: true })</code> draws a 1 m grid in world space, which makes the camera's movement visible.</p>
+<p class="mt-3 text-[0.9rem] text-muted">If the camera stops following an entity because it was <a href="#remove">removed</a>, the camera stays where it is. <code>Game.create(canvas, { grid: true })</code> draws a 1 m grid in world space, which makes the camera's movement visible.</p>

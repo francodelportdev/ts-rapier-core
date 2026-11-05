@@ -1,14 +1,14 @@
 <h1>Push the boxes off the platform</h1>
-<p class="lead">A demo of <code>@francodelportdev/rapier-engine</code>, a 2D engine built on Rapier physics.</p>
+<p class="text-muted">A demo of <code>@francodelportdev/rapier-engine</code>, a 2D engine built on Rapier physics.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
   <li><kbd>Space</kbd> Jump</li>
   <li><kbd>E</kbd> Kick the first box upwards</li>
 </ul>
 
 <h2>How it's built</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Create the game</h3>
     <p><code>await Game.create(canvas)</code> loads Rapier, which is WebAssembly, and then creates the physics world. That's why it's <code>async</code> and you can't use <code>new Game()</code>.</p>
@@ -34,4 +34,4 @@
     <p><code>game.start()</code> runs physics at a fixed 60 steps per second, whatever your screen's refresh rate. Each step calls <code>update()</code> on every entity and then <code>world.step()</code>. Each frame then calls <code>draw()</code>.</p>
   </li>
 </ol>
-<p class="hint">Each demo is one function that receives a canvas. To use one in your own project, run <code>bun add @francodelportdev/rapier-engine</code> and paste the body of the function. <code>ui</code> and <code>Demo</code> only belong to this site: they show the labels over the canvas.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Each demo is one function that receives a canvas. To use one in your own project, run <code>bun add @francodelportdev/rapier-engine</code> and paste the body of the function. <code>ui</code> and <code>Demo</code> only belong to this site: they show the labels over the canvas.</p>

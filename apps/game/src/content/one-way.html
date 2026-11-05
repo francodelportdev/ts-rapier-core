@@ -1,15 +1,15 @@
-<p class="eyebrow">Player</p>
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
 <h1>One-way platforms</h1>
-<p class="lead">You jump up through them from below and stand on them from above. Hold <kbd>↓</kbd> and jump to drop through. Climb the tower, then compare with the solid platform on the right, which blocks you from below.</p>
+<p class="text-muted">You jump up through them from below and stand on them from above. Hold <kbd>↓</kbd> and jump to drop through. Climb the tower, then compare with the solid platform on the right, which blocks you from below.</p>
 <!-- demo -->
-<ul class="controls">
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
   <li><kbd>Space</kbd> Jump up through a platform</li>
   <li><kbd>↓</kbd> + <kbd>Space</kbd> Drop through</li>
 </ul>
 
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Mark a platform as one-way</h3>
     <p>Add <code>oneWay: true</code> to a <code>Platform</code>, or to any fixed <a href="#shapes"><code>Shape</code></a>, including tilted ones. One-way platforms are drawn in a lighter gray, and a <code>Platform</code> also gets a bright top edge.</p>
@@ -23,4 +23,4 @@
     <p>Pressing jump while holding <kbd>↓</kbd> (<code>keys.down</code>) on a one-way platform drops through it instead of jumping. For <code>dropThroughTime</code> seconds (0.25 by default), every one-way platform is ignored, so the player doesn't land back on the same one. Dropping uses up the ground jump, just like walking off a ledge. The <code>dropThrough</code> event fires.</p>
   </li>
 </ol>
-<p class="hint">Only the player passes through. Other bodies, such as boxes or dynamic shapes, always collide with one-way platforms. <code>player.isOnOneWayPlatform()</code> tells you whether ↓ + jump would drop through.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Only the player passes through. Other bodies, such as boxes or dynamic shapes, always collide with one-way platforms. <code>player.isOnOneWayPlatform()</code> tells you whether ↓ + jump would drop through.</p>
