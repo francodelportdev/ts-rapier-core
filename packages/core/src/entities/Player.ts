@@ -93,6 +93,11 @@ export interface PlayerOptions {
   /** Jumps available before touching the ground again. 2 = double jump. Default: 1. */
   maxJumps?: number;
 
+  /**
+   * Steepest slope the player can walk up and stand on without sliding, in degrees. Steeper
+   * surfaces count as walls (they stop it, and it can wall slide on them). Default: 50.
+   */
+  maxSlope?: number;
   /** Falling below this Y (meters) sends the player back to its start position. Default: -15. */
   respawnBelow?: number;
 
@@ -141,6 +146,7 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
     jumpBuffer: o.jumpBuffer ?? 0.1,
     maxJumps: o.maxJumps ?? 1,
     respawnBelow: o.respawnBelow ?? -15,
+    maxSlope: o.maxSlope ?? 50,
     dash: dash && {
       speed: dash.speed ?? 20,
       duration: dash.duration ?? 0.15,
@@ -200,8 +206,11 @@ export class Player extends Entity<ResolvedOptions> {
   private lastWallSide: 1 | -1 = 1;
   private wallCoyoteTimer = 0;
   private controlLockTimer = 0;
-  /** Reused shape for wall probes (half extents set per probe). */
+  /** Reused shapes for wall and ground probes. */
   private wallProbe: RAPIER.Cuboid | null = null;
+  private groundProbe: RAPIER.Cuboid | null = null;
+  /** Surfaces whose normal points up less than this (cos of maxSlope) are walls, not slopes. */
+  private minWallNormalY = 0;
   private state: PlayerState = "idle";
   /** Seconds since the player last touched the ground. */
   private airTime = 0;
@@ -214,6 +223,11 @@ export class Player extends Entity<ResolvedOptions> {
     this.controller.enableAutostep(0.3, 0.2, false);
     this.controller.setApplyImpulsesToDynamicBodies(true);
     this.controller.setCharacterMass(CHARACTER_MASS);
+    // Climb slopes up to maxSlope, and don't slide down them while standing still.
+    const maxSlope = (this.options.maxSlope * Math.PI) / 180;
+    this.controller.setMaxSlopeClimbAngle(maxSlope);
+    this.controller.setMinSlopeSlideAngle(maxSlope);
+    this.minWallNormalY = Math.cos(maxSlope);
   }
 
   /** True while standing on something. */
@@ -413,7 +427,9 @@ export class Player extends Entity<ResolvedOptions> {
     this.controller.computeColliderMovement(collider, desired);
     const moved = this.controller.computedMovement();
     const fallSpeed = Math.max(0, -this.vy);
-    this.grounded = this.controller.computedGrounded();
+    // The controller also reports "grounded" when a corner of the box rests on a steep surface,
+    // which would let the player stand on (and jump up) walls. Only walkable ground counts.
+    this.grounded = this.controller.computedGrounded() && this.onWalkableGround(moved);
     const prevAirTime = this.airTime;
     this.airTime = this.grounded ? 0 : this.airTime + dt;
 
@@ -445,35 +461,57 @@ export class Player extends Entity<ResolvedOptions> {
       const body = hit?.collider?.parent();
       if (!hit || !body || body.isDynamic()) continue;
       // normal1 points out of the obstacle: a wall on the right has a normal pointing left.
-      if (Math.abs(hit.normal1.x) > 0.7 && Math.sign(hit.normal1.x) === -Math.sign(this.vx)) return true;
+      // Slopes up to maxSlope point up enough to be walkable, so they don't count.
+      if (hit.normal1.y < this.minWallNormalY - 1e-3 && Math.sign(hit.normal1.x) === -Math.sign(this.vx)) return true;
     }
     return false;
   }
 
-  /** Side of a wall right next to the player (1 = right, -1 = left), or 0. */
+  /** True if the surface right below the player (after `moved`) is no steeper than maxSlope. */
+  private onWalkableGround(moved: RAPIER.Vector): boolean {
+    const { halfWidth, halfHeight } = this.options;
+    const t = this.body.translation();
+    this.groundProbe ??= new RAPIER.Cuboid(halfWidth, halfHeight);
+    const hit = this.world.castShape(
+      { x: t.x + moved.x, y: t.y + moved.y },
+      0,
+      { x: 0, y: -1 },
+      this.groundProbe,
+      0,
+      0.1, // the snap-to-ground distance is 0.2, but grounded contacts are within the 0.01 m offset
+      true,
+      RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
+      undefined,
+      undefined,
+      this.body,
+    );
+    // For shape casts, normal1 is the outward normal of the surface that was hit.
+    return hit !== null && hit.normal1.y >= this.minWallNormalY - 1e-3;
+  }
+
+  /** Side of a wall right next to the player (1 = right, -1 = left), or 0. Walkable slopes don't count. */
   private touchingWall(): 0 | 1 | -1 {
     const { halfWidth, halfHeight } = this.options;
     const t = this.body.translation();
-    // A thin box beside each side, a bit shorter than the player so floors and ceilings don't count.
-    this.wallProbe ??= new RAPIER.Cuboid(WALL_PROBE / 2, halfHeight * 0.8);
+    // The player's box, a bit shorter so floors and ceilings don't count, moved WALL_PROBE sideways.
+    this.wallProbe ??= new RAPIER.Cuboid(halfWidth, halfHeight * 0.9);
     const sides: readonly (1 | -1)[] = [this.facing, this.facing === 1 ? -1 : 1]; // facing side first
     for (const side of sides) {
-      const position = { x: t.x + side * (halfWidth + WALL_PROBE / 2), y: t.y };
-      let hit = false;
-      this.world.intersectionsWithShape(
-        position,
+      const hit = this.world.castShape(
+        t,
         0,
+        { x: side, y: 0 },
         this.wallProbe,
-        () => {
-          hit = true;
-          return false; // one hit is enough
-        },
+        0,
+        WALL_PROBE + 0.01, // the controller keeps a 0.01 m gap
+        true,
         RAPIER.QueryFilterFlags.EXCLUDE_DYNAMIC | RAPIER.QueryFilterFlags.EXCLUDE_SENSORS,
         undefined,
         undefined,
         this.body,
       );
-      if (hit) return side;
+      // For shape casts, normal1 is the outward normal of the surface that was hit.
+      if (hit !== null && hit.normal1.y < this.minWallNormalY - 1e-3) return side;
     }
     return 0;
   }

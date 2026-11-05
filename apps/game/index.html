@@ -21,6 +21,7 @@
           <li class="group">Engine</li>
           <li><a href="#remove">Removing entities</a></li>
           <li><a href="#camera">Camera</a></li>
+          <li><a href="#shapes">Geometry</a></li>
         </ul>
       </nav>
 
@@ -131,6 +132,7 @@
               <tr><td><code>maxJumps</code></td><td><code>1</code></td><td>See <a href="#double-jump">Double jump</a>.</td></tr>
               <tr><td><code>dash</code></td><td><code>false</code></td><td>See <a href="#dash">Dash</a>.</td></tr>
               <tr><td><code>wallJump</code></td><td><code>false</code></td><td>See <a href="#wall-jump">Wall jump</a>.</td></tr>
+              <tr><td><code>maxSlope</code></td><td><code>50</code></td><td>Steepest walkable slope, in degrees. See <a href="#shapes">Geometry</a>.</td></tr>
               <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position. See <a href="#events">State &amp; events</a> for the <code>respawn</code> event.</td></tr>
               <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
             </tbody>
@@ -440,6 +442,65 @@ off(); // stop listening</code></pre>
           </div>
           <pre><code data-source="camera"></code></pre>
         </section>
+
+        <!-- ============================== Geometry ============================== -->
+        <section id="shapes">
+          <p class="eyebrow">Engine</p>
+          <h1>Geometry</h1>
+          <p class="lead"><code>Shape</code> is a physics body with any geometry: boxes, circles, capsules, ramps, convex polygons and polylines. Use fixed shapes to build levels, and dynamic ones for objects that fall, roll and bounce.</p>
+
+          <div class="demo">
+            <canvas id="shapes-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+            <div class="hud">
+              <span class="state-label" id="shapes-current">click to drop</span>
+            </div>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move (walk up the ramp, try the steep slab)</li>
+            <li><kbd>Space</kbd> Jump (×2)</li>
+            <li><strong>Click</strong> to drop a shape</li>
+            <li><kbd>1</kbd>–<kbd>5</kbd> Choose circle, box, triangle, hexagon or capsule</li>
+          </ul>
+
+          <h2>Geometry</h2>
+          <p>Sizes are in meters. Points are relative to the shape's position.</p>
+          <table>
+            <thead><tr><th><code>geometry</code></th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>{ type: "box", width, height }</code></td><td>A rectangle, centered on the position.</td></tr>
+              <tr><td><code>{ type: "circle", radius }</code></td><td>A circle. A line from its center shows it rolling.</td></tr>
+              <tr><td><code>{ type: "capsule", radius, height }</code></td><td>A vertical segment of <code>height</code> with half-circles at both ends.</td></tr>
+              <tr><td><code>{ type: "ramp", width, height, rises? }</code></td><td>A right triangle whose bottom edge is centered on the position. <code>rises</code> is <code>"right"</code> (the default) or <code>"left"</code>.</td></tr>
+              <tr><td><code>{ type: "polygon", points }</code></td><td>A convex polygon. If the points aren't convex, Rapier uses their convex hull, the smallest convex shape around them. The drawing shows the hull that Rapier actually built.</td></tr>
+              <tr><td><code>{ type: "polyline", points }</code></td><td>Connected line segments for terrain, such as the hills here. A polyline can be concave, but it has no inside, so it can't be dynamic.</td></tr>
+            </tbody>
+          </table>
+
+          <h2>Options</h2>
+          <table>
+            <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>x</code>, <code>y</code></td><td>required</td><td>Position, in meters.</td></tr>
+              <tr><td><code>angle</code></td><td><code>0</code></td><td>Rotation in radians, counterclockwise.</td></tr>
+              <tr><td><code>body</code></td><td><code>"fixed"</code></td><td><code>"fixed"</code> never moves, <code>"dynamic"</code> falls and collides, and <code>"kinematic"</code> moves only from code.</td></tr>
+              <tr><td><code>density</code></td><td><code>1</code></td><td>Mass per square meter. A heavier shape pushes lighter ones harder.</td></tr>
+              <tr><td><code>friction</code></td><td><code>0.5</code></td><td>0 is ice and 1 is rubber.</td></tr>
+              <tr><td><code>restitution</code></td><td><code>0</code></td><td>Bounciness. 1 bounces back to the same height. When two surfaces touch, the bouncier one wins.</td></tr>
+              <tr><td><code>color</code></td><td>by body type</td><td>Gray for fixed, orange for dynamic and blue for kinematic.</td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Methods: <code>applyImpulse(x, y)</code>, <code>applyTorqueImpulse(torque)</code> to spin it, and <code>getAngle()</code>.</p>
+
+          <h2>The player on slopes</h2>
+          <p>The player walks up and stands on slopes up to <code>maxSlope</code>, which defaults to 50°. It doesn't slide down them while standing still. Anything steeper counts as a wall: the player can't stand on it or jump up it, and with <a href="#wall-jump">wall jump</a> enabled, it can wall slide on it.</p>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/shapes.ts</code></h2>
+            <button type="button" data-copy="shapes">Copy</button>
+          </div>
+          <pre><code data-source="shapes"></code></pre>
+        </section>
       </main>
     </div>
 
@@ -451,6 +512,7 @@ off(); // stop listening</code></pre>
     <script type="module" src="/src/demos/events.ts"></script>
     <script type="module" src="/src/demos/remove.ts"></script>
     <script type="module" src="/src/demos/camera.ts"></script>
+    <script type="module" src="/src/demos/shapes.ts"></script>
     <script type="module" src="/src/docs.ts"></script>
   </body>
 </html>
