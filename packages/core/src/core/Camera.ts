@@ -86,6 +86,18 @@ export class Camera {
     this.bounds = bounds;
   }
 
+  /** Back to the defaults: at the origin, zoom 1, no target, bounds or shake. */
+  public reset(): void {
+    this.target = null;
+    this.bounds = null;
+    this.x = 0;
+    this.y = 0;
+    this.zoom = 1;
+    this.shakeTimer = 0;
+    this.shakeX = 0;
+    this.shakeY = 0;
+  }
+
   /** Moves the camera to a point immediately, without smoothing. */
   public moveTo(x: number, y: number): void {
     this.x = x;

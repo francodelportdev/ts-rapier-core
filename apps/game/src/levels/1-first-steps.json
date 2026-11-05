@@ -1,0 +1,12 @@
+{
+  "name": "First steps",
+  "bounds": { "minX": -10, "maxX": 30, "minY": -8, "maxY": 10 },
+  "spawn": { "x": -7, "y": -3.5 },
+  "goal": { "x": 27, "y": -3.5, "width": 1, "height": 2 },
+  "platforms": [
+    { "x": 0, "y": -5, "width": 20 },
+    { "x": 22, "y": -5, "width": 16 }
+  ],
+  "boxes": [{ "x": 3, "y": -4 }],
+  "coins": [{ "x": -2, "y": -3.5 }, { "x": 12, "y": -2 }, { "x": 20, "y": -3.5 }]
+}

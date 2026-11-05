@@ -1,0 +1,58 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
+<h1>Scenes &amp; levels</h1>
+<p class="text-muted">A game is more than one screen. Scenes switch between menus and levels, and levels are plain data, so they can live in JSON files.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>Enter</kbd> Start or continue</li>
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump</li>
+  <li><kbd>R</kbd> Restart the scene</li>
+</ul>
+
+<h2>Scenes</h2>
+<p>Extend <code>Scene</code>, build your entities in <code>onEnter(data)</code>, and register a factory, so every visit starts fresh.</p>
+<pre><code>class Menu extends Scene {
+  onEnter() { /* add entities */ }
+  update() { /* runs every physics step */ }
+  draw(ctx, width, height) { /* menus and HUDs, in pixels */ }
+}
+
+game.scenes.add("menu", () =&gt; new Menu());
+game.scenes.go("menu");</code></pre>
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
+  <li>
+    <h3>Changing scene</h3>
+    <p><code>game.scenes.go(name, { data, fade })</code> is safe anywhere, even in an event listener: the change waits for the end of the physics step. With <code>fade</code>, the screen fades to black, the physics freezes, and the new scene fades in. While a change is under way, further calls are ignored.</p>
+  </li>
+  <li>
+    <h3>Cleaning up</h3>
+    <p>Leaving a scene calls <code>onExit()</code> and then <code>game.clear()</code>, which removes every entity and resets the camera, the gravity and the kill plane. Only clean up what you created outside the game, such as timers.</p>
+  </li>
+  <li>
+    <h3>Restarting</h3>
+    <p><code>game.scenes.restart()</code> enters the current scene again with the same data. The <code>change</code> event tells you about every change.</p>
+  </li>
+</ol>
+
+<h2>Levels</h2>
+<p><code>new LevelScene(data, { next })</code> builds a level from its data, follows the player with the camera and handles the goal. On reaching the goal, it goes to the <code>next</code> scene and passes it the stats: <code>{ coins, totalCoins, deaths, time }</code>.</p>
+<table>
+  <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>yes</td><td>Shown in errors and available as <code>scene.level.name</code>.</td></tr>
+    <tr><td><code>bounds</code></td><td>yes</td><td><code>{ minX, maxX, minY, maxY }</code>. The camera stays inside it, and falling 5 m below it counts as a death.</td></tr>
+    <tr><td><code>spawn</code></td><td>yes</td><td>Where the player starts and respawns.</td></tr>
+    <tr><td><code>goal</code></td><td>yes</td><td>An area: <code>{ x, y, width, height }</code>.</td></tr>
+    <tr><td><code>platforms</code></td><td>no</td><td><code>Platform</code> options, including <code>oneWay</code>.</td></tr>
+    <tr><td><code>shapes</code></td><td>no</td><td><code>Shape</code> options, for ramps, hills and more.</td></tr>
+    <tr><td><code>boxes</code></td><td>no</td><td>Positions of pushable boxes.</td></tr>
+    <tr><td><code>hazards</code></td><td>no</td><td>Areas that send the player back to the spawn.</td></tr>
+    <tr><td><code>coins</code></td><td>no</td><td>Positions of coins.</td></tr>
+    <tr><td><code>player</code></td><td>no</td><td>Player options for this level, such as <code>{ "maxJumps": 2 }</code>.</td></tr>
+    <tr><td><code>gravity</code></td><td>no</td><td>World gravity, in m/s². The default is 9.81.</td></tr>
+  </tbody>
+</table>
+<p class="mt-3 text-[0.9rem] text-muted"><code>LevelScene</code> checks the required fields and throws an error naming the level and the problem. Other fields aren't checked.</p>
+
+<h2>Triggers</h2>
+<p>Goals, hazards and coins are built with <code>Trigger</code>, an area nothing collides with. You can use it directly: <code>new Trigger(world, { x, y, width, height, target: player })</code>, then <code>trigger.on("enter", ...)</code> and <code>trigger.on("exit", ...)</code>.</p>

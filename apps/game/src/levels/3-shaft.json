@@ -1,0 +1,14 @@
+{
+  "name": "The shaft",
+  "bounds": { "minX": -8, "maxX": 12, "minY": -8, "maxY": 24 },
+  "spawn": { "x": 0, "y": -3.5 },
+  "goal": { "x": 8, "y": 13, "width": 1, "height": 2 },
+  "platforms": [
+    { "x": 0, "y": -5, "width": 12 },
+    { "x": -3.5, "y": 8, "width": 1, "height": 26 },
+    { "x": 3.5, "y": 3.5, "width": 1, "height": 17 },
+    { "x": 7, "y": 11.75, "width": 6 }
+  ],
+  "coins": [{ "x": 0, "y": 3 }, { "x": 0, "y": 9 }],
+  "player": { "maxJumps": 2, "wallJump": true }
+}
