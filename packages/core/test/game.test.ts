@@ -175,3 +175,146 @@ describe("Game: destroy", () => {
     expect(game["rafId"]).toBeNull();
   });
 });
+
+describe("Game: lifecycle safety", () => {
+  async function playerGame() {
+    keys.reset();
+    const game = await createGame();
+    const world = game.getWorld();
+    const player = new Player(world);
+    game.addEntity(new Ground(world));
+    game.addEntity(player);
+    game.start();
+    stepGame(game, 5);
+    return { game, world, player };
+  }
+
+  test("entity.destroy() on an entity in a running game removes it safely", async () => {
+    const game = await createGame();
+    const box = new Box(game.getWorld());
+    const removed: unknown[] = [];
+    game.on("entityRemoved", ({ entity }) => removed.push(entity));
+    game.addEntity(box);
+    game.start();
+    box.destroy();
+    expect(() => stepGame(game, 3)).not.toThrow();
+    expect(box.isDestroyed).toBe(true);
+    expect(game.getEntities()).toHaveLength(0);
+    expect(game.getBodyCount()).toBe(0);
+    expect(removed).toEqual([box]);
+  });
+
+  test("entity.destroy() with the loop stopped is immediate", async () => {
+    const game = await createGame();
+    const box = new Box(game.getWorld());
+    game.addEntity(box);
+    box.destroy();
+    expect(box.isDestroyed).toBe(true);
+    expect(box.getGame()).toBeNull();
+    expect(game.getEntities()).toHaveLength(0);
+  });
+
+  test("an entity can destroy itself from its own event", async () => {
+    const { game, player } = await playerGame();
+    player.on("jump", () => player.destroy());
+    keys.down("Space");
+    expect(() => stepGame(game, 3)).not.toThrow();
+    expect(player.isDestroyed).toBe(true);
+  });
+
+  test("game.clear() from a player event waits for the step to end", async () => {
+    const { game, player } = await playerGame();
+    player.on("jump", () => game.clear());
+    keys.down("Space");
+    expect(() => stepGame(game, 3)).not.toThrow();
+    expect(game.getEntities()).toHaveLength(0);
+    expect(game.getBodyCount()).toBe(0);
+  });
+
+  test("game.destroy() from a player event waits for the step to end", async () => {
+    const { game, world, player } = await playerGame();
+    freed.add(world);
+    player.on("jump", () => game.destroy());
+    keys.down("Space");
+    expect(() => stepGame(game, 1)).not.toThrow();
+    expect(game["destroyed"]).toBe(true);
+    expect(game["rafId"]).toBeNull();
+  });
+
+  test("removing after stop() from inside a step is still deferred", async () => {
+    const { game, player } = await playerGame();
+    player.on("jump", () => {
+      game.stop();
+      game.removeEntity(player);
+    });
+    keys.down("Space");
+    expect(() => stepGame(game, 1)).not.toThrow();
+    expect(player.isDestroyed).toBe(true);
+  });
+
+  test("game.clear() from a draw waits for the draw to end", async () => {
+    const game = await createGame();
+    const world = game.getWorld();
+    const first = new Box(world);
+    const second = new Box(world);
+    first.render = () => game.clear();
+    second.render = () => {};
+    game.addEntity(first);
+    game.addEntity(second);
+    game.start();
+    expect(() => game["loop"](0)).not.toThrow();
+    expect(game.getBodyCount()).toBe(0);
+  });
+});
+
+describe("Game: errors", () => {
+  async function failing(arrange: (game: Awaited<ReturnType<typeof createGame>>, fail: () => never) => void) {
+    const game = await createGame();
+    const logged: unknown[] = [];
+    const original = console.error;
+    console.error = (e: unknown) => void logged.push(e);
+    const seen: unknown[] = [];
+    game.on("error", ({ error }) => seen.push(error));
+    arrange(game, () => {
+      throw new Error("boom");
+    });
+    game.start();
+    try {
+      game["accumulator"] = 3 / 60;
+      game["loop"](0);
+      game["loop"](0);
+    } finally {
+      console.error = original;
+    }
+    return { game, logged, seen };
+  }
+
+  test("a frame listener that throws doesn't stop the loop, and repeats are logged once", async () => {
+    const { game, logged, seen } = await failing((g, fail) => g.on("frame", fail));
+    expect(game["rafId"]).not.toBeNull();
+    expect(seen).toHaveLength(2);
+    expect(logged).toHaveLength(1);
+  });
+
+  test("an update that throws doesn't stop the loop or grow the backlog", async () => {
+    const { game, seen } = await failing((g, fail) => {
+      const box = new Box(g.getWorld());
+      box.update = fail;
+      g.addEntity(box);
+    });
+    expect(game["rafId"]).not.toBeNull();
+    expect(seen.length).toBeGreaterThan(0);
+    expect(game["accumulator"]).toBeLessThan(1 / 60);
+    expect(game["busy"]).toBe(false);
+  });
+
+  test("a draw that throws doesn't stop the loop", async () => {
+    const { game, seen } = await failing((g, fail) => {
+      const box = new Box(g.getWorld());
+      box.render = fail;
+      g.addEntity(box);
+    });
+    expect(game["rafId"]).not.toBeNull();
+    expect(seen).toHaveLength(2);
+  });
+});

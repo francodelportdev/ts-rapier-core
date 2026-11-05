@@ -123,10 +123,15 @@ export abstract class Entity<TOptions extends object = object> {
 
   /**
    * Removes the body and its colliders from the physics world, freeing their memory.
-   * Usually called by `game.removeEntity()`. Calling it twice has no effect.
+   * In a game, this is the same as `game.removeEntity()`, so it may wait for the current step
+   * to end. Calling it twice has no effect.
    */
   public destroy(): void {
     if (this.destroyed) return;
+    if (this.game !== null) {
+      this.game.removeEntity(this as unknown as Entity);
+      return;
+    }
     for (const type of [...this.components.keys()]) this.remove(type);
     this.onDestroy();
     for (let i = 0; i < this.body.numColliders(); i++) unregisterEntity(this.world, this.body.collider(i));

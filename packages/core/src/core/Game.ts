@@ -35,6 +35,8 @@ export interface GameEvents {
   entityRemoved: { entity: Entity; reason: RemoveReason };
   /** A frame was drawn. Use it for per-frame work such as updating a HUD; it stops with the game. */
   frame: Record<string, never>;
+  /** Something threw during a step, a draw or a listener. The game keeps running. */
+  error: { error: unknown };
 }
 
 /**
@@ -66,6 +68,12 @@ export class Game {
   private lastTime: number | null = null;
   private accumulator = 0;
   private destroyed = false;
+  /** True while stepping or drawing: nothing may free physics objects until it ends. */
+  private busy = false;
+  private clearRequested = false;
+  private destroyRequested = false;
+  /** The last error logged, so that one failing every frame doesn't flood the console. */
+  private lastErrorMessage: string | null = null;
   /** Removes the canvas listeners on `destroy()`. */
   private readonly listeners = new AbortController();
 
@@ -126,10 +134,18 @@ export class Game {
   /**
    * Removes every entity, and resets the camera, the gravity and the kill plane. The scene
    * manager calls it on every scene change. No `entityRemoved` events are emitted.
+   * Called during a step or a draw (for example, from a listener), it waits for that to end.
    */
   public clear(): void {
+    if (this.busy) {
+      this.clearRequested = true;
+      return;
+    }
     this.pendingRemovals.clear();
-    for (const e of this.entities.splice(0)) e.destroy();
+    for (const e of this.entities.splice(0)) {
+      e.setGame(null);
+      e.destroy();
+    }
     this.camera.reset();
     this.world.gravity.x = 0;
     this.world.gravity.y = -9.81;
@@ -184,10 +200,14 @@ export class Game {
   /**
    * Stops the game for good: ends the loop, removes its canvas listeners and frees the physics
    * world with everything in it. Don't use the game or its entities afterwards. Calling it
-   * twice has no effect.
+   * twice has no effect. Called during a step or a draw, it waits for that to end.
    */
   public destroy(): void {
     if (this.destroyed) return;
+    if (this.busy) {
+      this.destroyRequested = true;
+      return;
+    }
     this.destroyed = true;
     this.stop();
     this.listeners.abort();
@@ -199,28 +219,62 @@ export class Game {
   private step(): void {
     this.input.setEnabled(this.isFocused());
     if (this.scenes.tick(this.world.timestep)) return; // frozen during a fade out
-    this.scenes.update();
-    for (const e of this.entities) {
-      e.update();
-      e.updateComponents(this.world.timestep);
-      e.getSprite()?.animator?.update(this.world.timestep);
-    }
-    this.world.step();
-    this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
-
-    if (this.killPlaneY !== null) {
+    this.whileBusy(() => {
+      this.scenes.update();
       for (const e of this.entities) {
-        if (e.getPosition().y < this.killPlaneY) this.queueRemoval(e, "killPlane");
+        e.update();
+        e.updateComponents(this.world.timestep);
+        e.getSprite()?.animator?.update(this.world.timestep);
       }
-    }
+      this.world.step();
+      this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
+
+      if (this.killPlaneY !== null) {
+        for (const e of this.entities) {
+          if (e.getPosition().y < this.killPlaneY) this.queueRemoval(e, "killPlane");
+        }
+      }
+    });
+    if (this.destroyed) return;
     this.flushRemovals();
     this.scenes.flushInstant();
   }
 
+  /** Runs `work` with physics objects protected, then applies what it asked for. */
+  private whileBusy(work: () => void): void {
+    this.busy = true;
+    try {
+      work();
+    } finally {
+      this.busy = false;
+      if (this.destroyRequested) this.destroy();
+      else if (this.clearRequested) {
+        this.clearRequested = false;
+        this.clear();
+      }
+    }
+  }
+
+  /** A failure in game code shouldn't freeze the game: report it and carry on. */
+  private guard(work: () => void): void {
+    try {
+      work();
+    } catch (error) {
+      const message = String(error);
+      if (message !== this.lastErrorMessage) console.error(error);
+      this.lastErrorMessage = message;
+      try {
+        this.events.emit("error", { error });
+      } catch (listenerError) {
+        console.error(listenerError);
+      }
+    }
+  }
+
   private queueRemoval(e: Entity, reason: RemoveReason): void {
     if (!this.pendingRemovals.has(e)) this.pendingRemovals.set(e, reason);
-    // Outside the loop (for example, from a click handler), remove right away.
-    if (this.rafId === null) this.flushRemovals();
+    // With the loop stopped (for example, from a click handler), remove right away.
+    if (this.rafId === null && !this.busy) this.flushRemovals();
   }
 
   private flushRemovals(): void {
@@ -231,6 +285,7 @@ export class Game {
       const index = this.entities.indexOf(entity);
       if (index === -1) continue; // not in this game, or already removed
       this.entities.splice(index, 1);
+      entity.setGame(null);
       entity.destroy();
       this.events.emit("entityRemoved", { entity, reason });
     }
@@ -264,22 +319,33 @@ export class Game {
     this.accumulator += frameTime;
 
     const dt = this.world.timestep;
-    while (this.accumulator >= dt) {
-      this.step();
-      this.accumulator -= dt;
+    while (this.accumulator >= dt && !this.destroyed) {
+      this.guard(() => this.step());
+      this.accumulator -= dt; // even after a failure, or the backlog would grow forever
     }
-    // Removals requested between steps (for example, from a key handler) apply before drawing.
-    this.flushRemovals();
+    if (!this.destroyed) {
+      // Removals requested between steps (for example, from a key handler) apply before drawing.
+      this.guard(() => this.flushRemovals());
+      this.guard(() => this.whileBusy(() => this.render()));
+    }
+    if (!this.destroyed) this.guard(() => this.events.emit("frame", {}));
+    if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
+  };
 
+  private render(): void {
     const { width, height } = this.canvas;
     this.ctx.clearRect(0, 0, width, height);
     const { scale, centerX, centerY } = this.camera.getViewport();
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
-    for (const e of this.entities) e.render(this.ctx, scale, centerX, centerY);
+    for (const e of this.entities) {
+      this.ctx.save(); // a draw that throws can't leave its transform behind
+      try {
+        e.render(this.ctx, scale, centerX, centerY);
+      } finally {
+        this.ctx.restore();
+      }
+    }
     this.scenes.draw(this.ctx, width, height);
     this.debug.draw(this.ctx, scale, centerX, centerY);
-
-    this.events.emit("frame", {});
-    if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
-  };
+  }
 }
