@@ -105,6 +105,11 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
+    id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
+    load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
+    controls: () => [],
+  },
+  {
     id: "shapes", title: "Geometry", group: "Engine", file: "src/demos/shapes.ts",
     load: () => import("./demos/shapes"), source: () => import("./demos/shapes.ts?raw"), content: () => import("./content/shapes.html?raw"),
     controls: ({ game, player: p }) => [

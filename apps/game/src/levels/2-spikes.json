@@ -1,0 +1,17 @@
+{
+  "name": "Mind the lava",
+  "bounds": { "minX": -10, "maxX": 50, "minY": -8, "maxY": 12 },
+  "spawn": { "x": -7, "y": -3.5 },
+  "goal": { "x": 46, "y": -3.5, "width": 1, "height": 2 },
+  "platforms": [
+    { "x": 20, "y": -5, "width": 60 },
+    { "x": 24, "y": -2.25, "width": 8, "height": 0.3, "oneWay": true }
+  ],
+  "hazards": [
+    { "x": 8, "y": -4.25, "width": 3, "height": 0.5 },
+    { "x": 24, "y": -4.25, "width": 8, "height": 0.5 },
+    { "x": 38, "y": -4.25, "width": 3, "height": 0.5 }
+  ],
+  "coins": [{ "x": 8, "y": -1 }, { "x": 24, "y": -1 }, { "x": 38, "y": -1 }],
+  "player": { "maxJumps": 2 }
+}

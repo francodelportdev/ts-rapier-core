@@ -2,6 +2,7 @@ import RAPIER from "@dimforge/rapier2d-compat";
 import type { Entity } from "../entities/Entity";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { Input } from "../systems/Input";
+import { SceneManager } from "../scenes/SceneManager";
 import { Camera } from "./Camera";
 import { SCALE } from "./constants";
 
@@ -47,11 +48,14 @@ export class Game {
   private readonly world: RAPIER.World;
   private readonly ctx: CanvasRenderingContext2D;
   private readonly input = Input.getInstance();
-  private readonly killPlaneY: number | null;
+  private killPlaneY: number | null;
+  private readonly defaultKillPlaneY: number | null;
   private readonly events = new EventEmitter<GameEvents>();
   private readonly grid: { size: number; color: string } | null;
   /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
   public readonly camera = new Camera(SCALE);
+  /** Switches between scenes, such as a menu and levels. Optional: a game can use none. */
+  public readonly scenes = new SceneManager(this);
   private entities: Entity[] = [];
   /** Entities to remove after the current step (removing mid-step would break the loop). */
   private readonly pendingRemovals = new Map<Entity, RemoveReason>();
@@ -69,6 +73,7 @@ export class Game {
     this.ctx = ctx;
     this.world = new RAPIER.World({ x: 0.0, y: -9.81 });
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
+    this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
     this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
 
@@ -106,6 +111,29 @@ export class Game {
    */
   public removeEntity(e: Entity): void {
     this.queueRemoval(e, "manual");
+  }
+
+  /** Changes the kill plane (see `GameOptions.killPlaneY`) until the next `clear()`. */
+  public setKillPlane(y: number | null): void {
+    this.killPlaneY = y;
+  }
+
+  /**
+   * Removes every entity, and resets the camera, the gravity and the kill plane. The scene
+   * manager calls it on every scene change. No `entityRemoved` events are emitted.
+   */
+  public clear(): void {
+    this.pendingRemovals.clear();
+    for (const e of this.entities.splice(0)) e.destroy();
+    this.camera.reset();
+    this.world.gravity.x = 0;
+    this.world.gravity.y = -9.81;
+    this.killPlaneY = this.defaultKillPlaneY;
+  }
+
+  /** True while the loop is running. */
+  public isRunning(): boolean {
+    return this.rafId !== null;
   }
 
   /** The entities currently in the game. */
@@ -166,6 +194,8 @@ export class Game {
   /** Runs one physics step: update every entity, step the world, then apply removals. */
   private step(): void {
     this.input.setEnabled(this.isFocused());
+    if (this.scenes.tick(this.world.timestep)) return; // frozen during a fade out
+    this.scenes.update();
     for (const e of this.entities) e.update();
     this.world.step();
     this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
@@ -176,6 +206,7 @@ export class Game {
       }
     }
     this.flushRemovals();
+    this.scenes.flushInstant();
   }
 
   private queueRemoval(e: Entity, reason: RemoveReason): void {
@@ -237,6 +268,7 @@ export class Game {
     const { scale, centerX, centerY } = this.camera.getViewport();
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
     for (const e of this.entities) e.draw(this.ctx, scale, centerX, centerY);
+    this.scenes.draw(this.ctx, width, height);
 
     this.events.emit("frame", {});
     if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it

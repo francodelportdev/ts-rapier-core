@@ -529,7 +529,7 @@ export class Player extends Entity<ResolvedOptions> {
       right: start.x + o.halfWidth,
       bottom: start.y - o.halfHeight,
     };
-    this.controller.computeColliderMovement(collider, desired, undefined, undefined, this.solidFilter);
+    this.controller.computeColliderMovement(collider, desired, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, undefined, this.solidFilter);
     const moved = this.controller.computedMovement();
     const fallSpeed = Math.max(0, -this.vy);
     // The controller also reports "grounded" when a corner of the box rests on a steep surface,

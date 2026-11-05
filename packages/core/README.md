@@ -88,6 +88,35 @@ player.on("respawn", () => game.camera.snapToTarget());
 
 The camera updates once per physics step, after `world.step()`. If its target is destroyed, it stops following and stays where it is.
 
+### Scenes and levels
+
+`game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
+
+```ts
+class Menu extends Scene {
+  onEnter() {}                  // receives the data passed to go()
+  update() {}                   // once per physics step
+  draw(ctx, width, height) {}   // in pixels, after the entities
+  onExit() {}
+}
+game.scenes.add("menu", () => new Menu());
+game.scenes.go("menu", { fade: 0.3 });
+```
+
+| Member | Description |
+|---|---|
+| `add(name, factory)` | Registers a scene. |
+| `go(name, { data?, fade? })` | Changes scene at the end of the current step, so it's safe anywhere. Physics freezes during a fade out. While a change is under way, further calls are ignored. Unknown names throw. |
+| `restart({ fade? })` | Enters the current scene again with the same data. |
+| `current`, `currentSceneName` | The current scene. |
+| `on("change", ({ from, to }) => …)` | Runs after each change. |
+
+Each change calls `onExit()` and then `game.clear()`, which removes every entity and resets the camera, gravity and kill plane.
+
+`new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Required fields are checked with `validateLevel()`, which throws an error naming the level.
+
+`new Trigger(world, { x, y, width, height, target, targetHalfWidth?, targetHalfHeight?, color?, round? })` is an area nothing collides with. It emits `enter` and `exit` for its target.
+
 ### `Entity` (abstract)
 
 The base class for anything that has a physics body.
@@ -306,6 +335,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `wall-jump.test.ts` | Wall slide (speed cap, needs pushing, ends on landing, boxes aren't walls), wall jump, control lock, wall coyote time, keeping the double jump, climbing a shaft |
 | `shapes.test.ts` | Each geometry type, ramps, invalid polygons, body types, bounce, rolling and friction, impulses, the player on slopes (climbing, `maxSlope`, standing still, walking down, steep surfaces) |
 | `one-way.test.ts` | Jumping up through, side pass-through, standing on the edge, drop-through and its timer, rotated one-way shapes, not being walls, cleanup on destroy, dynamic bodies colliding |
+| `scenes.test.ts` | Scene changes, deferral, fades, restart, `Trigger`, `LevelScene` (coins, goal, hazards, falling, per-level options) and validation |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
