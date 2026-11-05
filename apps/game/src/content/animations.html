@@ -1,0 +1,58 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
+<h1>Animations</h1>
+<p class="text-muted">Sprites replace the rectangles with images, and an animator plays their frames. Here, the character changes clip with its state: try running, jumping, dashing and sliding down the wall on the left.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump (×2)</li>
+  <li><kbd>Shift</kbd> Dash</li>
+</ul>
+
+<h2>How it works</h2>
+<ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
+  <li>
+    <h3>The sprite sheet</h3>
+    <p><code>await loadSpriteSheet("/hero.png", 32, 32)</code> loads an image and cuts it into frames of 32×32 pixels, numbered left to right and top to bottom. With an image you already have, use <code>new SpriteSheet(image, 32, 32)</code>.</p>
+  </li>
+  <li>
+    <h3>The animator</h3>
+    <p><code>new Animator(clips, "idle")</code> plays named clips. It has <code>play(name)</code>, <code>pause()</code>, <code>resume()</code> and <code>speed</code>, and it runs with the physics steps.</p>
+  </li>
+  <li>
+    <h3>The sprite</h3>
+    <p><code>new Sprite({ sheet, animator, width, height })</code> sets the size on screen in meters. <code>entity.setSprite(sprite)</code> shows it instead of the entity's <code>draw()</code>, on any entity. The physics doesn't change: the collider stays the same whatever the image's size, and the sprite turns with the body.</p>
+  </li>
+  <li>
+    <h3>The player</h3>
+    <p><code>animatePlayer(player, sprite)</code> plays the clip named like each state and mirrors the sprite to the facing direction. A state without a clip plays <code>"idle"</code>. Different names? <code>animatePlayer(player, sprite, { run: "walk" })</code>.</p>
+  </li>
+</ol>
+
+<h2>Clips</h2>
+<pre><code>const animator = new Animator({
+  idle:   { frames: [0, 1, 2, 3], fps: 4 },
+  attack: { frames: [4, 5, 6], fps: 12, loop: false, next: "idle" },
+}, "idle");</code></pre>
+<table>
+  <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>frames</code></td><td>required</td><td>Frame numbers in the sheet, in playing order.</td></tr>
+    <tr><td><code>fps</code></td><td>required</td><td>Frames per second.</td></tr>
+    <tr><td><code>loop</code></td><td><code>true</code></td><td>Start over at the end.</td></tr>
+    <tr><td><code>next</code></td><td>none</td><td>Clip to play when a non-looping clip ends.</td></tr>
+  </tbody>
+</table>
+<p class="mt-3 text-[0.9rem] text-muted">Events: <code>change</code>, <code>end</code> and <code>frame</code>, which is handy for footstep sounds. <code>play()</code> with the clip already playing does nothing, unless you pass <code>{ restart: true }</code>.</p>
+
+<h2>Sprite options</h2>
+<table>
+  <thead><tr><th>Option</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>sheet</code>, <code>width</code>, <code>height</code></td><td>required</td><td>The sheet, and the size in meters.</td></tr>
+    <tr><td><code>animator</code></td><td>none</td><td>Chooses the frame.</td></tr>
+    <tr><td><code>frame</code></td><td><code>0</code></td><td>The frame to show without an animator.</td></tr>
+    <tr><td><code>offsetX</code>, <code>offsetY</code></td><td><code>0</code></td><td>Moves the image from the body's center, in meters.</td></tr>
+    <tr><td><code>flipX</code></td><td><code>false</code></td><td>Mirrors the image. It can be a function.</td></tr>
+    <tr><td><code>smooth</code></td><td><code>false</code></td><td>Blends pixels when scaling. Keep it off for pixel art.</td></tr>
+  </tbody>
+</table>

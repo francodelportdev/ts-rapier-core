@@ -1,4 +1,5 @@
 import RAPIER from "@dimforge/rapier2d-compat";
+import type { Sprite } from "../animation/Sprite";
 import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 
@@ -12,6 +13,7 @@ export abstract class Entity<TOptions extends object = object> {
   /** Constructor options. Set before `createBody()` runs, so it is safe to read there. */
   protected readonly options: TOptions;
   private destroyed = false;
+  private sprite: Sprite | null = null;
   private collision: CollisionFilter = { layers: ALL_LAYERS, mask: ALL_LAYERS };
 
   constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
@@ -22,6 +24,23 @@ export abstract class Entity<TOptions extends object = object> {
     for (let i = 0; i < this.body.numColliders(); i++) registerEntity(world, this.body.collider(i), this as unknown as Entity);
     const { collision } = options as { collision?: CollisionFilter };
     if (collision !== undefined) this.setCollision(collision);
+  }
+
+  /** Shows an image instead of `draw()`. `null` goes back to `draw()`. */
+  public setSprite(sprite: Sprite | null): void {
+    this.sprite = sprite;
+  }
+
+  public getSprite(): Sprite | null {
+    return this.sprite;
+  }
+
+  /** Called by `Game` every frame: draws the sprite if there is one, and `draw()` otherwise. */
+  public render(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
+    if (this.sprite === null) return this.draw(ctx, scale, centerX, centerY);
+    const t = this.body.translation();
+    const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
+    this.sprite.draw(ctx, px, py, this.body.rotation(), scale);
   }
 
   /** Changes what this entity is and what it collides with. It can be called at any time. */
