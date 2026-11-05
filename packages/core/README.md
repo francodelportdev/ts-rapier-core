@@ -133,6 +133,27 @@ animatePlayer(player, sprite);     // or: clips follow the player's state and fa
 
 Entities now have `setSprite()`, `getSprite()` and `render()`, which `Game` calls instead of `draw()`.
 
+### Components
+
+Small behaviors that attach to any entity:
+
+```ts
+class Spin extends Component {
+  update(dt: number) {
+    const body = this.entity.getBody();
+    body.setRotation(body.rotation() + dt, true);
+  }
+}
+
+crate.add(new Spin());
+const health = player.add(new Health(5, { invulnerableTime: 1 }));
+player.get(Health); player.has(Health); player.remove(Health);
+```
+
+A `Component` has `onAttach()`, `update(dt)`, `draw(ctx, scale, centerX, centerY)` and `onDetach()`, and reaches its entity through `this.entity`. An entity has one component per class, and adding a second one throws. `Game` updates them every physics step, and destroying the entity detaches them. `entity.getBody()` returns the Rapier body and `entity.getGame()` the game.
+
+Included: `Health` (`damage`, `heal`, `reset`, `value`, `isDead`, `isInvulnerable`, events `change` and `death`), `Patrol(points, speed)` for kinematic entities, and `Lifetime(seconds)`. `Patrol` doesn't carry a player standing on the entity.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -384,6 +405,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `layers.test.ts` | `defineLayers`, both masks having to agree, runtime changes, and the player respecting its filter |
 | `sensors.test.ts` | Overlap events, several entities, layers, filters, `follow`, `once`, `setEnabled`, destroyed entities, `Trigger` and `entityOf` |
 | `animation.test.ts` | `Animator` timing, loops, `next` and events, `SpriteSheet`, `Sprite` drawing, `render()`, and `animatePlayer` |
+| `components.test.ts` | Adding and removing, lifecycle, `Health`, `Lifetime` and `Patrol` |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

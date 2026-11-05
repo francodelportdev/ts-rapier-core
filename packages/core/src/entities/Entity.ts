@@ -1,5 +1,7 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import type { Sprite } from "../animation/Sprite";
+import type { Component, ComponentType } from "../components/Component";
+import type { Game } from "../core/Game";
 import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 
@@ -14,6 +16,8 @@ export abstract class Entity<TOptions extends object = object> {
   protected readonly options: TOptions;
   private destroyed = false;
   private sprite: Sprite | null = null;
+  private readonly components = new Map<ComponentType<Component>, Component>();
+  private game: Game | null = null;
   private collision: CollisionFilter = { layers: ALL_LAYERS, mask: ALL_LAYERS };
 
   constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
@@ -24,6 +28,53 @@ export abstract class Entity<TOptions extends object = object> {
     for (let i = 0; i < this.body.numColliders(); i++) registerEntity(world, this.body.collider(i), this as unknown as Entity);
     const { collision } = options as { collision?: CollisionFilter };
     if (collision !== undefined) this.setCollision(collision);
+  }
+
+  /** Attaches a component and returns it. It throws if the entity already has one of that class. */
+  public add<T extends Component>(component: T): T {
+    const type = component.constructor as ComponentType<Component>;
+    if (this.components.has(type)) throw new Error(`The entity already has a ${type.name}`);
+    this.components.set(type, component);
+    component.entity = this as unknown as Entity;
+    component.onAttach();
+    return component;
+  }
+
+  /** The component of that exact class, or undefined. */
+  public get<T extends Component>(type: ComponentType<T>): T | undefined {
+    return this.components.get(type) as T | undefined;
+  }
+
+  public has(type: ComponentType<Component>): boolean {
+    return this.components.has(type);
+  }
+
+  /** Detaches a component. Removing one the entity doesn't have does nothing. */
+  public remove(type: ComponentType<Component>): void {
+    const component = this.components.get(type);
+    if (component === undefined) return;
+    this.components.delete(type);
+    component.onDetach();
+  }
+
+  /** Called by `Game` every physics step. */
+  public updateComponents(dt: number): void {
+    for (const component of this.components.values()) component.update(dt); // a Map allows removing while iterating
+  }
+
+  /** The Rapier body, for components and anything the engine doesn't wrap. */
+  public getBody(): RAPIER.RigidBody {
+    return this.body;
+  }
+
+  /** The game this entity was added to, or null. */
+  public getGame(): Game | null {
+    return this.game;
+  }
+
+  /** @internal Called by `Game`. */
+  public setGame(game: Game | null): void {
+    this.game = game;
   }
 
   /** Shows an image instead of `draw()`. `null` goes back to `draw()`. */
@@ -37,10 +88,14 @@ export abstract class Entity<TOptions extends object = object> {
 
   /** Called by `Game` every frame: draws the sprite if there is one, and `draw()` otherwise. */
   public render(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
-    if (this.sprite === null) return this.draw(ctx, scale, centerX, centerY);
-    const t = this.body.translation();
-    const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
-    this.sprite.draw(ctx, px, py, this.body.rotation(), scale);
+    if (this.sprite === null) {
+      this.draw(ctx, scale, centerX, centerY);
+    } else {
+      const t = this.body.translation();
+      const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
+      this.sprite.draw(ctx, px, py, this.body.rotation(), scale);
+    }
+    for (const component of this.components.values()) component.draw(ctx, scale, centerX, centerY);
   }
 
   /** Changes what this entity is and what it collides with. It can be called at any time. */
@@ -72,6 +127,7 @@ export abstract class Entity<TOptions extends object = object> {
    */
   public destroy(): void {
     if (this.destroyed) return;
+    for (const type of [...this.components.keys()]) this.remove(type);
     this.onDestroy();
     for (let i = 0; i < this.body.numColliders(); i++) unregisterEntity(this.world, this.body.collider(i));
     this.world.removeRigidBody(this.body); // also removes the colliders attached to it
