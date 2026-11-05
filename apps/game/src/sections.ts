@@ -110,6 +110,11 @@ export const SECTIONS: Section[] = [
     controls: () => [],
   },
   {
+    id: "sensors", title: "Sensors & triggers", group: "Engine", file: "src/demos/sensors.ts",
+    load: () => import("./demos/sensors"), source: () => import("./demos/sensors.ts?raw"), content: () => import("./content/sensors.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

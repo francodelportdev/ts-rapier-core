@@ -12,6 +12,8 @@ export interface DemoUI {
 export interface Demo {
   game: Game;
   player?: Player;
+  /** Extra sliders for the "Tune it live" panel. */
+  sliders?: Control[];
   /** On/off switches for the "Tune it live" panel. */
   toggles?: Toggle[];
 }

@@ -135,7 +135,7 @@ export class Shape extends Entity<ShapeOptions> {
 
   protected override createCollider(): RAPIER.Collider {
     const { density = 1, friction = 0.5, restitution = 0 } = this.options;
-    const desc = this.colliderDesc()
+    const desc = this.describeCollider(this.colliderDesc())
       .setDensity(density)
       .setFriction(friction)
       .setRestitution(restitution)
@@ -189,6 +189,11 @@ export class Shape extends Entity<ShapeOptions> {
     const points: Point[] = [];
     for (let i = 0; i + 1 < vertices.length; i += 2) points.push({ x: vertices[i]!, y: vertices[i + 1]! });
     return points;
+  }
+
+  /** Override to adjust the collider before it's created. */
+  protected describeCollider(desc: RAPIER.ColliderDesc): RAPIER.ColliderDesc {
+    return desc;
   }
 
   private colliderDesc(): RAPIER.ColliderDesc {

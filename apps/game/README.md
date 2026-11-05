@@ -15,6 +15,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Engine: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |
 | Engine: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
 | Engine: collision layers | [`src/demos/layers.ts`](src/demos/layers.ts) | `defineLayers()` and `setCollision()`, with switches for who collides with whom. |
+| Engine: sensors & triggers | [`src/demos/sensors.ts`](src/demos/sensors.ts) | A pressure plate that opens a gate, a radar that follows the player, and a one-shot goal. |
 | Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.

@@ -127,7 +127,7 @@ export class LevelScene extends Scene {
     });
 
     const area = (a: LevelArea, color: string, round = false) =>
-      new Trigger(world, { ...a, target: player, targetHalfWidth: 0.5, targetHalfHeight: 1, color, round });
+      new Trigger(world, { ...a, target: player, color, round });
 
     for (const hazard of data.hazards ?? []) {
       add(area(hazard, "#e53e3e")).on("enter", () => {
