@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import { registerOneWay, unregisterOneWay } from "../systems/oneWay";
 
 export interface PlatformOptions {
   /** Center X, in meters. */
@@ -10,8 +11,14 @@ export interface PlatformOptions {
   width: number;
   /** Full height, in meters. Default: 0.5. */
   height?: number;
-  /** Fill color. Default: "#4a5568". */
+  /** Fill color. Default: "#4a5568" ("#718096" for one-way platforms). */
   color?: string;
+  /**
+   * One-way platform: the player stands on it from above, but passes through it from below
+   * and the sides, and drops through it with ↓ + jump. Other bodies always collide with it.
+   * Default: false.
+   */
+  oneWay?: boolean;
 }
 
 /** A static, axis-aligned rectangle to stand on. */
@@ -38,12 +45,34 @@ export class Platform extends Entity<PlatformOptions> {
   }
 
   protected override createCollider(): RAPIER.Collider {
-    return this.world.createCollider(RAPIER.ColliderDesc.cuboid(this.halfWidth, this.halfHeight), this.body);
+    const collider = this.world.createCollider(RAPIER.ColliderDesc.cuboid(this.halfWidth, this.halfHeight), this.body);
+    if (this.options.oneWay) {
+      const { x, y } = this.options;
+      const [w, h] = [this.halfWidth, this.halfHeight];
+      registerOneWay(this.world, collider, [
+        { x: x - w, y: y - h },
+        { x: x + w, y: y - h },
+        { x: x + w, y: y + h },
+        { x: x - w, y: y + h },
+      ]);
+    }
+    return collider;
+  }
+
+  protected override onDestroy(): void {
+    if (this.options.oneWay) unregisterOneWay(this.world, this.body.collider(0));
   }
 
   public override update(): void {}
 
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
-    this.drawCuboid(ctx, this.halfWidth, this.halfHeight, this.options.color ?? "#4a5568", scale, centerX, centerY);
+    const color = this.options.color ?? (this.options.oneWay ? "#718096" : "#4a5568");
+    this.drawCuboid(ctx, this.halfWidth, this.halfHeight, color, scale, centerX, centerY);
+    if (this.options.oneWay) {
+      // A bright top edge marks the side you can stand on.
+      const { px, py } = this.toCanvas(this.options.x - this.halfWidth, this.top, scale, centerX, centerY);
+      ctx.fillStyle = "#e2e8f0";
+      ctx.fillRect(px, py, this.options.width * scale, Math.max(2, 0.06 * scale));
+    }
   }
 }

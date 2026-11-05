@@ -12,5 +12,6 @@ export type { ShapeOptions, Geometry, BodyType, Point } from "./entities/Shape";
 export { Player } from "./entities/Player";
 export type { PlayerOptions, PlayerKeys, DashOptions, WallJumpOptions, PlayerState, PlayerEvents } from "./entities/Player";
 export { Input } from "./systems/Input";
+export { isOneWay } from "./systems/oneWay";
 export { EventEmitter } from "./systems/EventEmitter";
 export type { Listener } from "./systems/EventEmitter";

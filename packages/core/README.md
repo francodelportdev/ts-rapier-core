@@ -121,7 +121,7 @@ abstract class Entity<TOptions extends object = object> {
 | Class | Body | Collider (half extents) | Behavior |
 |---|---|---|---|
 | `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A static floor. Its top surface is at y = -4.5. |
-| `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
+| `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color?, oneWay? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
 | `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5)`. Has `applyImpulse(x, y)`. |
 | `Shape` | any | any | Any geometry and body type. See [Shape](#shape). |
 | `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | A platformer character. See [Player](#player). |
@@ -151,8 +151,17 @@ new Shape(world, { x: 0, y: 5, body: "dynamic", restitution: 0.6, geometry: { ty
 | `friction` | `0.5` | 0 is ice and 1 is rubber. |
 | `restitution` | `0` | Bounciness. When two surfaces touch, the bouncier one wins (`CoefficientCombineRule.Max`). |
 | `color` | by body type | Gray for fixed, orange for dynamic and blue for kinematic. |
+| `oneWay` | `false` | One-way platform. Only for fixed shapes. See [One-way platforms](#one-way-platforms). |
 
 Methods: `applyImpulse(x, y)`, `applyTorqueImpulse(torque)` and `getAngle()`. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
+
+### One-way platforms
+
+Add `oneWay: true` to a `Platform` or to a fixed `Shape`. For the player, a one-way platform is solid only when the player's bottom edge is above its top surface, at the player's left side, center or right side. From below or the side, the player passes through. Holding ↓ (`keys.down`) and pressing jump while standing on one drops through it. During `dropThroughTime`, one-way platforms are ignored and the `dropThrough` event fires. Other bodies always collide with one-way platforms, and they're never walls for wall slides.
+
+`isOneWay(world, collider)` tells you whether a collider is a one-way platform.
+
+> **Implementation note:** collision filters run inside Rapier's WebAssembly code, where calling back into Rapier (`collider.parent()`, `castRay()`, …) fails silently. That's why each one-way platform stores its outline in plain JavaScript when it's created, and the filter only reads that.
 
 ### `Player`
 
@@ -179,13 +188,14 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 | `maxJumps` | `1` | Jumps available before landing. `2` gives a double jump. |
 | `dash` | `false` | `true`, or `{ speed = 20, duration = 0.15, cooldown = 0.4 }`. A horizontal burst with gravity paused. It's available on the ground and once per jump in the air. |
 | `wallJump` | `false` | `true`, or `{ slideSpeed = 3, pushSpeed = 10, jumpHeight = jumpHeight, controlLock = 0.15, coyoteTime = 0.1 }`. In the air, pushing into a wall slides down it at up to `slideSpeed`, and jumping pushes away from it. The arrow keys are ignored for `controlLock` seconds after a wall jump. Walls are fixed or kinematic bodies, not dynamic ones. A wall jump counts as the ground jump, so a double jump is still available. |
+| `dropThroughTime` | `0.25` | Seconds that one-way platforms are ignored after ↓ + jump. |
 | `maxSlope` | `50` | Steepest walkable slope, in degrees. The player walks up and stands on slopes up to this angle without sliding. Steeper surfaces count as walls: the player can't stand on them or jump up them, and can wall slide on them. |
 | `respawnBelow` | `-15` | Falling below this Y sends the player back to its start position. |
 | `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump` and `dash`. You can override one action without the others. |
 
-Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`.
+Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`, `down: ["ArrowDown", "KeyS"]`.
 
-Methods: `isGrounded()`, `isDashing()`, `isWallSliding()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
+Methods: `isGrounded()`, `isDashing()`, `isWallSliding()`, `isOnOneWayPlatform()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
 
 #### State
 
@@ -206,6 +216,7 @@ off(); // unsubscribe. once() and off() are also available.
 | `jump` | `{ airJump: boolean; wallJump: boolean; jumpNumber: number }` | A jump started. `airJump` is true for extra jumps in the air, and `wallJump` for jumps off a wall. |
 | `land` | `{ fallSpeed: number }` | The player touched the ground after at least 0.05 s in the air. The speed is in m/s. |
 | `dash` | `{ direction: 1 \| -1; inAir: boolean }` | A dash started. |
+| `dropThrough` | `{}` | The player dropped through a one-way platform. |
 | `wallSlideStart` / `wallSlideEnd` | `{ side: 1 \| -1 }` | Started or stopped sliding down a wall. `side` is the wall's side. |
 | `respawn` | `{ fell: boolean }` | The player went back to its start position. `fell` is true for falls below `respawnBelow`, and false for `respawn()` calls. |
 
@@ -292,6 +303,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `player.test.ts` | Movement and keys, walls stopping the player, box pushing, jump height, variable jump, double jump, ceilings, coyote time, jump buffer, dash and cooldown, respawn |
 | `wall-jump.test.ts` | Wall slide (speed cap, needs pushing, ends on landing, boxes aren't walls), wall jump, control lock, wall coyote time, keeping the double jump, climbing a shaft |
 | `shapes.test.ts` | Each geometry type, ramps, invalid polygons, body types, bounce, rolling and friction, impulses, the player on slopes (climbing, `maxSlope`, standing still, walking down, steep surfaces) |
+| `one-way.test.ts` | Jumping up through, side pass-through, standing on the edge, drop-through and its timer, rotated one-way shapes, not being walls, cleanup on destroy, dynamic bodies colliding |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

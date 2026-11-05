@@ -17,6 +17,7 @@
           <li><a href="#double-jump">Double jump</a></li>
           <li><a href="#dash">Dash</a></li>
           <li><a href="#wall-jump">Wall jump</a></li>
+          <li><a href="#one-way">One-way platforms</a></li>
           <li><a href="#events">State &amp; events</a></li>
           <li class="group">Engine</li>
           <li><a href="#remove">Removing entities</a></li>
@@ -132,12 +133,13 @@
               <tr><td><code>maxJumps</code></td><td><code>1</code></td><td>See <a href="#double-jump">Double jump</a>.</td></tr>
               <tr><td><code>dash</code></td><td><code>false</code></td><td>See <a href="#dash">Dash</a>.</td></tr>
               <tr><td><code>wallJump</code></td><td><code>false</code></td><td>See <a href="#wall-jump">Wall jump</a>.</td></tr>
+              <tr><td><code>dropThroughTime</code></td><td><code>0.25</code></td><td>Seconds that one-way platforms are ignored after ↓ + jump. See <a href="#one-way">One-way platforms</a>.</td></tr>
               <tr><td><code>maxSlope</code></td><td><code>50</code></td><td>Steepest walkable slope, in degrees. See <a href="#shapes">Geometry</a>.</td></tr>
               <tr><td><code>respawnBelow</code></td><td><code>-15</code></td><td>Falling below this Y sends the player back to its start position. See <a href="#events">State &amp; events</a> for the <code>respawn</code> event.</td></tr>
               <tr><td><code>keys</code></td><td>see below</td><td>Lists of <code>KeyboardEvent.code</code> values for each action.</td></tr>
             </tbody>
           </table>
-          <p class="hint">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>
+          <p class="hint">Default keys: <code>left: ["ArrowLeft", "KeyA"]</code>, <code>right: ["ArrowRight", "KeyD"]</code>, <code>jump: ["Space", "ArrowUp", "KeyW"]</code>, <code>dash: ["ShiftLeft", "ShiftRight", "KeyX"]</code>, <code>down: ["ArrowDown", "KeyS"]</code>. You can override one action without the others, for example <code>keys: { jump: ["KeyZ"] }</code>.</p>
 
           <div class="code-header">
             <h2>Source: <code>src/demos/player.ts</code></h2>
@@ -274,6 +276,49 @@
           <pre><code data-source="wall-jump"></code></pre>
         </section>
 
+        <!-- ============================== One-way platforms ============================== -->
+        <section id="one-way">
+          <p class="eyebrow">Player</p>
+          <h1>One-way platforms</h1>
+          <p class="lead">You jump up through them from below and stand on them from above. Hold <kbd>↓</kbd> and jump to drop through. Climb the tower, then compare with the solid platform on the right, which blocks you from below.</p>
+
+          <div class="demo">
+            <canvas id="one-way-demo" width="800" height="450"></canvas>
+            <span class="focus-hint">Click to play</span>
+            <div class="hud">
+              <span class="state-label" id="one-way-standing">on solid ground</span>
+            </div>
+          </div>
+          <ul class="controls">
+            <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+            <li><kbd>Space</kbd> Jump up through a platform</li>
+            <li><kbd>↓</kbd> + <kbd>Space</kbd> Drop through</li>
+          </ul>
+
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li>
+              <h3>Mark a platform as one-way</h3>
+              <p>Add <code>oneWay: true</code> to a <code>Platform</code>, or to any fixed <a href="#shapes"><code>Shape</code></a>, including tilted ones. One-way platforms are drawn in a lighter gray, and a <code>Platform</code> also gets a bright top edge.</p>
+            </li>
+            <li>
+              <h3>Solid only from above</h3>
+              <p>For the player, a one-way platform is solid only when the player's bottom edge is above the platform's top surface, at the left side, the center or the right side of the player. Coming from below or the side, the player passes through. One-way platforms are never walls for <a href="#wall-jump">wall slides</a>.</p>
+            </li>
+            <li>
+              <h3>Drop through</h3>
+              <p>Pressing jump while holding <kbd>↓</kbd> (<code>keys.down</code>) on a one-way platform drops through it instead of jumping. For <code>dropThroughTime</code> seconds (0.25 by default), every one-way platform is ignored, so the player doesn't land back on the same one. Dropping uses up the ground jump, just like walking off a ledge. The <code>dropThrough</code> event fires.</p>
+            </li>
+          </ol>
+          <p class="hint">Only the player passes through. Other bodies, such as boxes or dynamic shapes, always collide with one-way platforms. <code>player.isOnOneWayPlatform()</code> tells you whether ↓ + jump would drop through.</p>
+
+          <div class="code-header">
+            <h2>Source: <code>src/demos/one-way.ts</code></h2>
+            <button type="button" data-copy="one-way">Copy</button>
+          </div>
+          <pre><code data-source="one-way"></code></pre>
+        </section>
+
         <!-- ============================== State & events ============================== -->
         <section id="events">
           <p class="eyebrow">Player</p>
@@ -319,6 +364,7 @@
               <tr><td><code>jump</code></td><td><code>{ airJump, wallJump, jumpNumber }</code></td><td>A jump started. <code>airJump</code> is true for extra jumps in the air, and <code>wallJump</code> for jumps off a wall.</td></tr>
               <tr><td><code>land</code></td><td><code>{ fallSpeed }</code></td><td>The player touched the ground after being in the air. Useful for dust particles or fall damage.</td></tr>
               <tr><td><code>dash</code></td><td><code>{ direction, inAir }</code></td><td>A dash started.</td></tr>
+              <tr><td><code>dropThrough</code></td><td><code>{}</code></td><td>The player dropped through a one-way platform (see <a href="#one-way">One-way platforms</a>).</td></tr>
               <tr><td><code>wallSlideStart</code> / <code>wallSlideEnd</code></td><td><code>{ side }</code></td><td>Started or stopped sliding down a wall. <code>side</code> is 1 for a wall on the right and -1 for one on the left.</td></tr>
               <tr><td><code>respawn</code></td><td><code>{ fell }</code></td><td>The player went back to its start position. <code>fell</code> is true if it fell below <code>respawnBelow</code>, and false if you called <code>respawn()</code>.</td></tr>
             </tbody>
@@ -509,6 +555,7 @@ off(); // stop listening</code></pre>
     <script type="module" src="/src/demos/double-jump.ts"></script>
     <script type="module" src="/src/demos/dash.ts"></script>
     <script type="module" src="/src/demos/wall-jump.ts"></script>
+    <script type="module" src="/src/demos/one-way.ts"></script>
     <script type="module" src="/src/demos/events.ts"></script>
     <script type="module" src="/src/demos/remove.ts"></script>
     <script type="module" src="/src/demos/camera.ts"></script>

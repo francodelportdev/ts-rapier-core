@@ -5,12 +5,13 @@ import player from "./demos/player.ts?raw";
 import doubleJump from "./demos/double-jump.ts?raw";
 import dash from "./demos/dash.ts?raw";
 import wallJump from "./demos/wall-jump.ts?raw";
+import oneWay from "./demos/one-way.ts?raw";
 import events from "./demos/events.ts?raw";
 import remove from "./demos/remove.ts?raw";
 import camera from "./demos/camera.ts?raw";
 import shapes from "./demos/shapes.ts?raw";
 
-const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash, "wall-jump": wallJump, events, remove, camera, shapes };
+const SOURCES: Record<string, string> = { main, player, "double-jump": doubleJump, dash, "wall-jump": wallJump, "one-way": oneWay, events, remove, camera, shapes };
 
 // --- Source viewers ---------------------------------------------------------
 for (const el of document.querySelectorAll<HTMLElement>("[data-source]")) {

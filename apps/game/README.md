@@ -9,6 +9,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Player: double jump | [`src/demos/double-jump.ts`](src/demos/double-jump.ts) | `maxJumps: 2` |
 | Player: dash | [`src/demos/dash.ts`](src/demos/dash.ts) | `dash: { speed, duration, cooldown }` |
 | Player: wall jump | [`src/demos/wall-jump.ts`](src/demos/wall-jump.ts) | `wallJump: { slideSpeed, pushSpeed, jumpHeight, controlLock, coyoteTime }`, in a 40 m shaft followed by the camera. |
+| Player: one-way platforms | [`src/demos/one-way.ts`](src/demos/one-way.ts) | `oneWay: true` on platforms and shapes, jump up through them and drop with ↓ + jump, in a 6-level tower. |
 | Player: state & events | [`src/demos/events.ts`](src/demos/events.ts) | `getState()` and `player.on("jump" \| "land" \| "dash" \| "respawn" \| "stateChange")`, shown in a live HUD. |
 | Engine: removing entities | [`src/demos/remove.ts`](src/demos/remove.ts) | Kill plane, `game.removeEntity()` and the `entityRemoved` event, with a live body count. |
 | Engine: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |

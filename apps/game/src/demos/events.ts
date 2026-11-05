@@ -40,6 +40,7 @@ player.on("jump", ({ airJump, wallJump, jumpNumber }) =>
 player.on("land", ({ fallSpeed }) => addLine(`land at ${fallSpeed.toFixed(1)} m/s${fallSpeed > 15 ? " (hard!)" : ""}`));
 player.on("dash", ({ direction, inAir }) => addLine(`dash ${direction > 0 ? "→" : "←"}${inAir ? " (air)" : ""}`));
 player.on("respawn", ({ fell }) => addLine(fell ? "respawn (fell off)" : "respawn"));
+player.on("dropThrough", () => addLine("drop through"));
 
 // R: respawn by hand. respawn() emits the "respawn" event with fell = false.
 canvas.addEventListener("keydown", (e) => {
