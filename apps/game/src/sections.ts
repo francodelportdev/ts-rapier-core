@@ -120,6 +120,11 @@ export const SECTIONS: Section[] = [
     controls: () => [],
   },
   {
+    id: "components", title: "Components", group: "Engine", file: "src/demos/components.ts",
+    load: () => import("./demos/components"), source: () => import("./demos/components.ts?raw"), content: () => import("./content/components.html?raw"),
+    controls: () => [],
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

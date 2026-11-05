@@ -102,6 +102,7 @@ export class Game {
   public addEntity(e: Entity): void {
     if (e.isDestroyed) throw new Error("Cannot add an entity that was already destroyed");
     this.entities.push(e);
+    e.setGame(this);
   }
 
   /**
@@ -186,8 +187,7 @@ export class Game {
     this.destroyed = true;
     this.stop();
     this.listeners.abort();
-    this.entities = [];
-    this.pendingRemovals.clear();
+    this.clear(); // destroys the entities, so their components get onDetach()
     this.world.free();
   }
 
@@ -198,6 +198,7 @@ export class Game {
     this.scenes.update();
     for (const e of this.entities) {
       e.update();
+      e.updateComponents(this.world.timestep);
       e.getSprite()?.animator?.update(this.world.timestep);
     }
     this.world.step();
