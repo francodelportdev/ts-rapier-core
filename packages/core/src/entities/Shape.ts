@@ -3,7 +3,7 @@ import { Entity } from "./Entity";
 import type { CollisionFilter } from "../systems/layers";
 import { registerOneWay, toWorld, unregisterOneWay } from "../systems/oneWay";
 
-import type { Point } from "../systems/oneWay";
+import type { Point } from "../core/Point";
 export type { Point };
 
 /** The geometry of a `Shape`. Sizes are in meters; points are relative to the shape's position. */

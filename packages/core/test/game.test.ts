@@ -53,7 +53,7 @@ describe("Game: removing entities", () => {
     game.addEntity(box);
     game.removeEntity(box);
     expect(game.getEntities()).toHaveLength(0);
-    expect(game.getBodyCount()).toBe(0);
+    expect(game.debug.getStats().bodies).toBe(0);
     expect(removed).toEqual([{ entity: box, reason: "manual" }]);
   });
 
@@ -108,7 +108,7 @@ describe("Game: removing entities", () => {
     stepGame(game, 300);
     expect(removed).toEqual([{ entity: offEdge, reason: "killPlane" }]);
     expect(game.getEntities()).toContain(onGround);
-    expect(game.getBodyCount()).toBe(2);
+    expect(game.debug.getStats().bodies).toBe(2);
   });
 
   test("killPlaneY changes the height, and null disables it", async () => {
@@ -200,7 +200,7 @@ describe("Game: lifecycle safety", () => {
     expect(() => stepGame(game, 3)).not.toThrow();
     expect(box.isDestroyed).toBe(true);
     expect(game.getEntities()).toHaveLength(0);
-    expect(game.getBodyCount()).toBe(0);
+    expect(game.debug.getStats().bodies).toBe(0);
     expect(removed).toEqual([box]);
   });
 
@@ -228,7 +228,7 @@ describe("Game: lifecycle safety", () => {
     keys.down("Space");
     expect(() => stepGame(game, 3)).not.toThrow();
     expect(game.getEntities()).toHaveLength(0);
-    expect(game.getBodyCount()).toBe(0);
+    expect(game.debug.getStats().bodies).toBe(0);
   });
 
   test("game.destroy() from a player event waits for the step to end", async () => {
@@ -263,7 +263,7 @@ describe("Game: lifecycle safety", () => {
     game.addEntity(second);
     game.start();
     expect(() => game["loop"](0)).not.toThrow();
-    expect(game.getBodyCount()).toBe(0);
+    expect(game.debug.getStats().bodies).toBe(0);
   });
 });
 

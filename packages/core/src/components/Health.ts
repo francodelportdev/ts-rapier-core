@@ -45,6 +45,15 @@ export class Health extends Component {
     return this.events.on(event, listener);
   }
 
+  /** Like `on()`, but the listener runs only once. */
+  public once<K extends keyof HealthEvents>(event: K, listener: Listener<HealthEvents[K]>): () => void {
+    return this.events.once(event, listener);
+  }
+
+  public off<K extends keyof HealthEvents>(event: K, listener: Listener<HealthEvents[K]>): void {
+    this.events.off(event, listener);
+  }
+
   /** Takes damage. Returns false if it was ignored (dead or invulnerable). */
   public damage(amount: number): boolean {
     if (amount <= 0 || this.isDead || this.isInvulnerable) return false;
