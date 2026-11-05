@@ -78,6 +78,13 @@ export class Sensor extends Shape {
     return geometry.type === "circle" ? geometry.radius : null;
   }
 
+  protected override onDestroy(): void {
+    const left = [...this.inside];
+    this.inside.clear();
+    for (const entity of left) this.events.emit("exit", { entity });
+    super.onDestroy();
+  }
+
   protected override describeCollider(desc: RAPIER.ColliderDesc): RAPIER.ColliderDesc {
     return desc.setSensor(true);
   }

@@ -56,6 +56,11 @@ export class Animator {
     if (from !== name) this.events.emit("change", { from, to: name });
   }
 
+  /** Every frame number used by any clip. */
+  public get allFrames(): number[] {
+    return [...new Set(Object.values(this.clips).flatMap((clip) => clip.frames))];
+  }
+
   public pause(): void {
     this.paused = true;
   }

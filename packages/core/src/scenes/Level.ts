@@ -32,7 +32,10 @@ export interface LevelData {
   coins?: { x: number; y: number }[];
   /** Options for this level's player, such as `{ "maxJumps": 2 }`. */
   player?: Omit<PlayerOptions, "x" | "y" | "keys">;
-  /** World gravity, in m/s² (positive = down). Default: 9.81. */
+  /**
+   * World gravity, in m/s² (positive = down), for boxes and dynamic shapes. The player has its
+   * own: use `player: { gravity }`. Default: the game's gravity.
+   */
   gravity?: number;
 }
 

@@ -64,7 +64,9 @@ export class Sprite {
   constructor(options: SpriteOptions) {
     this.options = options;
     this.animator = options.animator;
-    options.sheet.frameRect(options.frame ?? 0); // fail now, not on the first draw
+    // Fail now, not on the first draw.
+    options.sheet.frameRect(options.frame ?? 0);
+    for (const frame of options.animator?.allFrames ?? []) options.sheet.frameRect(frame);
   }
 
   /** Changes the mirroring. */

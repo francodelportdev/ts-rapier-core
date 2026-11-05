@@ -25,6 +25,8 @@ export interface GameOptions {
    * `true` draws a line every 1 m. Default: false.
    */
   grid?: boolean | { size?: number; color?: string };
+  /** World gravity, in m/s² (positive = down). `clear()` goes back to it. Default: 9.81. */
+  gravity?: number;
 }
 
 /** Why an entity was removed. */
@@ -53,6 +55,9 @@ export class Game {
   private readonly input = Input.getInstance();
   private killPlaneY: number | null;
   private readonly defaultKillPlaneY: number | null;
+  private readonly defaultGravity: number;
+  /** While entering a scene, listeners go here, to be removed when it ends. */
+  private scopedListeners: (() => void)[] | null = null;
   private readonly events = new EventEmitter<GameEvents>();
   private readonly grid: { size: number; color: string } | null;
   /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
@@ -82,12 +87,15 @@ export class Game {
     const ctx = canvas.getContext("2d");
     if (ctx === null) throw new Error("Could not get 2D canvas context");
     this.ctx = ctx;
-    this.world = new RAPIER.World({ x: 0.0, y: -9.81 });
+    this.defaultGravity = options.gravity ?? 9.81;
+    this.world = new RAPIER.World({ x: 0.0, y: -this.defaultGravity });
     this.debug = new DebugRenderer(this.world);
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
     this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
     this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
+
+    this.camera.update(0, canvas.width, canvas.height); // so conversions work before start()
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
     const { signal } = this.listeners;
@@ -113,6 +121,7 @@ export class Game {
 
   public addEntity(e: Entity): void {
     if (e.isDestroyed) throw new Error("Cannot add an entity that was already destroyed");
+    if (e.getGame() !== null) throw new Error("This entity is already in a game");
     this.entities.push(e);
     e.setGame(this);
   }
@@ -148,7 +157,7 @@ export class Game {
     }
     this.camera.reset();
     this.world.gravity.x = 0;
-    this.world.gravity.y = -9.81;
+    this.world.gravity.y = -this.defaultGravity;
     this.killPlaneY = this.defaultKillPlaneY;
   }
 
@@ -167,8 +176,23 @@ export class Game {
     return this.world.bodies.len();
   }
 
+  /** Subscribes to an event. Inside a scene's `onEnter()`, it lasts until the scene ends. */
   public on<K extends keyof GameEvents>(event: K, listener: Listener<GameEvents[K]>): () => void {
-    return this.events.on(event, listener);
+    const off = this.events.on(event, listener);
+    this.scopedListeners?.push(off);
+    return off;
+  }
+
+  /** @internal Collects the listeners added during `work`, for the scene manager. */
+  public collectListeners(work: () => void): (() => void)[] {
+    const collected: (() => void)[] = [];
+    this.scopedListeners = collected;
+    try {
+      work();
+    } finally {
+      this.scopedListeners = null;
+    }
+    return collected;
   }
 
   public off<K extends keyof GameEvents>(event: K, listener: Listener<GameEvents[K]>): void {
@@ -236,6 +260,7 @@ export class Game {
       }
     });
     if (this.destroyed) return;
+    if (this.isFocused()) this.input.endStep();
     this.flushRemovals();
     this.scenes.flushInstant();
   }

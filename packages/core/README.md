@@ -46,7 +46,7 @@ game.start();
 |---|---|
 | `static async create(canvas: HTMLCanvasElement, options?: GameOptions): Promise<Game>` | Runs `RAPIER.init()` and creates the physics world. Use it instead of `new`, because the world can't exist before the WASM loads. |
 | `getWorld(): RAPIER.World` | The Rapier world. Pass it to entity constructors. |
-| `addEntity(e: Entity): void` | Registers an entity for the game loop. Throws if the entity was already destroyed. |
+| `addEntity(e: Entity): void` | Registers an entity for the game loop. Throws if it was destroyed or is already in a game. |
 | `removeEntity(e: Entity): void` | Takes the entity out of the loop and frees its physics body. It's safe to call anywhere, because the removal waits until the current step ends. Calling it twice has no effect. |
 | `getEntities(): readonly Entity[]` | The entities currently in the game. |
 | `getBodyCount(): number` | How many rigid bodies the physics world has. Useful to check for leaks. |
@@ -67,6 +67,7 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 
 **Options:**
 - `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
+- `gravity` (default `9.81`): world gravity in m/s², positive down. `clear()` goes back to it. The player has its own `gravity` option.
 - `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
@@ -158,7 +159,7 @@ player.get(Health); player.has(Health); player.remove(Health);
 
 A `Component` has `onAttach()`, `update(dt)`, `draw(ctx, scale, centerX, centerY)` and `onDetach()`, and reaches its entity through `this.entity`. An entity has one component per class, and adding a second one throws. `Game` updates them every physics step, and destroying the entity detaches them. `entity.getBody()` returns the Rapier body and `entity.getGame()` the game.
 
-Included: `Health` (`damage`, `heal`, `reset`, `value`, `isDead`, `isInvulnerable`, events `change` and `death`), `Patrol(points, speed)` for kinematic entities, and `Lifetime(seconds)`. `Patrol` doesn't carry a player standing on the entity.
+Included: `Health` (`damage`, `heal`, `reset`, `value`, `isDead`, `isInvulnerable`, events `change` and `death`), `Patrol(points, speed)` for kinematic entities, and `Lifetime(seconds)`. A player standing on a `Patrol` entity rides along, in any direction, so it also works as a moving platform.
 
 ### Debug renderer
 
@@ -192,7 +193,7 @@ game.scenes.go("menu", { fade: 0.3 });
 | `current`, `currentSceneName` | The current scene. |
 | `on("change", ({ from, to }) => …)` | Runs after each change. |
 
-Each change calls `onExit()` and then `game.clear()`, which removes every entity and resets the camera, gravity and kill plane.
+Each change calls `onExit()` and then `game.clear()`, which removes every entity and resets the camera, gravity and kill plane. `this.game.on()` inside `onEnter()` ends with the scene. For other subscriptions, use `this.listen(off)`, as in `this.listen(health.on("death", ...))`.
 
 `new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Required fields are checked with `validateLevel()`, which throws an error naming the level.
 
@@ -352,6 +353,7 @@ events.emit("hit", { damage: 10 });
 const input = Input.getInstance();
 input.isPressed("ArrowLeft");             // boolean, uses KeyboardEvent.code
 input.isAnyPressed(["ArrowLeft", "KeyA"]); // true if any of them is pressed
+input.endStep();                          // Game calls it: a quick tap lasts one step
 input.setEnabled(false);                  // every key reads as not pressed
 ```
 
@@ -422,6 +424,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `animation.test.ts` | `Animator` timing, loops, `next` and events, `SpriteSheet`, `Sprite` drawing, `render()`, and `animatePlayer` |
 | `components.test.ts` | Adding and removing, lifecycle, `Health`, `Lifetime` and `Patrol` |
 | `debug.test.ts` | Outlines of each shape, colors, parts on and off, velocity arrows, stats and `Game` integration |
+| `regressions.test.ts` | Quick taps, scene listeners, validation, moving platforms and other fixed bugs |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

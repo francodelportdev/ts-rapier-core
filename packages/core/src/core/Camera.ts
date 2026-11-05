@@ -107,7 +107,7 @@ export class Camera {
 
   /** Jumps straight to the followed target, skipping smoothing. Call it after a respawn or a teleport. */
   public snapToTarget(): void {
-    if (this.target === null) return;
+    if (this.target === null || this.target.isDestroyed) return;
     const p = this.target.getPosition();
     this.moveTo(p.x + this.offset.x, p.y + this.offset.y);
   }

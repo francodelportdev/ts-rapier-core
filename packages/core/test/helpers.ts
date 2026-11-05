@@ -51,6 +51,7 @@ export function simulate(
     onStep?.(i);
     for (const e of entities) e.update();
     world.step();
+    Input.getInstance().endStep();
   }
 }
 
@@ -65,6 +66,7 @@ export function simulateUntil(
     if (done()) return i;
     for (const e of entities) e.update();
     world.step();
+    Input.getInstance().endStep();
   }
   throw new Error(`Condition not reached after ${maxSteps} steps`);
 }

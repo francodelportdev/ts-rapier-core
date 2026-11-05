@@ -114,6 +114,7 @@ export class SceneManager {
     this.pending = null;
     const from = this.currentName;
     this.scene?.onExit();
+    this.scene?.runCleanups();
     this.game.clear();
 
     const scene = this.factories.get(next.name)!();
@@ -121,7 +122,8 @@ export class SceneManager {
     this.scene = scene;
     this.currentName = next.name;
     this.lastData = next.data;
-    scene.onEnter(next.data as never);
+    const listeners = this.game.collectListeners(() => scene.onEnter(next.data as never));
+    for (const off of listeners) scene["listen"](off);
     this.game.camera.snapToTarget();
     this.events.emit("change", { from, to: next.name });
   }

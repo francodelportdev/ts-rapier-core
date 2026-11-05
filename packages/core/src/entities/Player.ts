@@ -214,6 +214,15 @@ const MIN_AIR_TIME = 0.05;
 /** How far beside the player to look for a wall, in meters. */
 const WALL_PROBE = 0.05;
 
+/** Leaves out undefined values, and rejects anything that would turn the physics into NaN. */
+function numbersOnly<T extends object>(values: T): Partial<T> {
+  const entries = Object.entries(values).filter(([, value]) => value !== undefined);
+  for (const [key, value] of entries) {
+    if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`Invalid value for "${key}": ${String(value)}`);
+  }
+  return Object.fromEntries(entries) as Partial<T>;
+}
+
 /** Moves `current` towards `target` by at most `maxDelta`. */
 function approach(current: number, target: number, maxDelta: number): number {
   return current < target ? Math.min(current + maxDelta, target) : Math.max(current - maxDelta, target);
@@ -253,6 +262,8 @@ export class Player extends Entity<ResolvedOptions> {
   private groundProbe: RAPIER.Cuboid | null = null;
   /** True while standing on a one-way platform. */
   private onOneWay = false;
+  /** The kinematic body under the player, and its height last step, to ride it downwards. */
+  private ridden: { handle: number; y: number } | null = null;
   /** While above 0, one-way platforms are ignored (dropping through). */
   private dropTimer = 0;
   /** The player's bottom edge before this step's move, for the one-way filter. */
@@ -299,9 +310,9 @@ export class Player extends Entity<ResolvedOptions> {
    */
   public configure(tuning: PlayerTuning): void {
     const { dash, wallJump, ...rest } = tuning;
-    Object.assign(this.options, rest);
-    if (dash && this.options.dash) Object.assign(this.options.dash, dash);
-    if (wallJump && this.options.wallJump) Object.assign(this.options.wallJump, wallJump);
+    Object.assign(this.options, numbersOnly(rest));
+    if (dash && this.options.dash) Object.assign(this.options.dash, numbersOnly(dash));
+    if (wallJump && this.options.wallJump) Object.assign(this.options.wallJump, numbersOnly(wallJump));
     if (rest.maxSlope !== undefined) this.applyMaxSlope();
   }
 
@@ -528,6 +539,7 @@ export class Player extends Entity<ResolvedOptions> {
     // --- Move with collisions -----------------------------------------------
     const collider = this.body.collider(0);
     const desired = { x: this.vx * dt, y: this.vy * dt };
+    desired.y += this.rideDown();
     const start = this.body.translation();
     this.filterBounds = {
       left: start.x - o.halfWidth,
@@ -582,6 +594,16 @@ export class Player extends Entity<ResolvedOptions> {
     return false;
   }
 
+  /**
+   * How far the kinematic body under the player sank since the last step. Without following
+   * it, gravity would need time to catch up, and the player couldn't jump in the meantime.
+   */
+  private rideDown(): number {
+    if (this.ridden === null || this.vy > 0) return 0;
+    const body = this.world.getRigidBody(this.ridden.handle);
+    return body ? Math.min(0, body.translation().y - this.ridden.y) : 0;
+  }
+
   /** True if the surface right below the player (after `moved`) is no steeper than maxSlope. */
   private onWalkableGround(moved: RAPIER.Vector): boolean {
     const { halfWidth, halfHeight } = this.options;
@@ -602,6 +624,8 @@ export class Player extends Entity<ResolvedOptions> {
       this.solidFilter,
     );
     this.onOneWay = hit !== null && isOneWay(this.world, hit.collider);
+    const under = hit?.collider.parent();
+    this.ridden = under?.isKinematic() ? { handle: under.handle, y: under.translation().y } : null;
     // For shape casts, normal1 is the outward normal of the surface that was hit.
     return hit !== null && hit.normal1.y >= this.minWallNormalY - 1e-3;
   }

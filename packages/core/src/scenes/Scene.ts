@@ -9,9 +9,23 @@ import type { Game } from "../core/Game";
 export abstract class Scene<TData = void> {
   /** Set by the scene manager before `onEnter()`. */
   public game!: Game;
+  private readonly cleanups: (() => void)[] = [];
 
   protected get world(): RAPIER.World {
     return this.game.getWorld();
+  }
+
+  /**
+   * Keeps a subscription until the scene ends: `this.listen(health.on("death", ...))`.
+   * `this.game.on()` inside `onEnter()` is already handled.
+   */
+  protected listen(off: () => void): void {
+    this.cleanups.push(off);
+  }
+
+  /** @internal Called by the scene manager when the scene ends. */
+  public runCleanups(): void {
+    for (const off of this.cleanups.splice(0)) off();
   }
 
   /** Builds the scene. `data` is what `game.scenes.go()` received. */
