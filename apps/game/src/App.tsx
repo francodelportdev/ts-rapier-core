@@ -88,6 +88,9 @@ function Switch({ toggle, onRelease }: { toggle: Toggle; onRelease: () => void }
   );
 }
 
+/** The "debug view" switch, remembered across pages. */
+let debugView = false;
+
 /** Runs a demo on its own canvas, and destroys it when the page changes or on reset. */
 function DemoView({ section, onReset }: { section: Section; onReset: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -111,6 +114,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       const started = await start(canvas, ui);
       if (cancelled) return started.game.destroy();
       running = started;
+      if (debugView) started.game.debug.enabled = true;
       setDemo(started);
       canvas.focus({ preventScroll: true });
     });
@@ -122,7 +126,15 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
 
   const focusCanvas = () => canvasRef.current?.focus({ preventScroll: true });
   const controls = [...(demo?.player ? section.controls({ ...demo, player: demo.player }) : []), ...(demo?.sliders ?? [])];
-  const toggles = demo?.toggles ?? [];
+  const debugToggle = demo && {
+    label: "debug view",
+    value: demo.game.debug.enabled,
+    set: (on: boolean) => {
+      debugView = on;
+      demo.game.debug.enabled = on;
+    },
+  };
+  const toggles = [...(demo?.toggles ?? []), ...(debugToggle ? [debugToggle] : [])];
 
   return (
     <>

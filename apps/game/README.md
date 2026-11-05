@@ -18,6 +18,7 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Engine: sensors & triggers | [`src/demos/sensors.ts`](src/demos/sensors.ts) | A pressure plate that opens a gate, a radar that follows the player, and a one-shot goal. |
 | Engine: animations | [`src/demos/animations.ts`](src/demos/animations.ts) | `SpriteSheet`, `Animator`, `Sprite` and `animatePlayer()`, with a sheet drawn by code. |
 | Engine: components | [`src/demos/components.ts`](src/demos/components.ts) | `Health`, `Patrol` and `Lifetime`, plus two components written in the demo. |
+| Engine: debug renderer | [`src/demos/debug.ts`](src/demos/debug.ts) | `game.debug`, with every kind of body and two invisible sensors. All demos also have a "debug view" switch. |
 | Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.
