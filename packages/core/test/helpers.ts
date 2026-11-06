@@ -87,7 +87,7 @@ export function createCanvas(): HTMLCanvasElement {
     focus(): void {
       fakeDocument.activeElement = canvas;
     },
-    getContext: () => ({ fillStyle: "", clearRect(): void {}, fillRect(): void {}, save(): void {}, restore(): void {} }),
+    getContext: () => ({ fillStyle: "", clearRect(): void {}, fillRect(): void {}, save(): void {}, restore(): void {}, setTransform(): void {} }),
   };
   return canvas as unknown as HTMLCanvasElement;
 }

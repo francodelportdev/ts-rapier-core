@@ -52,6 +52,8 @@ game.start();
 | `on("entityRemoved", ({ entity, reason }) => …)` | Runs after each removal. `reason` is `"manual"` or `"killPlane"`. Returns a function that unsubscribes. `off()` is also available. |
 | `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
+| `width`, `height` | The size to work with, in pixels, whatever the pixel ratio. Use them instead of `canvas.width`. |
+| `resize(width, height)` | Changes the size of the view. |
 | `isFocused(): boolean` | True while the canvas has keyboard focus. |
 | `destroy(): void` | Stops the game for good: ends the loop, removes its canvas listeners and frees the physics world. Don't use the game or its entities afterwards. |
 | `clear(): void` | Removes every entity and resets the camera, gravity and kill plane. |
@@ -69,6 +71,7 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 - `gravity` (default `9.81`): world gravity in m/s², positive down. `clear()` goes back to it. The player has its own `gravity` option.
 - `scale` (default `30`): pixels per meter at zoom 1.
 - `background` (default transparent): canvas color behind everything.
+- `maxPixelRatio` (default `2`): renders sharply on high-density screens, up to this ratio. `1` turns it off.
 - `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
@@ -441,6 +444,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `debug.test.ts` | Outlines of each shape, colors, parts on and off, velocity arrows, stats and `Game` integration |
 | `regressions.test.ts` | Quick taps, scene listeners, validation, moving platforms and other fixed bugs |
 | `pointer.test.ts` | Positions, CSS scaling, edges, several fingers, events, and on-screen buttons moving the player |
+| `resolution.test.ts` | Pixel ratio, its limit, screen changes, `resize()`, and pointer and buttons staying in the same coordinates |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

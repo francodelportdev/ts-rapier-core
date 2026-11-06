@@ -33,6 +33,11 @@ export interface GameOptions {
   scale?: number;
   /** Canvas color behind everything. Default: transparent. */
   background?: string;
+  /**
+   * Highest pixel ratio to render at. Screens with more pixels than CSS pixels look sharp up to
+   * this value; 1 turns it off. Higher values cost more to draw. Default: 2.
+   */
+  maxPixelRatio?: number;
 }
 
 /** Why an entity was removed. */
@@ -67,6 +72,10 @@ export class Game {
   private readonly events = new EventEmitter<GameEvents>();
   private readonly grid: { size: number; color: string } | null;
   private readonly background: string | null;
+  /** The size everything works in, in canvas pixels. Not `canvas.width`, which also has the pixel ratio. */
+  private readonly view: { width: number; height: number };
+  private readonly maxPixelRatio: number;
+  private pixelRatio = 1;
   /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
   public readonly camera: Camera;
   /** Switches between scenes, such as a menu and levels. Optional: a game can use none. */
@@ -108,12 +117,16 @@ export class Game {
     const grid = options.grid === true ? {} : options.grid || null;
     this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
 
-    this.camera.update(0, canvas.width, canvas.height); // so conversions work before start()
+    this.view = { width: canvas.width, height: canvas.height };
+    this.maxPixelRatio = options.maxPixelRatio ?? 2;
+    this.keepDisplaySize();
+    this.syncResolution();
+    this.camera.update(0, this.view.width, this.view.height); // so conversions work before start()
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
     const { signal } = this.listeners;
-    this.pointer = new Pointer(canvas, this.camera, signal);
-    this.touch = new TouchControls(canvas, this.input, this.pointer);
+    this.pointer = new Pointer(canvas, this.view, this.camera, signal);
+    this.touch = new TouchControls(canvas, this.view, this.input, this.pointer);
     canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }), { signal });
     canvas.addEventListener(
       "keydown",
@@ -128,6 +141,23 @@ export class Game {
     rapierReady ??= RAPIER.init();
     await rapierReady;
     return new Game(canvas, options);
+  }
+
+  /** The canvas size to work with, in pixels, whatever the screen's pixel ratio. */
+  public get width(): number {
+    return this.view.width;
+  }
+
+  public get height(): number {
+    return this.view.height;
+  }
+
+  /** Changes the size of the game's view, in pixels. */
+  public resize(width: number, height: number): void {
+    this.view.width = width;
+    this.view.height = height;
+    this.applyResolution();
+    this.camera.update(0, width, height);
   }
 
   public getWorld(): RAPIER.World {
@@ -228,7 +258,7 @@ export class Game {
       this.canvas.focus({ preventScroll: true });
     }
     this.lastTime = null;
-    this.camera.update(0, this.canvas.width, this.canvas.height);
+    this.camera.update(0, this.view.width, this.view.height);
     this.camera.snapToTarget();
     this.rafId = requestAnimationFrame(this.loop);
   }
@@ -272,7 +302,7 @@ export class Game {
         e.getSprite()?.animator?.update(this.world.timestep);
       }
       this.world.step();
-      this.camera.update(this.world.timestep, this.canvas.width, this.canvas.height);
+      this.camera.update(this.world.timestep, this.view.width, this.view.height);
 
       if (this.killPlaneY !== null) {
         for (const e of this.entities) {
@@ -349,12 +379,12 @@ export class Game {
     for (let x = Math.floor(view.minX / size) * size; x <= view.maxX; x += size) {
       const { px } = this.camera.worldToScreen(x, 0);
       ctx.moveTo(Math.round(px) + 0.5, 0);
-      ctx.lineTo(Math.round(px) + 0.5, this.canvas.height);
+      ctx.lineTo(Math.round(px) + 0.5, this.view.height);
     }
     for (let y = Math.floor(view.minY / size) * size; y <= view.maxY; y += size) {
       const { py } = this.camera.worldToScreen(0, y);
       ctx.moveTo(0, Math.round(py) + 0.5);
-      ctx.lineTo(this.canvas.width, Math.round(py) + 0.5);
+      ctx.lineTo(this.view.width, Math.round(py) + 0.5);
     }
     ctx.stroke();
     ctx.restore();
@@ -379,8 +409,33 @@ export class Game {
     if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
   };
 
+  /**
+   * A canvas without CSS sizing displays at its attribute size, so raising the attributes would
+   * enlarge it. Pin that size; one sized by CSS (like `width: 100%`) stays responsive.
+   */
+  private keepDisplaySize(): void {
+    const canvas = this.canvas;
+    if (typeof getComputedStyle !== "function" || (canvas.style.width ?? "") !== "") return;
+    if (getComputedStyle(canvas).width !== `${canvas.width}px`) return;
+    canvas.style.width = `${canvas.width}px`;
+    canvas.style.height = `${canvas.height}px`;
+  }
+
+  private syncResolution(): void {
+    const ratio = Math.min(globalThis.devicePixelRatio ?? 1, this.maxPixelRatio);
+    if (ratio !== this.pixelRatio || this.canvas.width !== Math.round(this.view.width * ratio)) this.applyResolution();
+  }
+
+  private applyResolution(): void {
+    this.pixelRatio = Math.min(globalThis.devicePixelRatio ?? 1, this.maxPixelRatio);
+    this.canvas.width = Math.round(this.view.width * this.pixelRatio);
+    this.canvas.height = Math.round(this.view.height * this.pixelRatio);
+  }
+
   private render(): void {
-    const { width, height } = this.canvas;
+    this.syncResolution(); // the window may have moved to another screen
+    const { width, height } = this.view;
+    this.ctx.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
     this.ctx.clearRect(0, 0, width, height);
     if (this.background !== null) {
       this.ctx.fillStyle = this.background;
