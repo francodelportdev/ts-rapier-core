@@ -204,6 +204,15 @@ game.audio.playMusic("theme", { fade: 1 });
 - `synth(name, { wave, frequency, endFrequency, duration, volume })` makes a sound with no file. `frequency` can be a list of notes.
 - Unknown names throw. Without Web Audio, everything does nothing.
 
+### Gamepad
+
+```ts
+game.gamepad.enabled = true;
+game.gamepad.setMapping({ buttons: { Space: [2] }, moveAxes: [[0, 1], [6, 7]] }); // pads with their own layout
+```
+
+A pad presses keyboard keys, so `Player` works unchanged. By default, button 0 is jump, 2 is dash, the D-pad (13–15) and axes 0 and 1 move. Generic USB pads often have their own layout: `getState()` returns `{ id, mapping, pressed, axes }` to find the numbers. Also `isConnected`, `deadZone` and `vibrate(seconds, strength)`. Browsers reveal a pad only after a button press. Only the first pad is read, and only by the focused game.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -464,6 +473,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `resolution.test.ts` | Pixel ratio, its limit, screen changes, `resize()`, and pointer and buttons staying in the same coordinates |
 | `interpolation.test.ts` | Entities and the camera drawn between steps, rotation, teleports, frozen scenes and turning it off |
 | `audio.test.ts` | Synthesis, locking, effects, music, fades, volumes and `Game` integration, with a fake Web Audio |
+| `gamepad.test.ts` | Buttons, dead zone, custom layouts, unplugging, focus and rumble, with a fake pad |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |

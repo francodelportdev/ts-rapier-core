@@ -117,6 +117,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       running = started;
       if (debugView) started.game.debug.enabled = true;
       started.game.touch.enabled = true; // every demo can be played on a touch screen
+      started.game.gamepad.enabled = true; // and with a gamepad
       if (started.player?.getTuning().dash) started.game.touch.addButton({ key: "KeyX", label: "»", x: -116, y: -42 });
       setDemo(started);
       canvas.focus({ preventScroll: true });

@@ -38,6 +38,8 @@ export { Lifetime } from "./components/Lifetime";
 export { Patrol } from "./components/Patrol";
 export { AudioManager } from "./systems/Audio";
 export type { SynthOptions, PlayOptions, MusicOptions, SoundHandle } from "./systems/Audio";
+export { GamepadInput } from "./systems/GamepadInput";
+export type { GamepadMapping, GamepadSnapshot } from "./systems/GamepadInput";
 export { Input } from "./systems/Input";
 export { Pointer } from "./systems/Pointer";
 export type { PointerInfo, PointerEvents } from "./systems/Pointer";
