@@ -97,7 +97,9 @@ export class DebugRenderer {
         ctx.arc(0, 0, c.radius() * scale, 0, Math.PI * 2);
         break;
       case RAPIER.ShapeType.Cuboid: {
-        const { x, y } = c.halfExtents();
+        const extents = c.halfExtents();
+        if (extents === null) break;
+        const { x, y } = extents;
         ctx.rect(-x * scale, -y * scale, x * 2 * scale, y * 2 * scale);
         break;
       }

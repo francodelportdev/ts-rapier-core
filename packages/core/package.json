@@ -30,7 +30,7 @@
     "prepublishOnly": "bun run typecheck && bun test && bun run build"
   },
   "dependencies": {
-    "@dimforge/rapier2d-compat": "^0.14.0"
+    "@dimforge/rapier2d-compat": "^0.21.0"
   },
   "devDependencies": {
     "typescript": "~7.0.2"

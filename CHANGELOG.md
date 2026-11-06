@@ -11,6 +11,9 @@
 
 ### Changed
 - `canvas.width` now includes the pixel ratio: use `game.width`
+- Rapier 0.21
+- A grounded player no longer presses into the floor, which made it stutter on Rapier 0.21
+- The player rides the kinematic body under it explicitly, sideways and downwards
 
 ## 0.2.0
 
