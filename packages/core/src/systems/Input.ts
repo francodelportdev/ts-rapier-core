@@ -50,6 +50,11 @@ export class Input {
     return codes.some((code) => this.isPressed(code));
   }
 
+  /** True if any of the keys is held from code, by on-screen buttons or a gamepad. */
+  public isAnyHeldFromCode(codes: readonly string[]): boolean {
+    return this.enabled && codes.some((code) => this.virtual.has(code) || this.virtualTaps.has(code));
+  }
+
   /** Holds a key from code, as if it were pressed on the keyboard. On-screen buttons use it. */
   public press(code: string): void {
     this.virtual.add(code);

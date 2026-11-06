@@ -19,6 +19,14 @@
 - A grounded player no longer presses into the floor, which made it stutter on Rapier 0.21
 - The player rides the kinematic body under it explicitly, sideways and downwards
 
+### Fixed
+- The player no longer flies off when leaving a moving platform
+- `game.destroy()` ends the current scene: `onExit()` and its cleanups run
+- A canvas can be reused by a new game without doubling its size on high-density screens
+- `game.resize()` also changes the displayed size of a canvas without CSS sizing
+- `stop()` and `start()` from a listener no longer leave two loops running
+- On-screen buttons and gamepads work with a player that has its own `keys`
+
 ## 0.2.0
 
 ### Added

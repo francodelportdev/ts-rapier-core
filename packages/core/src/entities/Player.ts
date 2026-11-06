@@ -412,6 +412,7 @@ export class Player extends Entity<ResolvedOptions> {
     this.controlLockTimer = 0;
     this.wallCoyoteTimer = 0;
     this.dropTimer = 0;
+    this.ridden = null;
     this.setWallSlide(0);
   }
 
@@ -439,20 +440,24 @@ export class Player extends Entity<ResolvedOptions> {
   }
 
   private readInput() {
-    const { keys } = this.options;
-    const inputDir = (this.input.isAnyPressed(keys.right) ? 1 : 0) - (this.input.isAnyPressed(keys.left) ? 1 : 0);
+    const inputDir = (this.isActionDown("right") ? 1 : 0) - (this.isActionDown("left") ? 1 : 0);
     // Right after a wall jump, the arrow keys are ignored so the player can't steer back into the wall.
     this.controlLockTimer = Math.max(0, this.controlLockTimer - this.world.timestep);
     const locked = this.controlLockTimer > 0;
     const dir = locked ? 0 : inputDir;
-    const jumpDown = this.input.isAnyPressed(keys.jump);
-    const dashDown = this.input.isAnyPressed(keys.dash);
+    const jumpDown = this.isActionDown("jump");
+    const dashDown = this.isActionDown("dash");
     const jumpPressed = jumpDown && !this.jumpHeld; // true only on the step the key goes down
     const dashPressed = dashDown && !this.dashHeld;
     this.jumpHeld = jumpDown;
     this.dashHeld = dashDown;
     if (dir !== 0) this.facing = dir > 0 ? 1 : -1;
     return { dir, locked, jumpDown, jumpPressed, dashPressed };
+  }
+
+  /** The player's own keys, or the default ones held from code: touch and gamepads press those. */
+  private isActionDown(action: keyof PlayerKeys): boolean {
+    return this.input.isAnyPressed(this.options.keys[action]) || this.input.isAnyHeldFromCode(DEFAULT_KEYS[action]);
   }
 
   private tickTimers(jumpPressed: boolean): void {
@@ -519,7 +524,7 @@ export class Player extends Entity<ResolvedOptions> {
     const wallSide = wall !== 0 ? wall : this.wallCoyoteTimer > 0 ? this.lastWallSide : 0;
     const canAirJump = !canGroundJump && this.jumpsUsed < o.maxJumps && (this.jumpsUsed > 0 || o.maxJumps > 1);
 
-    if (this.grounded && this.onOneWay && this.input.isAnyPressed(o.keys.down)) {
+    if (this.grounded && this.onOneWay && this.isActionDown("down")) {
       this.dropThrough();
     } else if (o.wallJump && !canGroundJump && wallSide !== 0) {
       this.wallJumpFrom(wallSide, o.wallJump);
@@ -596,6 +601,7 @@ export class Player extends Entity<ResolvedOptions> {
     // The controller also reports "grounded" when a corner of the box rests on a steep surface,
     // which would let the player stand on (and jump up) walls. Only walkable ground counts.
     this.grounded = this.controller.computedGrounded() && this.onWalkableGround(moved);
+    if (!this.grounded) this.ridden = null; // its last position would be stale when falling
     const prevAirTime = this.airTime;
     this.airTime = this.grounded ? 0 : this.airTime + dt;
 
