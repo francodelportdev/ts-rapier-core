@@ -84,6 +84,19 @@ export class SceneManager {
     this.events.off(event, listener);
   }
 
+  /** @internal Ends the current scene for good. Called by `Game` on `destroy()`. */
+  public shutdown(): void {
+    const scene = this.scene;
+    this.pending = null;
+    this.scene = null;
+    this.currentName = null;
+    try {
+      scene?.onExit();
+    } finally {
+      scene?.runCleanups();
+    }
+  }
+
   /** @internal Advances fades. Returns true while the physics must stay frozen. */
   public tick(dt: number): boolean {
     if (this.pending !== null && this.pending.fade > 0) {

@@ -18,6 +18,9 @@ const MAX_FRAME_TIME = 0.25;
 
 let rapierReady: Promise<void> | null = null;
 
+/** Canvases whose CSS size the engine set, so it has to follow `resize()`, also in a later game. */
+const pinnedCanvases = new WeakSet<HTMLCanvasElement>();
+
 export interface GameOptions {
   /**
    * Entities whose center falls below this Y (meters) are removed automatically, so objects
@@ -178,6 +181,7 @@ export class Game {
   public resize(width: number, height: number): void {
     this.view.width = width;
     this.view.height = height;
+    if (pinnedCanvases.has(this.canvas)) this.pinDisplaySize();
     this.applyResolution();
     this.camera.update(0, width, height);
   }
@@ -303,12 +307,14 @@ export class Game {
     }
     this.destroyed = true;
     this.stop();
+    this.guard(() => this.scenes.shutdown()); // a failing onExit() can't leave the game half destroyed
     this.listeners.abort();
     this.touch.releaseAll();
     this.gamepad.releaseAll();
     this.audio.destroy();
     this.clear(); // destroys the entities, so their components get onDetach()
     this.world.free();
+    this.releaseCanvas();
   }
 
   /** Runs one physics step: update every entity, step the world, then apply removals. */
@@ -417,6 +423,7 @@ export class Game {
   }
 
   private readonly loop = (time: number): void => {
+    const frame = this.rafId;
     const frameTime = this.lastTime === null ? 0 : Math.min((time - this.lastTime) / 1000, MAX_FRAME_TIME);
     this.lastTime = time;
     this.accumulator += frameTime;
@@ -440,7 +447,8 @@ export class Game {
       );
     }
     if (!this.destroyed) this.guard(() => this.events.emit("frame", {}));
-    if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
+    // A listener may have stopped the game, or restarted it, which already asked for a frame.
+    if (frame !== null && this.rafId === frame) this.rafId = requestAnimationFrame(this.loop);
   };
 
   /**
@@ -451,8 +459,19 @@ export class Game {
     const canvas = this.canvas;
     if (typeof getComputedStyle !== "function" || (canvas.style.width ?? "") !== "") return;
     if (getComputedStyle(canvas).width !== `${canvas.width}px`) return;
-    canvas.style.width = `${canvas.width}px`;
-    canvas.style.height = `${canvas.height}px`;
+    pinnedCanvases.add(canvas);
+    this.pinDisplaySize();
+  }
+
+  private pinDisplaySize(): void {
+    this.canvas.style.width = `${this.view.width}px`;
+    this.canvas.style.height = `${this.view.height}px`;
+  }
+
+  /** Leaves the canvas as it was found, without the pixel ratio, so another game can use it. */
+  private releaseCanvas(): void {
+    this.canvas.width = this.view.width;
+    this.canvas.height = this.view.height;
   }
 
   private syncResolution(): void {

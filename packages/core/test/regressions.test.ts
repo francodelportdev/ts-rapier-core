@@ -294,3 +294,180 @@ describe("Landing", () => {
     expect(player.getPosition().y).toBeCloseTo(-3.75, 1);
   });
 });
+
+describe("Leaving a moving platform", () => {
+  async function ride() {
+    const game = await createGame({ killPlaneY: null });
+    const world = game.getWorld();
+    const platform = new Shape(world, { x: 0, y: -5, body: "kinematic", geometry: { type: "box", width: 6, height: 1 } });
+    platform.add(new Patrol([{ x: 0, y: -5 }, { x: 30, y: -5 }], 4));
+    const player = new Player(world, { x: 0, y: -3.49, respawnBelow: -1000 });
+    game.addEntity(platform);
+    game.addEntity(player);
+    game.start();
+    keys.reset();
+    stepGame(game, 60);
+    expect(player.isGrounded()).toBe(true);
+    return { game, player };
+  }
+
+  function largestStep(game: Game, player: Player, steps: number): number {
+    let largest = 0;
+    for (let i = 0; i < steps; i++) {
+      const before = player.getPosition().x;
+      stepGame(game);
+      largest = Math.max(largest, Math.abs(player.getPosition().x - before));
+    }
+    return largest;
+  }
+
+  test("jumping off doesn't throw the player sideways", async () => {
+    const { game, player } = await ride();
+    keys.down("Space");
+    expect(largestStep(game, player, 70)).toBeLessThan(0.2);
+  });
+
+  test("walking off the edge doesn't throw the player sideways", async () => {
+    const { game, player } = await ride();
+    keys.down("ArrowRight");
+    expect(largestStep(game, player, 120)).toBeLessThan(0.3);
+  });
+});
+
+describe("Game lifecycle", () => {
+  const globals = globalThis as unknown as Record<string, unknown>;
+
+  test("destroy() ends the current scene", async () => {
+    const calls: string[] = [];
+    class Level extends Scene {
+      override onEnter() {
+        this.listen(() => calls.push("cleanup"));
+      }
+      override onExit() {
+        calls.push("exit");
+      }
+    }
+    const game = await Game.create(createCanvas());
+    game.scenes.add("level", () => new Level());
+    game.scenes.go("level");
+    game.destroy();
+    expect(calls).toEqual(["exit", "cleanup"]);
+    expect(game.scenes.current).toBeNull();
+  });
+
+  test("a failing onExit() still destroys the game and runs the cleanups", async () => {
+    let cleaned = false;
+    class Level extends Scene {
+      override onEnter() {
+        this.listen(() => (cleaned = true));
+      }
+      override onExit() {
+        throw new Error("expected in this test");
+      }
+    }
+    const game = await Game.create(createCanvas());
+    game.scenes.add("level", () => new Level());
+    game.scenes.go("level");
+    game.destroy();
+    expect(cleaned).toBe(true);
+    expect(game.isRunning()).toBe(false);
+  });
+
+  test("a canvas can be reused on a high-density screen", async () => {
+    globals.devicePixelRatio = 2;
+    try {
+      const canvas = createCanvas();
+      (await Game.create(canvas)).destroy();
+      const second = await Game.create(canvas);
+      expect(second.width).toBe(800);
+      expect(canvas.width).toBe(1600);
+      second.destroy();
+    } finally {
+      delete globals.devicePixelRatio;
+    }
+  });
+
+  test("resize() changes the size of a canvas without CSS sizing, also on a reused canvas", async () => {
+    globals.getComputedStyle = (c: HTMLCanvasElement) => ({ width: c.style.width || `${c.width}px` });
+    try {
+      const canvas = createCanvas();
+      const first = await Game.create(canvas);
+      first.resize(1000, 300);
+      expect([canvas.style.width, canvas.style.height]).toEqual(["1000px", "300px"]);
+      first.destroy();
+      const second = await Game.create(canvas);
+      second.resize(640, 360);
+      expect([canvas.style.width, canvas.style.height]).toEqual(["640px", "360px"]);
+      second.destroy();
+    } finally {
+      delete globals.getComputedStyle;
+    }
+  });
+
+  test("resize() leaves a canvas sized by CSS alone", async () => {
+    globals.getComputedStyle = () => ({ width: "100%" });
+    try {
+      const canvas = createCanvas();
+      const game = await Game.create(canvas);
+      game.resize(1000, 300);
+      expect(canvas.style.width).toBeUndefined();
+      game.destroy();
+    } finally {
+      delete globals.getComputedStyle;
+    }
+  });
+
+  test("stop() and start() from a listener keep a single loop", async () => {
+    const original = { request: globalThis.requestAnimationFrame, cancel: globalThis.cancelAnimationFrame };
+    const pending = new Map<number, FrameRequestCallback>();
+    let nextId = 0;
+    globalThis.requestAnimationFrame = (callback) => {
+      pending.set(++nextId, callback);
+      return nextId;
+    };
+    globalThis.cancelAnimationFrame = (id) => void pending.delete(id);
+    try {
+      const game = await createGame();
+      game.once("frame", () => {
+        game.stop();
+        game.start();
+      });
+      game.start();
+      for (let frame = 0; frame < 3; frame++) {
+        const callbacks = [...pending.values()];
+        pending.clear();
+        for (const callback of callbacks) callback(frame * 16);
+        expect(pending.size).toBe(1);
+      }
+      game.stop();
+      expect(pending.size).toBe(0);
+    } finally {
+      globalThis.requestAnimationFrame = original.request;
+      globalThis.cancelAnimationFrame = original.cancel;
+    }
+  });
+});
+
+describe("A player with its own keys", () => {
+  test("still follows on-screen buttons and gamepads", () => {
+    const world = createWorld();
+    const player = new Player(world, { keys: { left: ["KeyJ"], right: ["KeyL"], jump: ["KeyK"] } });
+    const entities = [new Ground(world), player];
+    simulate(world, entities, 10);
+    const input = Input.getInstance();
+    input.press("ArrowRight");
+    simulate(world, entities, 20);
+    input.release("ArrowRight");
+    expect(player.getVelocity().x).toBeGreaterThan(0);
+  });
+
+  test("doesn't take the default keys from the keyboard", () => {
+    const world = createWorld();
+    const player = new Player(world, { keys: { right: ["KeyL"] } });
+    const entities = [new Ground(world), player];
+    simulate(world, entities, 10);
+    keys.down("ArrowRight");
+    simulate(world, entities, 20);
+    expect(player.getVelocity().x).toBe(0);
+  });
+});
