@@ -21,7 +21,7 @@ game.gamepad.vibrate(0.2, 0.6); // seconds and strength, if the pad can</code></
 <p>Well-known pads are reported as <code>"standard"</code>, with the same numbers everywhere. Many generic USB pads have their own layout, and numbers vary with the model and the system. Press each control here, note the numbers in the label, and map them:</p>
 <pre><code>game.gamepad.setMapping({
   buttons: { Space: [2], KeyX: [3], ArrowDown: [] },
-  moveAxes: [[0, 1], [6, 7]],  // the stick, and a D-pad reported as axes
+  moveAxes: [[0, 1], [5, 6]],  // the stick, and a D-pad reported as axes
 });</code></pre>
 <table>
   <thead><tr><th>Field</th><th>Default</th><th>Description</th></tr></thead>
@@ -31,4 +31,4 @@ game.gamepad.vibrate(0.2, 0.6); // seconds and strength, if the pad can</code></
     <tr><td><code>directions</code></td><td>←, → and ↓</td><td>The keys for each direction. Up presses nothing by default.</td></tr>
   </tbody>
 </table>
-<p class="mt-3 text-[0.9rem] text-muted"><code>game.gamepad.getState()</code> returns <code>{ id, mapping, pressed, axes }</code>, which is what the label shows. Only the first connected pad is read.</p>
+<p class="mt-3 text-[0.9rem] text-muted">This site maps axes 5 and 6 too, for generic USB pads. <code>game.gamepad.getState()</code> returns <code>{ id, mapping, pressed, axes }</code>, which is what the label shows. Only the first connected pad is read.</p>
