@@ -27,6 +27,15 @@ describe("Pixel ratio", () => {
     expect((await createGame({ maxPixelRatio: 1 }))["canvas"].width).toBe(800);
   });
 
+  test("maxPixelRatio can change while running", async () => {
+    screen.devicePixelRatio = 2;
+    const game = await createGame();
+    game.start();
+    game.maxPixelRatio = 1;
+    game["loop"](0);
+    expect(game["canvas"].width).toBe(800);
+  });
+
   test("each frame draws with the ratio as the transform", async () => {
     screen.devicePixelRatio = 2;
     const game = await createGame();

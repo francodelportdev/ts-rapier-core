@@ -76,7 +76,8 @@ export class Game {
   private readonly background: string | null;
   /** The size everything works in, in canvas pixels. Not `canvas.width`, which also has the pixel ratio. */
   private readonly view: { width: number; height: number };
-  private readonly maxPixelRatio: number;
+  /** Highest pixel ratio to render at. It can be changed at any time. */
+  public maxPixelRatio: number;
   private pixelRatio = 1;
   /** The view into the world. Use it to follow the player, set level bounds, zoom or shake. */
   public readonly camera: Camera;
