@@ -134,6 +134,7 @@ export class Game {
 
     canvas.tabIndex = 0; // focusable, so it can receive keyboard input
     const { signal } = this.listeners;
+    document.addEventListener?.("visibilitychange", () => this.audio.setPageHidden(document.hidden), { signal });
     this.pointer = new Pointer(canvas, this.view, this.camera, signal);
     this.touch = new TouchControls(canvas, this.view, this.input, this.pointer);
     canvas.addEventListener(

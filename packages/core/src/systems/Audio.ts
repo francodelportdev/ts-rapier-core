@@ -62,7 +62,11 @@ export class AudioManager {
   private readonly buffers = new Map<string, AudioBuffer>();
   /** Definitions waiting for the context, which can only be created when audio is available. */
   private readonly synths = new Map<string, SynthOptions>();
-  private music: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private music: { name: string; volume: number; source: AudioBufferSourceNode; gain: GainNode; startedAt: number; offset: number } | null = null;
+  /** Music on hold: where to continue from. */
+  private pausedMusic: { name: string; volume: number; offset: number } | null = null;
+  /** True if the context was suspended because the page was hidden. */
+  private hiddenSuspend = false;
   private volumes = { master: 1, effects: 1, music: 1 };
   private muted = false;
 
@@ -144,12 +148,36 @@ export class AudioManager {
     const context = this.ensureContext();
     if (context === null || this.musicBus === null) return;
     this.stopMusic();
-    const { source, gain } = this.start(context, name, this.musicBus, options.volume ?? 1, 1, true);
-    this.music = { source, gain };
+    const volume = options.volume ?? 1;
+    const { gain } = this.startMusic(context, this.musicBus, name, volume, 0);
     if (options.fade) {
       gain.gain.setValueAtTime(0, context.currentTime);
-      gain.gain.linearRampToValueAtTime(options.volume ?? 1, context.currentTime + options.fade);
+      gain.gain.linearRampToValueAtTime(volume, context.currentTime + options.fade);
     }
+  }
+
+  /** Holds the music where it is. `resumeMusic()` continues from there. */
+  public pauseMusic(): void {
+    const music = this.music;
+    const context = this.context;
+    if (music === null || context === null) return;
+    const length = music.source.buffer?.duration ?? 0;
+    const played = music.offset + context.currentTime - music.startedAt;
+    this.pausedMusic = { name: music.name, volume: music.volume, offset: length > 0 ? played % length : 0 };
+    this.music = null;
+    music.source.stop();
+  }
+
+  public resumeMusic(): void {
+    const paused = this.pausedMusic;
+    const context = this.ensureContext();
+    if (paused === null || context === null || this.musicBus === null) return;
+    this.pausedMusic = null;
+    this.startMusic(context, this.musicBus, paused.name, paused.volume, paused.offset);
+  }
+
+  public get isMusicPaused(): boolean {
+    return this.pausedMusic !== null;
   }
 
   public get isMusicPlaying(): boolean {
@@ -157,6 +185,7 @@ export class AudioManager {
   }
 
   public stopMusic(options: Pick<MusicOptions, "fade"> = {}): void {
+    this.pausedMusic = null;
     const music = this.music;
     const context = this.context;
     if (music === null || context === null) return;
@@ -175,6 +204,19 @@ export class AudioManager {
     if (context !== null && context.state === "suspended") void context.resume();
   }
 
+  /** @internal Called by `Game`: all sound stops while the page is hidden. */
+  public setPageHidden(hidden: boolean): void {
+    const context = this.context;
+    if (context === null) return;
+    if (hidden && context.state === "running") {
+      this.hiddenSuspend = true;
+      void context.suspend();
+    } else if (!hidden && this.hiddenSuspend) {
+      this.hiddenSuspend = false; // audio that was still locked stays locked
+      void context.resume();
+    }
+  }
+
   /** @internal Called by `Game`. */
   public destroy(): void {
     this.stopMusic();
@@ -182,7 +224,13 @@ export class AudioManager {
     this.context = null;
   }
 
-  private start(context: AudioContext, name: string, bus: GainNode, volume: number, rate: number, loop: boolean) {
+  private startMusic(context: AudioContext, bus: GainNode, name: string, volume: number, offset: number) {
+    const started = this.start(context, name, bus, volume, 1, true, offset);
+    this.music = { name, volume, source: started.source, gain: started.gain, startedAt: context.currentTime, offset };
+    return started;
+  }
+
+  private start(context: AudioContext, name: string, bus: GainNode, volume: number, rate: number, loop: boolean, offset = 0) {
     const source = context.createBufferSource();
     source.buffer = this.bufferOf(context, name);
     source.playbackRate.value = rate;
@@ -191,7 +239,7 @@ export class AudioManager {
     gain.gain.value = volume;
     source.connect(gain);
     gain.connect(bus);
-    source.start();
+    source.start(0, offset);
     return { source, gain, handle: { stop: () => source.stop() } };
   }
 

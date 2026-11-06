@@ -199,7 +199,7 @@ game.audio.playMusic("theme", { fade: 1 });
 ```
 
 - Browsers block sound until an interaction: the first click, touch or key on the canvas unlocks it. Until then, effects are skipped and music waits. `state` is `"running"` once unlocked.
-- `play(name, { volume, rate })` returns a handle with `stop()`. `playMusic(name, { volume, fade })` loops and replaces the current music, and keeps playing across scenes. `stopMusic({ fade })` ends it.
+- `play(name, { volume, rate })` returns a handle with `stop()`. `playMusic(name, { volume, fade })` loops and replaces the current music, and keeps playing across scenes. `stopMusic({ fade })` ends it, and `pauseMusic()` and `resumeMusic()` hold it and continue from the same point. All sound stops while the page is hidden.
 - `masterVolume`, `effectsVolume`, `musicVolume` and `isMuted`.
 - `synth(name, { wave, frequency, endFrequency, duration, volume })` makes a sound with no file. `frequency` can be a list of notes.
 - Unknown names throw. Without Web Audio, everything does nothing.

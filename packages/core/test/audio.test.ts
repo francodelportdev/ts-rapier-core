@@ -8,7 +8,7 @@ class FakeContext {
   public state = "suspended";
   public currentTime = 5;
   public destination = {};
-  public sources: { buffer: unknown; loop: boolean; playbackRate: { value: number }; started: number; stoppedAt: number | null; gain?: FakeGain }[] = [];
+  public sources: { buffer: unknown; loop: boolean; playbackRate: { value: number }; started: number; stoppedAt: number | null; offset: number; gain?: FakeGain }[] = [];
   public closed = false;
   constructor() {
     FakeContext.last = this;
@@ -18,9 +18,9 @@ class FakeContext {
   }
   createBufferSource() {
     const source = {
-      buffer: null as unknown, loop: false, playbackRate: { value: 1 }, started: 0, stoppedAt: null as number | null, gain: undefined as FakeGain | undefined,
+      buffer: null as unknown, loop: false, playbackRate: { value: 1 }, started: 0, stoppedAt: null as number | null, offset: 0, gain: undefined as FakeGain | undefined,
       connect(g: FakeGain) { source.gain = g; },
-      start() { source.started++; },
+      start(_when = 0, offset = 0) { source.started++; source.offset = offset; },
       stop(at = 0) { source.stoppedAt = at; },
     };
     this.sources.push(source);
@@ -28,7 +28,10 @@ class FakeContext {
   }
   createBuffer(_channels: number, length: number, sampleRate: number) {
     const data = new Float32Array(length);
-    return { length, sampleRate, getChannelData: () => data };
+    return { length, sampleRate, duration: length / sampleRate, getChannelData: () => data };
+  }
+  async suspend() {
+    this.state = "suspended";
   }
   async resume() {
     this.state = "running";
@@ -167,6 +170,74 @@ describe("AudioManager: music", () => {
     expect(context.sources[0]!.stoppedAt).toBe(6);
     expect(ramps.at(-1)).toEqual([0, 6]);
     expect(audio.isMusicPlaying).toBe(false);
+  });
+});
+
+describe("AudioManager: pause", () => {
+  function looping() {
+    const { audio, context } = unlocked();
+    audio.synth("loop", { frequency: [440, 550, 660, 770], duration: 0.5 }); // 2 s long
+    audio.playMusic("loop", { volume: 0.4 });
+    return { audio, context };
+  }
+
+  test("pausing stops the sound, and resuming continues from there", () => {
+    const { audio, context } = looping();
+    context.currentTime += 0.5;
+    audio.pauseMusic();
+    expect(context.sources[0]!.stoppedAt).not.toBeNull();
+    expect(audio.isMusicPaused).toBe(true);
+    expect(audio.isMusicPlaying).toBe(false);
+    context.currentTime += 10;
+    audio.resumeMusic();
+    const resumed = context.sources[1]!;
+    expect(resumed.offset).toBeCloseTo(0.5, 3);
+    expect(resumed.loop).toBe(true);
+    expect(resumed.gain!.gain.value).toBe(0.4);
+    expect(audio.isMusicPaused).toBe(false);
+  });
+
+  test("a second pause counts from where it resumed, wrapping around the loop", () => {
+    const { audio, context } = looping();
+    context.currentTime += 1.5;
+    audio.pauseMusic();
+    audio.resumeMusic();
+    context.currentTime += 1;
+    audio.pauseMusic();
+    audio.resumeMusic();
+    expect(context.sources[2]!.offset).toBeCloseTo(0.5, 3);
+  });
+
+  test("stopMusic() forgets a pause, and pausing nothing does nothing", () => {
+    const { audio } = looping();
+    audio.pauseMusic();
+    audio.stopMusic();
+    expect(audio.isMusicPaused).toBe(false);
+    expect(() => {
+      audio.pauseMusic();
+      audio.resumeMusic();
+    }).not.toThrow();
+  });
+});
+
+describe("AudioManager: hidden page", () => {
+  test("suspends while hidden and resumes after", async () => {
+    const { audio, context } = unlocked();
+    audio.setPageHidden(true);
+    expect(context.state).toBe("suspended");
+    audio.setPageHidden(false);
+    await Promise.resolve();
+    expect(context.state).toBe("running");
+  });
+
+  test("audio that was still locked stays locked", async () => {
+    const audio = new AudioManager();
+    audio.synth("beep");
+    audio.playMusic("beep"); // creates the context, still suspended
+    audio.setPageHidden(true);
+    audio.setPageHidden(false);
+    await Promise.resolve();
+    expect(FakeContext.last.state).toBe("suspended");
   });
 });
 

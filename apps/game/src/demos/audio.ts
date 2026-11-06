@@ -1,6 +1,6 @@
 /**
- * Audio: effects tied to player events, and background music. Every sound is made by code,
- * so the demo needs no files. With your own, use `await game.audio.load("jump", "/jump.ogg")`.
+ * Audio: effects tied to player events, and background music. The coin is a real file,
+ * loaded with `load()`, and the other sounds are made by code.
  * Explanation: the "audio" page of the docs.
  */
 import { Game, Ground, Platform, Player, Trigger } from "@francodelportdev/rapier-engine";
@@ -14,7 +14,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   audio.synth("jump", { wave: "square", frequency: 300, endFrequency: 700, duration: 0.15, volume: 0.25 });
   audio.synth("land", { wave: "noise", duration: 0.08, volume: 0.3 });
   audio.synth("dash", { wave: "sawtooth", frequency: 900, endFrequency: 200, duration: 0.18, volume: 0.2 });
-  audio.synth("coin", { wave: "square", frequency: [988, 1319], duration: 0.08, volume: 0.25 });
+  await audio.load("coin", "/sounds/coin.wav");
   audio.synth("music", { wave: "triangle", frequency: [262, 330, 392, 330, 294, 349, 440, 349], duration: 0.25, volume: 0.25 });
 
   game.addEntity(new Ground(world));
@@ -60,6 +60,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
     toggles: [
       { label: "mute", value: false, set: (on) => (audio.isMuted = on) },
       { label: "music", value: true, set: (on) => (on ? audio.playMusic("music", { fade: 0.5 }) : audio.stopMusic({ fade: 0.5 })) },
+      { label: "pause music", value: false, set: (on) => (on ? audio.pauseMusic() : audio.resumeMusic()) },
     ],
   };
 }
