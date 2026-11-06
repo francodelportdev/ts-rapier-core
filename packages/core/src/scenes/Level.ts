@@ -67,6 +67,20 @@ export function validateLevel(data: LevelData): void {
   if (data.bounds.minX >= data.bounds.maxX || data.bounds.minY >= data.bounds.maxY) fail("bounds are empty");
   if (!data.spawn || !numeric(data.spawn.x) || !numeric(data.spawn.y)) fail("spawn needs x and y");
   if (!data.goal || ![data.goal.x, data.goal.y, data.goal.width, data.goal.height].every(numeric)) fail("goal needs x, y, width and height");
+  data.platforms?.forEach((p, i) => {
+    if (!p || ![p.x, p.y, p.width].every(numeric)) fail(`platform ${i} needs x, y and width`);
+  });
+  data.shapes?.forEach((s, i) => {
+    if (!s || ![s.x, s.y].every(numeric) || !s.geometry) fail(`shape ${i} needs x, y and geometry`);
+  });
+  data.hazards?.forEach((h, i) => {
+    if (!h || ![h.x, h.y, h.width, h.height].every(numeric)) fail(`hazard ${i} needs x, y, width and height`);
+  });
+  for (const list of ["boxes", "coins"] as const) {
+    data[list]?.forEach((p, i) => {
+      if (!p || ![p.x, p.y].every(numeric)) fail(`${list} ${i} needs x and y`);
+    });
+  }
 }
 
 /**

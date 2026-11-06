@@ -131,6 +131,7 @@ export class Game {
     this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
     this.grid = grid && { size: grid.size ?? 1, color: grid.color ?? "rgb(255 255 255 / 0.05)" };
+    if (this.grid && !(this.grid.size > 0)) throw new Error("The grid size must be greater than 0");
 
     this.view = { width: canvas.width, height: canvas.height };
     this.maxPixelRatio = options.maxPixelRatio ?? 2;
@@ -163,7 +164,10 @@ export class Game {
   }
 
   public static async create(canvas: HTMLCanvasElement, options: GameOptions = {}): Promise<Game> {
-    rapierReady ??= RAPIER.init();
+    rapierReady ??= RAPIER.init().catch((error: unknown) => {
+      rapierReady = null; // the next create() tries again
+      throw error;
+    });
     await rapierReady;
     return new Game(canvas, options);
   }
@@ -323,6 +327,7 @@ export class Game {
     if (this.isFocused() && this.gamepad.poll()) this.audio.unlock();
     for (const e of this.entities) e.savePose();
     if (this.scenes.tick(this.world.timestep)) {
+      if (this.isFocused()) this.input.endStep(); // a tap during a fade doesn't reach the next scene
       this.pointer.endStep();
       return; // frozen during a fade out
     }
@@ -338,7 +343,7 @@ export class Game {
 
       if (this.killPlaneY !== null) {
         for (const e of this.entities) {
-          if (e.getPosition().y < this.killPlaneY) this.queueRemoval(e, "killPlane");
+          if (!e.survivesKillPlane && e.getPosition().y < this.killPlaneY) this.queueRemoval(e, "killPlane");
         }
       }
     });

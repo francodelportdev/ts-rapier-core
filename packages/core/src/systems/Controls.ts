@@ -102,12 +102,22 @@ export class Controls {
   /** Restores saved bindings. Anything invalid is skipped, and missing actions keep their defaults. */
   public load(data: unknown): void {
     const next = defaults();
-    if (typeof data === "object" && data !== null) {
-      for (const action of CONTROL_ACTIONS) {
-        const saved = (data as Partial<Record<ControlAction, unknown>>)[action];
-        if (Array.isArray(saved)) next[action] = saved.filter(isControlInput);
+    const used: ControlInput[] = [];
+    const missing: ControlAction[] = [];
+    for (const action of CONTROL_ACTIONS) {
+      const saved = typeof data === "object" && data !== null ? (data as Partial<Record<ControlAction, unknown>>)[action] : undefined;
+      if (!Array.isArray(saved)) {
+        missing.push(action);
+        continue;
       }
+      // An input belongs to one action: the first one that lists it.
+      next[action] = saved.filter(isControlInput).filter((input) => {
+        if (used.some((other) => same(other, input))) return false;
+        used.push(input);
+        return true;
+      });
     }
+    for (const action of missing) next[action] = next[action].filter((input) => !used.some((other) => same(other, input)));
     this.bindings = next;
     this.changed();
   }

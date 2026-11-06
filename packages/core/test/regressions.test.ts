@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { Animator, Box, Game, Ground, Input, Patrol, Platform, Player, Scene, Sensor, Shape, Sprite, SpriteSheet, type SheetImage } from "../src";
-import { createCanvas, createGame, createWorld, keys, simulate, simulateUntil, stepGame } from "./helpers";
+import { Animator, AudioManager, Box, Controls, Game, Ground, Health, Input, Patrol, Platform, Player, Scene, Sensor, Shape, Sprite, SpriteSheet, validateLevel, type LevelData, type SheetImage } from "../src";
+import { createCanvas, createGame, createWorld, firePointer, keys, simulate, simulateUntil, stepGame } from "./helpers";
 import { dispatchWindowEvent } from "./setup";
 
 beforeEach(() => keys.reset());
@@ -469,5 +469,143 @@ describe("A player with its own keys", () => {
     keys.down("ArrowRight");
     simulate(world, entities, 20);
     expect(player.getVelocity().x).toBe(0);
+  });
+});
+
+describe("Medium-severity audit bugs", () => {
+  test("a tap during a fade doesn't reach the next scene", async () => {
+    let jumps = 0;
+    class Empty extends Scene {
+      override onEnter() {}
+    }
+    class Level extends Scene {
+      override onEnter() {
+        this.game.addEntity(new Ground(this.world));
+        const player = new Player(this.world);
+        player.on("jump", () => jumps++);
+        this.game.addEntity(player);
+      }
+    }
+    const game = await createGame();
+    game.scenes.add("empty", () => new Empty());
+    game.scenes.add("level", () => new Level());
+    game.scenes.go("empty");
+    game.start();
+    stepGame(game);
+    game.scenes.go("level", { fade: 0.1 });
+    stepGame(game, 2);
+    keys.down("Space");
+    keys.up("Space");
+    stepGame(game, 12);
+    expect(jumps).toBe(0);
+  });
+
+  test("configure({ jumpHeight }) reaches wall jumps that inherit it, and only those", () => {
+    const inherits = new Player(createWorld(), { wallJump: true });
+    inherits.configure({ jumpHeight: 6 });
+    expect(inherits.getTuning().wallJump?.jumpHeight).toBe(6);
+    const own = new Player(createWorld(), { wallJump: { jumpHeight: 2 } });
+    own.configure({ jumpHeight: 6 });
+    expect(own.getTuning().wallJump?.jumpHeight).toBe(2);
+    inherits.configure({ wallJump: { jumpHeight: 1 } });
+    inherits.configure({ jumpHeight: 7 });
+    expect(inherits.getTuning().wallJump?.jumpHeight).toBe(1);
+  });
+
+  test("a once sensor enters once when two entities arrive together", async () => {
+    const game = await createGame();
+    const world = game.getWorld();
+    const sensor = new Sensor(world, { x: 0, y: 0, once: true, geometry: { type: "box", width: 4, height: 4 } });
+    let enters = 0;
+    sensor.on("enter", () => enters++);
+    game.addEntity(sensor);
+    game.addEntity(new Box(world, 0, 0));
+    game.addEntity(new Box(world, 1, 0));
+    stepGame(game, 3);
+    expect(enters).toBe(1);
+  });
+
+  test("a component that fails to attach isn't left on the entity", () => {
+    const box = new Box(createWorld(), 0, 0);
+    expect(() => box.add(new Patrol([{ x: 0, y: 0 }, { x: 1, y: 0 }]))).toThrow();
+    expect(box.has(Patrol)).toBe(false);
+  });
+
+  test("Controls.load() keeps an input in one action, also against defaults", () => {
+    const controls = new Controls();
+    const q = { type: "key", code: "KeyQ" } as const;
+    const a = { type: "key", code: "KeyA" } as const;
+    controls.load({ left: [q], right: [q], jump: [a] });
+    expect(controls.get("right")).toEqual([]);
+    expect(controls.get("jump")).toEqual([a]);
+    controls.load({ jump: [a] });
+    expect(controls.get("left")).not.toContainEqual(a);
+  });
+
+  test("Health ignores NaN damage", () => {
+    const health = new Health(5);
+    expect(health.damage(NaN)).toBe(false);
+    expect(health.value).toBe(5);
+  });
+
+  test("validateLevel checks the optional lists", () => {
+    const level = { name: "L", bounds: { minX: 0, maxX: 9, minY: 0, maxY: 9 }, spawn: { x: 1, y: 1 }, goal: { x: 5, y: 5, width: 1, height: 1 } };
+    const bad = (extra: object) => () => validateLevel({ ...level, ...extra } as LevelData);
+    expect(bad({ platforms: [{ x: 0, y: 0 }] })).toThrow(/platform 0/);
+    expect(bad({ shapes: [{ x: 0, y: 0 }] })).toThrow(/shape 0/);
+    expect(bad({ hazards: [{ x: 0, y: 0 }] })).toThrow(/hazard 0/);
+    expect(bad({ boxes: [{ x: 0 }] })).toThrow(/boxes 0/);
+    expect(bad({ coins: [{ y: 0 }] })).toThrow(/coins 0/);
+    expect(bad({ platforms: [{ x: 0, y: 0, width: 2 }] })).not.toThrow();
+  });
+
+  test("the kill plane leaves the player to its own respawn", async () => {
+    const game = await createGame({ killPlaneY: -10 });
+    const player = new Player(game.getWorld(), { y: 0 });
+    game.addEntity(player);
+    let respawned = false;
+    player.on("respawn", () => (respawned = true));
+    game.start();
+    stepGame(game, 120);
+    expect(player.isDestroyed).toBe(false);
+    expect(respawned).toBe(true);
+  });
+
+  test("a touch held through a window blur works again on the next move", async () => {
+    const game = await createGame();
+    game.touch.enabled = true;
+    game.touch.alwaysVisible = true;
+    const canvas = game["canvas"];
+    game.start();
+    firePointer(canvas, "pointerdown", 42, 408, 1, "touch");
+    dispatchWindowEvent("blur");
+    firePointer(canvas, "pointermove", 43, 408, 1, "touch");
+    expect(Input.getInstance().isPressed("ArrowLeft")).toBe(true);
+    firePointer(canvas, "pointerup", 43, 408, 1, "touch");
+    Input.getInstance().endStep(); // the tap from pressing lasts until the end of the step
+    expect(Input.getInstance().isPressed("ArrowLeft")).toBe(false);
+  });
+
+  test("a grid size of 0 is rejected", async () => {
+    await expect(Game.create(createCanvas(), { grid: { size: 0 } })).rejects.toThrow(/grid/);
+  });
+
+  test("audio creates no context after destroy()", () => {
+    const g = globalThis as { AudioContext?: unknown };
+    let created = 0;
+    g.AudioContext = class {
+      constructor() {
+        created++;
+      }
+    };
+    try {
+      const audio = new AudioManager();
+      audio.destroy();
+      audio.synth("beep");
+      audio.play("beep");
+      expect(created).toBe(0);
+    } finally {
+      delete g.AudioContext;
+    }
   });
 });

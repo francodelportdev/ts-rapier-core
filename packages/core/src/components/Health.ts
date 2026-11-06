@@ -56,7 +56,7 @@ export class Health extends Component {
 
   /** Takes damage. Returns false if it was ignored (dead or invulnerable). */
   public damage(amount: number): boolean {
-    if (amount <= 0 || this.isDead || this.isInvulnerable) return false;
+    if (!(amount > 0) || this.isDead || this.isInvulnerable) return false;
     this.set(this.current - amount);
     this.invulnerableTimer = this.invulnerableTime;
     if (this.isDead) this.events.emit("death", {});

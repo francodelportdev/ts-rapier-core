@@ -69,6 +69,7 @@ export class AudioManager {
   private hiddenSuspend = false;
   private volumes = { master: 1, effects: 1, music: 1 };
   private muted = false;
+  private destroyed = false;
 
   /** "running" once sound can play. */
   public get state(): string {
@@ -219,6 +220,7 @@ export class AudioManager {
 
   /** @internal Called by `Game`. */
   public destroy(): void {
+    this.destroyed = true;
     this.stopMusic();
     void this.context?.close();
     this.context = null;
@@ -274,7 +276,7 @@ export class AudioManager {
 
   private ensureContext(): AudioContext | null {
     if (this.context !== null) return this.context;
-    if (typeof AudioContext === "undefined") return null;
+    if (this.destroyed || typeof AudioContext === "undefined") return null;
     const context = new AudioContext();
     this.context = context;
     this.master = context.createGain();

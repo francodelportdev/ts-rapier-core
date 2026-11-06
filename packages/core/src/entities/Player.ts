@@ -289,9 +289,12 @@ export class Player extends Entity<ResolvedOptions> {
   /** Seconds since the player last touched the ground. */
   private airTime = 0;
   private readonly events = new EventEmitter<PlayerEvents>();
+  /** True while wall jumps use the player's `jumpHeight`, because none of their own was given. */
+  private wallJumpHeightInherited: boolean;
 
   constructor(world: RAPIER.World, options: PlayerOptions = {}) {
     super(world, resolveOptions(options));
+    this.wallJumpHeightInherited = typeof options.wallJump !== "object" || options.wallJump.jumpHeight === undefined;
     this.controller = world.createCharacterController(0.01);
     this.controller.enableSnapToGround(0.2);
     this.controller.enableAutostep(0.3, 0.2, false);
@@ -313,6 +316,8 @@ export class Player extends Entity<ResolvedOptions> {
     Object.assign(this.options, numbersOnly(rest));
     if (dash && this.options.dash) Object.assign(this.options.dash, numbersOnly(dash));
     if (wallJump && this.options.wallJump) Object.assign(this.options.wallJump, numbersOnly(wallJump));
+    if (wallJump?.jumpHeight !== undefined) this.wallJumpHeightInherited = false;
+    if (this.options.wallJump && this.wallJumpHeightInherited) this.options.wallJump.jumpHeight = this.options.jumpHeight;
     if (rest.maxSlope !== undefined) this.applyMaxSlope();
   }
 
@@ -328,6 +333,11 @@ export class Player extends Entity<ResolvedOptions> {
     this.controller.setMaxSlopeClimbAngle(maxSlope);
     this.controller.setMinSlopeSlideAngle(maxSlope);
     this.minWallNormalY = Math.cos(maxSlope);
+  }
+
+  /** It goes back to its start position at `respawnBelow` instead. */
+  public override get survivesKillPlane(): boolean {
+    return true;
   }
 
   /** True while standing on something. */
