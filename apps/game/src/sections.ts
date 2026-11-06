@@ -145,6 +145,11 @@ export const SECTIONS: Section[] = [
     controls: () => [],
   },
   {
+    id: "gamepad", title: "Gamepad", group: "Engine", file: "src/demos/gamepad.ts",
+    load: () => import("./demos/gamepad"), source: () => import("./demos/gamepad.ts?raw"), content: () => import("./content/gamepad.html?raw"),
+    controls: () => [],
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

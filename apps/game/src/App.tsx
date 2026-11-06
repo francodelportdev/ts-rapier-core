@@ -117,6 +117,9 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       running = started;
       if (debugView) started.game.debug.enabled = true;
       started.game.touch.enabled = true; // every demo can be played on a touch screen
+      started.game.gamepad.enabled = true; // and with a gamepad
+      // Generic USB pads may report the D-pad as axes 5 and 6. Standard pads only have axes 0 to 3.
+      started.game.gamepad.setMapping({ moveAxes: [[0, 1], [5, 6]] });
       if (started.player?.getTuning().dash) started.game.touch.addButton({ key: "KeyX", label: "»", x: -116, y: -42 });
       setDemo(started);
       canvas.focus({ preventScroll: true });
