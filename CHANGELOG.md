@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- `game.pointer`: mouse and touch, with positions in pixels and meters
+- `game.touch`: on-screen buttons that press keyboard keys
+- `Input.press()` and `Input.release()`
+
 ## 0.2.0
 
 ### Added

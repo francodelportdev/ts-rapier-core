@@ -17,7 +17,7 @@ abstract class TextScene<TData = void> extends Scene<TData> {
   private armed = false; // Enter must be released first, or a held key would skip this screen
 
   public override update(): void {
-    const enter = Input.getInstance().isPressed("Enter");
+    const enter = Input.getInstance().isPressed("Enter") || this.game.pointer.wasPressed();
     if (enter && this.armed) this.game.scenes.go(this.next, { fade: 0.3 });
     if (!enter) this.armed = true;
   }
@@ -36,7 +36,7 @@ class MenuScene extends TextScene {
   protected readonly next = "level-0";
   public override onEnter(): void {}
   protected lines(): string[] {
-    return ["Three levels", "Collect the coins, reach the green door", "Press Enter to start"];
+    return ["Three levels", "Collect the coins, reach the green door", "Press Enter or tap to start"];
   }
 }
 
@@ -52,7 +52,7 @@ class ResultsScene extends TextScene<LevelStats> {
   }
   protected lines(): string[] {
     const { coins, totalCoins, deaths, time } = this.stats;
-    return ["Level complete!", `Coins ${coins}/${totalCoins} · Deaths ${deaths} · ${time.toFixed(1)} s`, "Press Enter to continue"];
+    return ["Level complete!", `Coins ${coins}/${totalCoins} · Deaths ${deaths} · ${time.toFixed(1)} s`, "Press Enter or tap to continue"];
   }
 }
 
