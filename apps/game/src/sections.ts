@@ -32,6 +32,8 @@ export interface Section {
   source: () => Promise<{ default: string }>;
   content: () => Promise<{ default: string }>;
   controls: (demo: Demo & { player: Player }) => Control[];
+  /** Shows the controls table under the demo. */
+  editor?: boolean;
 }
 
 export const SECTIONS: Section[] = [
@@ -147,6 +149,11 @@ export const SECTIONS: Section[] = [
   {
     id: "gamepad", title: "Gamepad", group: "Engine", file: "src/demos/gamepad.ts",
     load: () => import("./demos/gamepad"), source: () => import("./demos/gamepad.ts?raw"), content: () => import("./content/gamepad.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "controls", title: "Controls", group: "Engine", file: "src/demos/controls.ts", editor: true,
+    load: () => import("./demos/controls"), source: () => import("./demos/controls.ts?raw"), content: () => import("./content/controls.html?raw"),
     controls: () => [],
   },
   {

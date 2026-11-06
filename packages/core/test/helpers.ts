@@ -17,6 +17,7 @@ export const keys = {
   reset(): void {
     dispatchWindowEvent("blur"); // Input clears every key on blur
     Input.getInstance().setEnabled(true);
+    Input.getInstance().setBindings({});
   },
 };
 

@@ -7,17 +7,27 @@
 export class Input {
   private static instance: Input | null = null;
   private readonly keys = new Map<string, boolean>();
+  /** Keys held from code, such as on-screen buttons and gamepads. Bindings don't apply to them. */
+  private readonly virtual = new Set<string>();
+  /** Game key → physical keys that trigger it, when remapped. */
+  private bindings = new Map<string, readonly string[]>();
   /** Keys pressed since the last step, so a tap between two steps still counts. */
   private readonly taps = new Set<string>();
+  private readonly virtualTaps = new Set<string>();
   private enabled = true;
 
   private constructor() {
-    window.addEventListener("keydown", (e: KeyboardEvent) => this.press(e.code));
-    window.addEventListener("keyup", (e: KeyboardEvent) => this.release(e.code));
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
+      this.keys.set(e.code, true);
+      this.taps.add(e.code);
+    });
+    window.addEventListener("keyup", (e: KeyboardEvent) => this.keys.set(e.code, false));
     // Prevent "stuck" keys when the window loses focus.
     window.addEventListener("blur", () => {
       this.keys.clear();
       this.taps.clear();
+      this.virtualTaps.clear();
+      this.virtual.clear();
     });
     // Taps made while another element had focus shouldn't reach a game later.
     window.addEventListener("focusin", () => this.taps.clear());
@@ -29,7 +39,10 @@ export class Input {
   }
 
   public isPressed(code: string): boolean {
-    return this.enabled && ((this.keys.get(code) ?? false) || this.taps.has(code));
+    if (!this.enabled) return false;
+    if (this.virtual.has(code) || this.virtualTaps.has(code)) return true;
+    const physical = this.bindings.get(code) ?? [code];
+    return physical.some((c) => (this.keys.get(c) ?? false) || this.taps.has(c));
   }
 
   /** True if any of the given keys is pressed. */
@@ -39,17 +52,26 @@ export class Input {
 
   /** Holds a key from code, as if it were pressed on the keyboard. On-screen buttons use it. */
   public press(code: string): void {
-    this.keys.set(code, true);
-    this.taps.add(code);
+    this.virtual.add(code);
+    this.virtualTaps.add(code);
   }
 
   public release(code: string): void {
-    this.keys.set(code, false);
+    this.virtual.delete(code);
+  }
+
+  /**
+   * Remaps the keyboard: each game key is triggered only by the physical keys listed for it.
+   * Keys not listed work as usual. `Controls` builds this for you.
+   */
+  public setBindings(bindings: Record<string, readonly string[]>): void {
+    this.bindings = new Map(Object.entries(bindings));
   }
 
   /** Called by `Game` after each step of the focused game: a tap lasts for one step. */
   public endStep(): void {
     this.taps.clear();
+    this.virtualTaps.clear();
   }
 
   /** While disabled, every key reads as not pressed. */

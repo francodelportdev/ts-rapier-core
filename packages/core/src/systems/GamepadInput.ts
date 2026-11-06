@@ -6,6 +6,8 @@ export interface GamepadMapping {
   buttons: Record<string, readonly number[]>;
   /** Pairs of axes that work as left/right and up/down, such as a stick or a D-pad. */
   moveAxes: readonly (readonly [number, number])[];
+  /** Key → single axis directions that press it. */
+  axes?: Record<string, readonly { axis: number; direction: 1 | -1 }[]>;
   /** Keys for the four directions of `moveAxes`. */
   directions: { left: string; right: string; up: string; down: string };
 }
@@ -106,7 +108,7 @@ export class GamepadInput {
   }
 
   private wantedKeys(pad: Gamepad): Set<string> {
-    const { buttons, moveAxes, directions } = this.mapping;
+    const { buttons, moveAxes, directions, axes = {} } = this.mapping;
     const wanted = new Set<string>();
     for (const [key, numbers] of Object.entries(buttons)) {
       if (numbers.some((n) => pad.buttons[n]?.pressed)) wanted.add(key);
@@ -118,6 +120,9 @@ export class GamepadInput {
       if (x > this.deadZone) wanted.add(directions.right);
       if (y < -this.deadZone) wanted.add(directions.up);
       if (y > this.deadZone) wanted.add(directions.down);
+    }
+    for (const [key, list] of Object.entries(axes)) {
+      if (list.some(({ axis, direction }) => (pad.axes[axis] ?? 0) * direction > this.deadZone)) wanted.add(key);
     }
     wanted.delete("");
     return wanted;

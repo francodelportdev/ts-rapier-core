@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { controls as gameControls } from "./controls";
+import { ControlsEditor } from "./ControlsEditor";
 import { PROSE } from "./prose";
 import { SECTIONS, type Section } from "./sections";
 import type { Control, Demo, Toggle } from "./ui";
@@ -104,6 +106,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
     if (canvas === null) return;
     let cancelled = false;
     let running: Demo | null = null;
+    let stopFollowing = () => {};
     let nextId = 0;
     const ui = {
       status: (text: string, state?: string) =>
@@ -118,8 +121,8 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       if (debugView) started.game.debug.enabled = true;
       started.game.touch.enabled = true; // every demo can be played on a touch screen
       started.game.gamepad.enabled = true; // and with a gamepad
-      // Generic USB pads may report the D-pad as axes 5 and 6. Standard pads only have axes 0 to 3.
-      started.game.gamepad.setMapping({ moveAxes: [[0, 1], [5, 6]] });
+      gameControls.applyTo(started.game);
+      stopFollowing = gameControls.on("change", () => gameControls.applyTo(started.game));
       if (started.player?.getTuning().dash) started.game.touch.addButton({ key: "KeyX", label: "»", x: -116, y: -42 });
       setDemo(started);
       canvas.focus({ preventScroll: true });
@@ -128,6 +131,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
     });
     return () => {
       cancelled = true;
+      stopFollowing();
       running?.game.destroy();
     };
   }, [section]);
@@ -225,6 +229,7 @@ function Page({ section }: { section: Section }) {
       {/* Our own static files from src/content, so rendering them as HTML is safe. */}
       <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[0] }} />
       <DemoView key={`${section.id}-${resets}`} section={section} onReset={() => setResets((n) => n + 1)} />
+      {section.editor && <ControlsEditor />}
       <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[1] }} />
       <Source section={section} />
     </main>

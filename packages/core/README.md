@@ -213,6 +213,19 @@ game.gamepad.setMapping({ buttons: { Space: [2] }, moveAxes: [[0, 1], [6, 7]] })
 
 A pad presses keyboard keys, so `Player` works unchanged. By default, button 0 is jump, 2 is dash, the D-pad (13–15) and axes 0 and 1 move. Generic USB pads often have their own layout: `getState()` returns `{ id, mapping, pressed, axes }` to find the numbers. Also `isConnected`, `deadZone` and `vibrate(seconds, strength)`. Browsers reveal a pad only after a button press. Only the first pad is read, and only by the focused game.
 
+### Controls
+
+```ts
+const controls = new Controls();
+controls.add("jump", { type: "key", code: "KeyJ" });
+controls.add("right", { type: "axis", axis: 5, direction: 1 });
+controls.remove("jump", { type: "key", code: "Space" });
+controls.applyTo(game);
+controls.on("change", () => controls.applyTo(game));
+```
+
+Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key", code }`, `{ type: "button", button }` or `{ type: "axis", axis, direction }`. An input belongs to one action: adding it elsewhere moves it. `applyTo()` works below `Player` through `Input.setBindings()`, so players made by scenes follow it, and it's shared by all games on the page. `toJSON()`, `load()` and `reset()` save, restore and clear it. `load()` skips invalid data. On-screen buttons aren't affected, and keys outside the actions work as usual.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -474,6 +487,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `interpolation.test.ts` | Entities and the camera drawn between steps, rotation, teleports, frozen scenes and turning it off |
 | `audio.test.ts` | Synthesis, locking, effects, music, fades, volumes and `Game` integration, with a fake Web Audio |
 | `gamepad.test.ts` | Buttons, dead zone, custom layouts, unplugging, focus and rumble, with a fake pad |
+| `controls.test.ts` | Adding, removing, moving, saving and validating controls, and playing with them on keyboard and pad |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
