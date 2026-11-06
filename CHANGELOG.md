@@ -11,6 +11,7 @@
 - Interpolated drawing, with the `interpolation` option
 - `game.audio`: effects, music, volumes, and sounds made by code
 - `game.gamepad`: physical pads, with custom layouts
+- `Controls`: editable keyboard and gamepad bindings that can be saved
 
 ### Changed
 - `canvas.width` now includes the pixel ratio: use `game.width`
