@@ -45,6 +45,9 @@ export class Camera {
   public zoom = 1;
 
   private target: Entity | null = null;
+  /** Where the camera was before the last step, and how far to draw between the two. */
+  private previous = { x: 0, y: 0 };
+  private alpha = 1;
   private smoothing = 0.15;
   private deadZone = { width: 2, height: 1.5 };
   private offset = { x: 0, y: 0 };
@@ -92,6 +95,7 @@ export class Camera {
     this.bounds = null;
     this.x = 0;
     this.y = 0;
+    this.previous = { x: 0, y: 0 };
     this.zoom = 1;
     this.shakeTimer = 0;
     this.shakeX = 0;
@@ -103,6 +107,7 @@ export class Camera {
     this.x = x;
     this.y = y;
     this.clampToBounds();
+    this.previous = { x: this.x, y: this.y }; // a jump, not a movement to smooth
   }
 
   /** Jumps straight to the followed target, skipping smoothing. Call it after a respawn or a teleport. */
@@ -140,8 +145,14 @@ export class Camera {
     return { minX: this.x - halfW, maxX: this.x + halfW, minY: this.y - halfH, maxY: this.y + halfH };
   }
 
+  /** @internal Called by `Game` around drawing: 1 is the latest position. */
+  public setInterpolation(alpha: number): void {
+    this.alpha = alpha;
+  }
+
   /** @internal Called by `Game` once per physics step. */
   public update(dt: number, viewWidth: number, viewHeight: number): void {
+    this.previous = { x: this.x, y: this.y };
     this.viewWidth = viewWidth;
     this.viewHeight = viewHeight;
 
@@ -176,9 +187,17 @@ export class Camera {
     const scale = this.scale;
     return {
       scale,
-      centerX: this.viewWidth / 2 - (this.x + this.shakeX) * scale,
-      centerY: this.viewHeight / 2 + (this.y + this.shakeY) * scale,
+      centerX: this.viewWidth / 2 - (this.drawnX + this.shakeX) * scale,
+      centerY: this.viewHeight / 2 + (this.drawnY + this.shakeY) * scale,
     };
+  }
+
+  private get drawnX(): number {
+    return this.previous.x + (this.x - this.previous.x) * this.alpha;
+  }
+
+  private get drawnY(): number {
+    return this.previous.y + (this.y - this.previous.y) * this.alpha;
   }
 
   private currentShake(): number {

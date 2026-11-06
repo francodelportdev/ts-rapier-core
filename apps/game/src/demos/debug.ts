@@ -41,5 +41,14 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   });
 
   game.start();
-  return { game, player, toggles: [toggle("colliders", "colliders"), toggle("centers", "centers"), toggle("velocities", "velocities")] };
+  return {
+    game,
+    player,
+    toggles: [
+      toggle("colliders", "colliders"),
+      toggle("centers", "centers"),
+      toggle("velocities", "velocities"),
+      { label: "interpolation", value: true, set: (on) => (game.interpolation = on) },
+    ],
+  };
 }

@@ -38,6 +38,8 @@ export interface GameOptions {
    * this value; 1 turns it off. Higher values cost more to draw. Default: 2.
    */
   maxPixelRatio?: number;
+  /** Draw between physics steps, so movement stays smooth on any refresh rate. Default: true. */
+  interpolation?: boolean;
 }
 
 /** Why an entity was removed. */
@@ -86,6 +88,8 @@ export class Game {
   public readonly pointer: Pointer;
   /** On-screen buttons for touch screens. Off until you set `enabled`. */
   public readonly touch: TouchControls;
+  /** Draw between physics steps. It can be changed at any time. */
+  public interpolation: boolean;
   private entities: Entity[] = [];
   /** Entities to remove after the current step (removing mid-step would break the loop). */
   private readonly pendingRemovals = new Map<Entity, RemoveReason>();
@@ -112,6 +116,7 @@ export class Game {
     this.debug = new DebugRenderer(this.world);
     this.camera = new Camera(options.scale ?? SCALE);
     this.background = options.background ?? null;
+    this.interpolation = options.interpolation ?? true;
     this.killPlaneY = options.killPlaneY === undefined ? -30 : options.killPlaneY;
     this.defaultKillPlaneY = this.killPlaneY;
     const grid = options.grid === true ? {} : options.grid || null;
@@ -290,6 +295,7 @@ export class Game {
   /** Runs one physics step: update every entity, step the world, then apply removals. */
   private step(): void {
     this.input.setEnabled(this.isFocused());
+    for (const e of this.entities) e.savePose();
     if (this.scenes.tick(this.world.timestep)) {
       this.pointer.endStep();
       return; // frozen during a fade out
@@ -403,7 +409,15 @@ export class Game {
     if (!this.destroyed) {
       // Removals requested between steps (for example, from a key handler) apply before drawing.
       this.guard(() => this.flushRemovals());
-      this.guard(() => this.whileBusy(() => this.render()));
+      this.guard(() =>
+        this.whileBusy(() => {
+          try {
+            this.render();
+          } finally {
+            this.camera.setInterpolation(1); // the pointer and your code read the latest position
+          }
+        }),
+      );
     }
     if (!this.destroyed) this.guard(() => this.events.emit("frame", {}));
     if (this.rafId !== null) this.rafId = requestAnimationFrame(this.loop); // a listener may have stopped it
@@ -441,12 +455,15 @@ export class Game {
       this.ctx.fillStyle = this.background;
       this.ctx.fillRect(0, 0, width, height);
     }
+    // The physics runs behind the screen by less than a step: draw that fraction of the way.
+    const alpha = this.interpolation ? Math.min(1, this.accumulator / this.world.timestep) : 1;
+    this.camera.setInterpolation(alpha);
     const { scale, centerX, centerY } = this.camera.getViewport();
     if (this.grid !== null) this.drawGrid(this.grid.size, this.grid.color);
     for (const e of this.entities) {
       this.ctx.save(); // a draw that throws can't leave its transform behind
       try {
-        e.render(this.ctx, scale, centerX, centerY);
+        e.render(this.ctx, scale, centerX, centerY, alpha);
       } finally {
         this.ctx.restore();
       }
