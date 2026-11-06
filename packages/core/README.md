@@ -188,6 +188,22 @@ game.touch.enabled = true;  // on-screen ←, → and jump, shown on the first t
 
 `game.touch` draws buttons that press keyboard keys, so `Player` works unchanged. `setButtons([{ key, label, x, y, radius? }])` replaces them and `addButton()` adds one, with negative positions counting from the right or bottom edge. `alwaysVisible` shows them before the first touch. `Input.press(code)` and `release(code)` hold a key from code.
 
+### Audio
+
+```ts
+await game.audio.load("jump", "/jump.ogg");                            // from a file
+game.audio.synth("coin", { frequency: [988, 1319], duration: 0.08 });  // from code
+
+player.on("jump", () => game.audio.play("jump", { volume: 0.5, rate: 1.5 }));
+game.audio.playMusic("theme", { fade: 1 });
+```
+
+- Browsers block sound until an interaction: the first click, touch or key on the canvas unlocks it. Until then, effects are skipped and music waits. `state` is `"running"` once unlocked.
+- `play(name, { volume, rate })` returns a handle with `stop()`. `playMusic(name, { volume, fade })` loops and replaces the current music, and keeps playing across scenes. `stopMusic({ fade })` ends it, and `pauseMusic()` and `resumeMusic()` hold it and continue from the same point. All sound stops while the page is hidden.
+- `masterVolume`, `effectsVolume`, `musicVolume` and `isMuted`.
+- `synth(name, { wave, frequency, endFrequency, duration, volume })` makes a sound with no file. `frequency` can be a list of notes.
+- Unknown names throw. Without Web Audio, everything does nothing.
+
 ### Scenes and levels
 
 `game.scenes` switches between scenes. Extend `Scene` and register a factory, so each visit starts fresh:
@@ -447,6 +463,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `pointer.test.ts` | Positions, CSS scaling, edges, several fingers, events, and on-screen buttons moving the player |
 | `resolution.test.ts` | Pixel ratio, its limit, screen changes, `resize()`, and pointer and buttons staying in the same coordinates |
 | `interpolation.test.ts` | Entities and the camera drawn between steps, rotation, teleports, frozen scenes and turning it off |
+| `audio.test.ts` | Synthesis, locking, effects, music, fades, volumes and `Game` integration, with a fake Web Audio |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
