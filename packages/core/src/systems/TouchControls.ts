@@ -33,11 +33,13 @@ export class TouchControls {
   private readonly held = new Set<string>();
   private touched = false;
   private readonly canvas: HTMLCanvasElement;
+  private readonly view: { width: number; height: number };
   private readonly input: Input;
   private readonly pointer: Pointer;
 
-  constructor(canvas: HTMLCanvasElement, input: Input, pointer: Pointer) {
+  constructor(canvas: HTMLCanvasElement, view: { width: number; height: number }, input: Input, pointer: Pointer) {
     this.canvas = canvas;
+    this.view = view;
     this.input = input;
     this.pointer = pointer;
     const sync = () => this.sync();
@@ -98,10 +100,10 @@ export class TouchControls {
    * to compensate, so they stay big enough for a finger.
    */
   private layout(button: TouchButton): { x: number; y: number; radius: number } {
-    const shrink = Math.max(1, this.canvas.width / this.canvas.getBoundingClientRect().width);
+    const shrink = Math.max(1, this.view.width / this.canvas.getBoundingClientRect().width);
     return {
-      x: button.x < 0 ? this.canvas.width + button.x * shrink : button.x * shrink,
-      y: button.y < 0 ? this.canvas.height + button.y * shrink : button.y * shrink,
+      x: button.x < 0 ? this.view.width + button.x * shrink : button.x * shrink,
+      y: button.y < 0 ? this.view.height + button.y * shrink : button.y * shrink,
       radius: (button.radius ?? 32) * shrink,
     };
   }

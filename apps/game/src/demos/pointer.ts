@@ -22,7 +22,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   // Press on a box to drag it, or anywhere else to drop a ball.
   const drags = new Map<number, Box>(); // one per finger
   game.pointer.on("down", ({ id, worldX, worldY, y }) => {
-    if (y > canvas.height * 0.7) return; // the row of buttons
+    if (y > game.height * 0.7) return; // the row of buttons
     const box = boxes.find((b) => Math.hypot(b.getPosition().x - worldX, b.getPosition().y - worldY) < 0.8);
     if (box) {
       drags.set(id, box);

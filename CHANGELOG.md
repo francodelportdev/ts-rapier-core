@@ -6,6 +6,11 @@
 - `game.pointer`: mouse and touch, with positions in pixels and meters
 - `game.touch`: on-screen buttons that press keyboard keys
 - `Input.press()` and `Input.release()`
+- Sharp rendering on high-density screens, with `maxPixelRatio`
+- `game.width`, `game.height` and `game.resize()`
+
+### Changed
+- `canvas.width` now includes the pixel ratio: use `game.width`
 
 ## 0.2.0
 

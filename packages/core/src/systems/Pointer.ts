@@ -24,6 +24,7 @@ export interface PointerEvents {
  */
 export class Pointer {
   private readonly canvas: HTMLCanvasElement;
+  private readonly view: { width: number; height: number };
   private readonly camera: Camera;
   private readonly events = new EventEmitter<PointerEvents>();
   private readonly active = new Map<number, { x: number; y: number; type: string }>();
@@ -31,8 +32,9 @@ export class Pointer {
   private pressed = false;
   private released = false;
 
-  constructor(canvas: HTMLCanvasElement, camera: Camera, signal: AbortSignal) {
+  constructor(canvas: HTMLCanvasElement, view: { width: number; height: number }, camera: Camera, signal: AbortSignal) {
     this.canvas = canvas;
+    this.view = view;
     this.camera = camera;
     // The finger controls the game here, not the page: no scrolling or zooming from the canvas.
     canvas.style.touchAction = "none";
@@ -123,8 +125,8 @@ export class Pointer {
   private toCanvas(e: PointerEvent): { x: number; y: number } {
     const rect = this.canvas.getBoundingClientRect();
     return {
-      x: ((e.clientX - rect.left) / rect.width) * this.canvas.width,
-      y: ((e.clientY - rect.top) / rect.height) * this.canvas.height,
+      x: ((e.clientX - rect.left) / rect.width) * this.view.width,
+      y: ((e.clientY - rect.top) / rect.height) * this.view.height,
     };
   }
 
