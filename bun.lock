@@ -30,7 +30,7 @@
       "name": "@francodelportdev/rapier-engine",
       "version": "0.2.0",
       "dependencies": {
-        "@dimforge/rapier2d-compat": "^0.14.0",
+        "@dimforge/rapier2d-compat": "^0.21.0",
       },
       "devDependencies": {
         "typescript": "~7.0.2",
@@ -38,7 +38,7 @@
     },
   },
   "packages": {
-    "@dimforge/rapier2d-compat": ["@dimforge/rapier2d-compat@0.14.0", "", {}, "sha512-sljQVPstRS63hVLnVNphsZUjH51TZoptVM0XlglKAdZ8CT+kWnmA6olwjkF7omPWYrlKMd/nHORxOUdJDOSoAQ=="],
+    "@dimforge/rapier2d-compat": ["@dimforge/rapier2d-compat@0.21.0", "", {}, "sha512-cMStLQZbY5D/ajAPjOwTwoYuAJAungTYB45MNFEa5B+LGaMiZfxLwjHsfpxH5B0sDa+gkmcQFJJKiHNKnlpMnA=="],
 
     "@francodelportdev/rapier-engine": ["@francodelportdev/rapier-engine@workspace:packages/core"],
 

@@ -2,7 +2,7 @@
  * Sensors: a pressure plate that opens a gate, and a radar that follows the player.
  * Explanation: the "sensors" page of the docs.
  */
-import { Box, Game, Ground, Platform, Player, Sensor, Trigger } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Platform, Player, Sensor, Shape, Trigger, type Entity } from "@francodelportdev/rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {
@@ -12,8 +12,11 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   game.addEntity(new Ground(world));
   const player = new Player(world, { x: -8 });
   game.addEntity(player);
-  const boxes = [new Box(world, -3, -4), new Box(world, -5, 2)];
-  for (const box of boxes) game.addEntity(box);
+  // Heavy crates: the player pushes them slowly, and they stay where they're left.
+  const crate = (x: number, y: number) =>
+    new Shape(world, { x, y, body: "dynamic", density: 8, friction: 1, geometry: { type: "box", width: 1, height: 1 } });
+  const crates: Entity[] = [crate(-3, -4), crate(-5, 2)];
+  for (const c of crates) game.addEntity(c);
 
   // --- Pressure plate: open the gate while a box is on it -------------------------------
   // The filter leaves the player out, and the curb stops the box on the plate.
@@ -21,7 +24,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
     x: 4,
     y: -4.25,
     color: "#ecc94b",
-    filter: (entity) => entity instanceof Box,
+    filter: (entity) => crates.includes(entity),
     geometry: { type: "box", width: 3, height: 0.5 },
   });
   game.addEntity(plate);
@@ -49,7 +52,7 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
     y: 0,
     follow: player,
     color: "#63b3ed",
-    filter: (entity) => entity instanceof Box,
+    filter: (entity) => crates.includes(entity),
     geometry: { type: "circle", radius: 3 },
   });
   game.addEntity(radar);

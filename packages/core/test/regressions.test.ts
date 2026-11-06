@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { Animator, Box, Game, Ground, Input, Patrol, Player, Scene, Sensor, Shape, Sprite, SpriteSheet, type SheetImage } from "../src";
-import { createCanvas, createGame, createWorld, keys, simulate, stepGame } from "./helpers";
+import { Animator, Box, Game, Ground, Input, Patrol, Platform, Player, Scene, Sensor, Shape, Sprite, SpriteSheet, type SheetImage } from "../src";
+import { createCanvas, createGame, createWorld, keys, simulate, simulateUntil, stepGame } from "./helpers";
 import { dispatchWindowEvent } from "./setup";
 
 beforeEach(() => keys.reset());
@@ -277,5 +277,20 @@ describe("Game options and API", () => {
     const box = new Box(world, 1, 2);
     expect(box).toBeInstanceOf(Shape);
     expect(box.getPosition()).toEqual({ x: 1, y: 2 });
+  });
+});
+
+describe("Landing", () => {
+  test("after a fast fall, the player keeps its running speed", () => {
+    const world = createWorld();
+    const player = new Player(world, { x: -40, y: 8 });
+    const entities = [new Platform(world, { x: 0, y: -5, width: 200, height: 0.5 }), player];
+    keys.down("ArrowRight");
+    simulateUntil(world, entities, () => player.isGrounded(), 200);
+    simulate(world, entities, 3);
+    const start = player.getPosition().x;
+    simulate(world, entities, 60);
+    expect(player.getPosition().x - start).toBeGreaterThan(7.5); // 8 m/s for 1 s
+    expect(player.getPosition().y).toBeCloseTo(-3.75, 1);
   });
 });

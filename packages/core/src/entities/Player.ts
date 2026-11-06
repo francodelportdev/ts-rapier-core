@@ -262,8 +262,8 @@ export class Player extends Entity<ResolvedOptions> {
   private groundProbe: RAPIER.Cuboid | null = null;
   /** True while standing on a one-way platform. */
   private onOneWay = false;
-  /** The kinematic body under the player, and its height last step, to ride it downwards. */
-  private ridden: { handle: number; y: number } | null = null;
+  /** The kinematic body under the player, and where it was last step, to ride it. */
+  private ridden: { handle: number; x: number; y: number } | null = null;
   /** While above 0, one-way platforms are ignored (dropping through). */
   private dropTimer = 0;
   /** The player's bottom edge before this step's move, for the one-way filter. */
@@ -578,7 +578,12 @@ export class Player extends Entity<ResolvedOptions> {
     const o = this.options;
     const collider = this.body.collider(0);
     const desired = { x: this.vx * dt, y: this.vy * dt };
-    desired.y += this.rideDown();
+    // Standing on the ground, gravity would only press the player into the controller's offset,
+    // where the floor stops it sideways. Snap-to-ground keeps it down, also on slopes.
+    if (this.grounded && this.vy <= 0) desired.y = 0;
+    const ride = this.rideDelta();
+    desired.x += ride.x;
+    desired.y += ride.y;
     const start = this.body.translation();
     this.filterBounds = {
       left: start.x - o.halfWidth,
@@ -632,13 +637,14 @@ export class Player extends Entity<ResolvedOptions> {
   }
 
   /**
-   * How far the kinematic body under the player sank since the last step. Without following
-   * it, gravity would need time to catch up, and the player couldn't jump in the meantime.
+   * How far the kinematic body under the player moved since the last step, so it rides along.
+   * Going up needs nothing: the body lifts the player by itself.
    */
-  private rideDown(): number {
-    if (this.ridden === null || this.vy > 0) return 0;
-    const body = this.world.getRigidBody(this.ridden.handle);
-    return body ? Math.min(0, body.translation().y - this.ridden.y) : 0;
+  private rideDelta(): { x: number; y: number } {
+    const body = this.ridden && this.vy <= 0 ? this.world.getRigidBody(this.ridden.handle) : null;
+    if (!body || !this.ridden) return { x: 0, y: 0 };
+    const p = body.translation();
+    return { x: p.x - this.ridden.x, y: Math.min(0, p.y - this.ridden.y) };
   }
 
   /** True if the surface right below the player (after `moved`) is no steeper than maxSlope. */
@@ -662,7 +668,7 @@ export class Player extends Entity<ResolvedOptions> {
     );
     this.onOneWay = hit !== null && isOneWay(this.world, hit.collider);
     const under = hit?.collider.parent();
-    this.ridden = under?.isKinematic() ? { handle: under.handle, y: under.translation().y } : null;
+    this.ridden = under?.isKinematic() ? { handle: under.handle, ...under.translation() } : null;
     // For shape casts, normal1 is the outward normal of the surface that was hit.
     return hit !== null && hit.normal1.y >= this.minWallNormalY - 1e-3;
   }
