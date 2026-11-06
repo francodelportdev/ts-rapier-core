@@ -41,7 +41,12 @@ export abstract class Entity<TOptions extends object = object> {
     if (this.components.has(type)) throw new Error(`The entity already has a ${type.name}`);
     this.components.set(type, component);
     component.entity = this as unknown as Entity;
-    component.onAttach();
+    try {
+      component.onAttach();
+    } catch (error) {
+      this.components.delete(type);
+      throw error;
+    }
     return component;
   }
 
@@ -146,6 +151,11 @@ export abstract class Entity<TOptions extends object = object> {
 
   public getCollision(): CollisionFilter {
     return this.collision;
+  }
+
+  /** True for entities that handle falling by themselves, so the kill plane leaves them alone. */
+  public get survivesKillPlane(): boolean {
+    return false;
   }
 
   /** True once `destroy()` has run. A destroyed entity must not be updated or drawn. */

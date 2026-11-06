@@ -132,7 +132,10 @@ export class Sensor extends Shape {
       if (this.inside.has(entity) || entity.isDestroyed || (filter && !filter(entity))) continue;
       this.inside.add(entity);
       this.events.emit("enter", { entity });
-      if (once) this.enabled = false;
+      if (once) {
+        this.enabled = false;
+        break;
+      }
     }
   }
 

@@ -67,7 +67,7 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 **Errors:** if game code throws, the game keeps running. The error goes to the `error` event and to `console.error`, without repeating the same message.
 
 **Options:**
-- `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off.
+- `killPlaneY` (default `-30`): entities whose center falls below it are removed automatically, so objects that fall out of the level stop using CPU and memory. Pass `null` to turn it off. A `Player` is never removed by it: it respawns at `respawnBelow`.
 - `gravity` (default `9.81`): world gravity in m/s², positive down. `clear()` goes back to it. The player has its own `gravity` option.
 - `scale` (default `30`): pixels per meter at zoom 1.
 - `background` (default transparent): canvas color behind everything.
@@ -251,7 +251,7 @@ game.scenes.go("menu", { fade: 0.3 });
 
 Each change calls `onExit()` and then `game.clear()`, which removes every entity and resets the camera, gravity and kill plane. `this.game.on()` inside `onEnter()` ends with the scene. For other subscriptions, use `this.listen(off)`, as in `this.listen(health.on("death", ...))`.
 
-`new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Required fields are checked with `validateLevel()`, which throws an error naming the level.
+`new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Fields are checked with `validateLevel()`, which throws an error naming the level.
 
 Goals, hazards and coins are built with [`Trigger`](#sensors-and-triggers).
 

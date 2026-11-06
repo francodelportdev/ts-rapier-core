@@ -93,7 +93,7 @@ export class GamepadInput {
     }
     let pressed = false;
     for (const key of wanted) {
-      if (this.held.has(key)) continue;
+      if (this.held.has(key) && this.input.isAnyHeldFromCode([key])) continue; // losing window focus lifts keys
       this.held.add(key);
       this.input.press(key);
       pressed = true;

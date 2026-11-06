@@ -26,6 +26,18 @@
 - `game.resize()` also changes the displayed size of a canvas without CSS sizing
 - `stop()` and `start()` from a listener no longer leave two loops running
 - On-screen buttons and gamepads work with a player that has its own `keys`
+- A key tapped during a fade no longer reaches the next scene
+- `configure({ jumpHeight })` also changes wall jumps that use the player's height
+- A `once` sensor fires `enter` only once when several entities enter together
+- A component whose `onAttach()` throws isn't left attached
+- `Controls.load()` keeps each input in a single action
+- `Health.damage(NaN)` is ignored
+- `validateLevel()` also checks platforms, shapes, boxes, hazards and coins
+- The kill plane no longer removes a `Player`, which respawns instead
+- On-screen buttons and pads held while the window loses focus work again on their next update
+- `grid.size` must be above 0, instead of hanging the page
+- Audio stays silent after `game.destroy()`
+- `Game.create()` can try again after Rapier fails to load
 
 ## 0.2.0
 
