@@ -9,6 +9,7 @@
 - Sharp rendering on high-density screens, with `maxPixelRatio`
 - `game.width`, `game.height` and `game.resize()`
 - Interpolated drawing, with the `interpolation` option
+- `game.audio`: effects, music, volumes, and sounds made by code
 
 ### Changed
 - `canvas.width` now includes the pixel ratio: use `game.width`

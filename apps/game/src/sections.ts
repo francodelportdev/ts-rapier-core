@@ -140,6 +140,11 @@ export const SECTIONS: Section[] = [
     controls: () => [],
   },
   {
+    id: "audio", title: "Audio", group: "Engine", file: "src/demos/audio.ts",
+    load: () => import("./demos/audio"), source: () => import("./demos/audio.ts?raw"), content: () => import("./content/audio.html?raw"),
+    controls: () => [],
+  },
+  {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],

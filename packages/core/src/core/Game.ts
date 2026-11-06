@@ -1,6 +1,7 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import type { Entity } from "../entities/Entity";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
+import { AudioManager } from "../systems/Audio";
 import { Input } from "../systems/Input";
 import { Pointer } from "../systems/Pointer";
 import { TouchControls } from "../systems/TouchControls";
@@ -89,6 +90,8 @@ export class Game {
   public readonly pointer: Pointer;
   /** On-screen buttons for touch screens. Off until you set `enabled`. */
   public readonly touch: TouchControls;
+  /** Sound effects and music. Music keeps playing across scene changes. */
+  public readonly audio = new AudioManager();
   /** Draw between physics steps. It can be changed at any time. */
   public interpolation: boolean;
   private entities: Entity[] = [];
@@ -133,10 +136,18 @@ export class Game {
     const { signal } = this.listeners;
     this.pointer = new Pointer(canvas, this.view, this.camera, signal);
     this.touch = new TouchControls(canvas, this.view, this.input, this.pointer);
-    canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }), { signal });
+    canvas.addEventListener(
+      "pointerdown",
+      () => {
+        canvas.focus({ preventScroll: true });
+        this.audio.unlock();
+      },
+      { signal },
+    );
     canvas.addEventListener(
       "keydown",
       (e) => {
+        this.audio.unlock();
         if (SCROLL_KEYS.has(e.code)) e.preventDefault();
       },
       { signal },
@@ -289,6 +300,7 @@ export class Game {
     this.stop();
     this.listeners.abort();
     this.touch.releaseAll();
+    this.audio.destroy();
     this.clear(); // destroys the entities, so their components get onDetach()
     this.world.free();
   }
