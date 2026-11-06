@@ -1,0 +1,28 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Engine</p>
+<h1>Display</h1>
+<p class="text-muted">How the game reaches the screen: sharp on any pixel density, and smooth at any refresh rate. Lower the physics rate and switch interpolation off to see the difference: everything starts moving in jumps.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump</li>
+</ul>
+
+<h2>Screen size and sharpness</h2>
+<p>The canvas renders at the screen's pixel density, so it looks sharp on phones and high-density monitors. You don't have to do anything, and your coordinates don't change: <code>draw()</code>, the camera and <code>game.pointer</code> keep working in the same pixels.</p>
+<pre><code>const game = await Game.create(canvas, { maxPixelRatio: 2 });
+
+game.width;            // the size to work with, in pixels
+game.height;
+game.resize(1024, 576); // change it</code></pre>
+<table>
+  <thead><tr><th>Member</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>maxPixelRatio</code></td><td>The highest density to render at. The default is 2, and 1 turns it off. Higher values draw more pixels, so lower it if a phone struggles.</td></tr>
+    <tr><td><code>game.width</code>, <code>game.height</code></td><td>Use them instead of <code>canvas.width</code>, which also includes the density.</td></tr>
+    <tr><td><code>game.resize(width, height)</code></td><td>Changes the size of the view. It doesn't follow the page by itself: for a full-screen game, call it when the window resizes.</td></tr>
+  </tbody>
+</table>
+<h2>Smooth movement</h2>
+<p>Physics runs at 60 steps per second, whatever the screen. On a 144 Hz monitor, some frames would have no new step, so movement would look uneven. The engine draws entities and the camera between the last two steps, which keeps it smooth. It's on by default and needs no changes in <code>draw()</code>, sprites or components. It adds a delay of less than one step (16 ms). Turn it off with <code>Game.create(canvas, { interpolation: false })</code> or <code>game.interpolation = false</code>.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Jumps of more than 2 m in a step, such as a respawn, aren't smoothed. The debug view shows the real bodies, so outlines can be slightly ahead of what's drawn.</p>
+<p class="mt-3 text-[0.9rem] text-muted">If the window moves to a screen with another density, the canvas adjusts on its own. A canvas sized by CSS, such as <code>width: 100%</code>, stays responsive.</p>
