@@ -5,6 +5,9 @@ import type { Game } from "../core/Game";
 import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 
+/** Moving further than this in one step, in meters, is a teleport: it isn't interpolated. */
+const MAX_INTERPOLATED_STEP = 2;
+
 /**
  * Base class for every physics entity. Works in meters (Rapier, Y axis up);
  * conversion to pixels (Y axis down) happens only in `draw` via `toCanvas`.
@@ -15,6 +18,8 @@ export abstract class Entity<TOptions extends object = object> {
   /** Constructor options. Set before `createBody()` runs, so it is safe to read there. */
   protected readonly options: TOptions;
   private destroyed = false;
+  /** Where the body was before the current physics step, to draw between the two. */
+  private previousPose: { x: number; y: number; angle: number } | null = null;
   private sprite: Sprite | null = null;
   private readonly components = new Map<ComponentType<Component>, Component>();
   private game: Game | null = null;
@@ -86,8 +91,41 @@ export abstract class Entity<TOptions extends object = object> {
     return this.sprite;
   }
 
-  /** Called by `Game` every frame: draws the sprite if there is one, and `draw()` otherwise. */
-  public render(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
+  /** @internal Called by `Game` before each physics step. */
+  public savePose(): void {
+    const { x, y } = this.body.translation();
+    this.previousPose = { x, y, angle: this.body.rotation() };
+  }
+
+  /**
+   * Moves the canvas from where the body is to where it should appear, `alpha` of the way from
+   * its previous pose. Working on the canvas means `draw()`, sprites and components need no changes.
+   */
+  private applyInterpolation(ctx: CanvasRenderingContext2D, alpha: number, scale: number, centerX: number, centerY: number): void {
+    const previous = this.previousPose;
+    if (alpha >= 1 || previous === null) return;
+    const t = this.body.translation();
+    const dx = (previous.x - t.x) * (1 - alpha);
+    const dy = (previous.y - t.y) * (1 - alpha);
+    if (Math.hypot(previous.x - t.x, previous.y - t.y) > MAX_INTERPOLATED_STEP) return; // a teleport
+    let turn = previous.angle - this.body.rotation();
+    turn = Math.atan2(Math.sin(turn), Math.cos(turn)) * (1 - alpha); // the short way around
+    ctx.translate(dx * scale, -dy * scale);
+    if (turn !== 0) {
+      const px = centerX + t.x * scale;
+      const py = centerY - t.y * scale;
+      ctx.translate(px, py);
+      ctx.rotate(-turn);
+      ctx.translate(-px, -py);
+    }
+  }
+
+  /**
+   * Called by `Game` every frame: draws the sprite if there is one, and `draw()` otherwise.
+   * `alpha` is how far the frame is between the last two physics steps.
+   */
+  public render(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number, alpha = 1): void {
+    this.applyInterpolation(ctx, alpha, scale, centerX, centerY);
     if (this.sprite === null) {
       this.draw(ctx, scale, centerX, centerY);
     } else {

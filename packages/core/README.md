@@ -72,6 +72,7 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 - `scale` (default `30`): pixels per meter at zoom 1.
 - `background` (default transparent): canvas color behind everything.
 - `maxPixelRatio` (default `2`): renders sharply on high-density screens, up to this ratio. `1` turns it off.
+- `interpolation` (default `true`): draws between physics steps, so movement is smooth at any refresh rate. It costs a delay of less than one step (16 ms). `game.interpolation` changes it at any time.
 - `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
@@ -445,6 +446,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `regressions.test.ts` | Quick taps, scene listeners, validation, moving platforms and other fixed bugs |
 | `pointer.test.ts` | Positions, CSS scaling, edges, several fingers, events, and on-screen buttons moving the player |
 | `resolution.test.ts` | Pixel ratio, its limit, screen changes, `resize()`, and pointer and buttons staying in the same coordinates |
+| `interpolation.test.ts` | Entities and the camera drawn between steps, rotation, teleports, frozen scenes and turning it off |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
