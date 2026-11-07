@@ -1,5 +1,5 @@
 import type { Camera } from "../core/Camera";
-import { EventEmitter, type Listener } from "./EventEmitter";
+import { Observable } from "./EventEmitter";
 
 /** One finger, or the mouse. Positions are in canvas pixels and in world meters. */
 export interface PointerInfo {
@@ -22,17 +22,17 @@ export interface PointerEvents {
  * Mouse and touch on the game's canvas, at `game.pointer`. Both work the same way, and
  * positions already account for CSS scaling and the camera. Several fingers are tracked at once.
  */
-export class Pointer {
+export class Pointer extends Observable<PointerEvents> {
   private readonly canvas: HTMLCanvasElement;
   private readonly view: { width: number; height: number };
   private readonly camera: Camera;
-  private readonly events = new EventEmitter<PointerEvents>();
   private readonly active = new Map<number, { x: number; y: number; type: string }>();
   private last = { x: 0, y: 0 };
   private pressed = false;
   private released = false;
 
   constructor(canvas: HTMLCanvasElement, view: { width: number; height: number }, camera: Camera, signal: AbortSignal) {
+    super();
     this.canvas = canvas;
     this.view = view;
     this.camera = camera;
@@ -78,19 +78,6 @@ export class Pointer {
     return [...this.active].map(([id, p]) => this.info(id, p.x, p.y, p.type));
   }
 
-  public on<K extends keyof PointerEvents>(event: K, listener: Listener<PointerEvents[K]>): () => void {
-    return this.events.on(event, listener);
-  }
-
-  /** Like `on()`, but the listener runs only once. */
-  public once<K extends keyof PointerEvents>(event: K, listener: Listener<PointerEvents[K]>): () => void {
-    return this.events.once(event, listener);
-  }
-
-  public off<K extends keyof PointerEvents>(event: K, listener: Listener<PointerEvents[K]>): void {
-    this.events.off(event, listener);
-  }
-
   /** @internal Called by `Game` after each step. */
   public endStep(): void {
     this.pressed = false;
@@ -103,14 +90,14 @@ export class Pointer {
     this.active.set(e.pointerId, { ...p, type: e.pointerType });
     this.last = p;
     this.pressed = true;
-    this.events.emit("down", this.info(e.pointerId, p.x, p.y, e.pointerType));
+    this.emit("down", this.info(e.pointerId, p.x, p.y, e.pointerType));
   }
 
   private onMove(e: PointerEvent): void {
     const p = this.toCanvas(e);
     this.last = p;
     if (this.active.has(e.pointerId)) this.active.set(e.pointerId, { ...p, type: e.pointerType });
-    this.events.emit("move", this.info(e.pointerId, p.x, p.y, e.pointerType));
+    this.emit("move", this.info(e.pointerId, p.x, p.y, e.pointerType));
   }
 
   private onUp(e: PointerEvent): void {
@@ -118,7 +105,7 @@ export class Pointer {
     const p = this.toCanvas(e);
     this.last = p;
     this.released = true;
-    this.events.emit("up", this.info(e.pointerId, p.x, p.y, e.pointerType));
+    this.emit("up", this.info(e.pointerId, p.x, p.y, e.pointerType));
   }
 
   /** Page position → canvas pixels (the canvas may be scaled by CSS). */

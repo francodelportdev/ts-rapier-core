@@ -18,6 +18,10 @@
 - Collisions: the `collisionStart` and `collisionEnd` events, and `onCollisionStart()` and `onCollisionEnd()` on entities and components
 
 ### Changed
+- `update(dt)` on entities and scenes receives the step in seconds, like components. It's optional on entities
+- `Platform` (and `Ground`) is now a `Shape`
+- `Controls` has `once()` and `off()`
+- `Observable<Events>`: a base class that gives your own classes `on`, `once` and `off`
 - `getAngle()` moved from `Shape` to `Entity`, so every entity has it
 - Actions: `Input.isAction()`, and on-screen buttons and pads press `left`, `right`, `jump`, `dash` and `down` instead of keys
 - `TouchButton.key` is now `press`, and gamepad mappings use actions: `{ buttons: { jump: [2] } }`

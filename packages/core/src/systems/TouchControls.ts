@@ -1,3 +1,4 @@
+import { HeldKeys } from "./HeldKeys";
 import type { Input } from "./Input";
 import type { Pointer } from "./Pointer";
 
@@ -30,17 +31,16 @@ export class TouchControls {
   /** Show them even before a touch. Mouse clicks also press them. */
   public alwaysVisible = false;
   private buttons: readonly TouchButton[] = LAYOUT;
-  private readonly held = new Set<string>();
+  private readonly held: HeldKeys;
   private touched = false;
   private readonly canvas: HTMLCanvasElement;
   private readonly view: { width: number; height: number };
-  private readonly input: Input;
   private readonly pointer: Pointer;
 
   constructor(canvas: HTMLCanvasElement, view: { width: number; height: number }, input: Input, pointer: Pointer) {
     this.canvas = canvas;
     this.view = view;
-    this.input = input;
+    this.held = new HeldKeys(input);
     this.pointer = pointer;
     const sync = () => this.sync();
     pointer.on("down", ({ type }) => {
@@ -69,8 +69,7 @@ export class TouchControls {
 
   /** @internal Lifts every key the buttons are holding. */
   public releaseAll(): void {
-    for (const key of this.held) this.input.release(key);
-    this.held.clear();
+    this.held.releaseAll();
   }
 
   /** Presses the buttons under a pointer, and lifts the others. A finger can slide between them. */
@@ -83,16 +82,7 @@ export class TouchControls {
         if (Math.hypot(p.x - x, p.y - y) <= radius) wanted.add(button.press);
       }
     }
-    for (const key of [...this.held]) {
-      if (wanted.has(key)) continue;
-      this.held.delete(key);
-      this.input.release(key);
-    }
-    for (const key of wanted) {
-      if (this.held.has(key) && this.input.isHeld(key)) continue; // losing window focus lifts keys
-      this.held.add(key);
-      this.input.press(key);
-    }
+    this.held.sync(wanted);
   }
 
   /**

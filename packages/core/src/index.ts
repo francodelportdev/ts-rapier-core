@@ -52,5 +52,5 @@ export type { TouchButton } from "./systems/TouchControls";
 export { ALL_LAYERS, defineLayers, toInteractionGroups } from "./systems/layers";
 export type { CollisionFilter, Layers } from "./systems/layers";
 export { isOneWay } from "./systems/oneWay";
-export { EventEmitter } from "./systems/EventEmitter";
+export { EventEmitter, Observable } from "./systems/EventEmitter";
 export type { Listener } from "./systems/EventEmitter";

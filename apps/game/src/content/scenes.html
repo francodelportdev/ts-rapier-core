@@ -13,7 +13,7 @@
 <p>Extend <code>Scene</code>, build your entities in <code>onEnter(data)</code>, and register a factory, so every visit starts fresh.</p>
 <pre><code>class Menu extends Scene {
   onEnter() { /* add entities */ }
-  update() { /* runs every physics step */ }
+  update(dt) { /* runs every physics step, dt in seconds */ }
   draw(ctx, width, height) { /* menus and HUDs, in pixels */ }
 }
 

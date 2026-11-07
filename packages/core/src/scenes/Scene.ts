@@ -34,8 +34,8 @@ export abstract class Scene<TData = void> {
   /** Runs just before the scene's entities are removed. */
   public onExit(): void {}
 
-  /** Runs once per physics step, before the entities update. */
-  public update(): void {}
+  /** Runs once per physics step, before the entities update. `dt` is in seconds. */
+  public update(_dt: number): void {}
 
   /** Runs after the entities are drawn, in canvas pixels. For menus and HUDs. */
   public draw(_ctx: CanvasRenderingContext2D, _width: number, _height: number): void {}

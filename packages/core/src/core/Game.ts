@@ -372,9 +372,9 @@ export class Game {
       return; // frozen during a fade out
     }
     this.whileBusy(() => {
-      this.scenes.update();
+      this.scenes.update(this.world.timestep);
       for (const e of this.entities) {
-        e.update();
+        e.update(this.world.timestep);
         e.updateComponents(this.world.timestep);
         e.getSprite()?.animator?.update(this.world.timestep);
       }
