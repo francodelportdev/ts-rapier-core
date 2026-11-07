@@ -11,7 +11,9 @@ An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.
 
 ## Getting started
 
-Requires [Bun](https://bun.com) 1.4.4 or later. Earlier versions crash at random inside Rapier's WebAssembly while running the tests.
+Requires [Bun](https://bun.com) 1.4.4 or later.
+
+> **Known issue:** the tests sometimes crash inside Rapier's WebAssembly, with `Out of bounds memory access` or `Unreachable code`. It happens in about 1 run in 150 of the full suite on Bun 1.4, and about 1 in 25 on Bun 1.2, never in a single test file. The cause is unknown. If it happens, run the tests again. The game in the browser isn't affected.
 
 ```bash
 bun install
