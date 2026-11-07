@@ -52,6 +52,7 @@ game.start();
 | `on("entityRemoved", ({ entity, reason }) => …)` | Runs after each removal. `reason` is `"manual"` or `"killPlane"`. Returns a function that unsubscribes. `off()` is also available. |
 | `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
+| `pause()`, `resume()`, `isPaused()` | Freezes the game, but keeps drawing it, for a pause menu. See [Pause](#pause). |
 | `width`, `height` | The size to work with, in pixels, whatever the pixel ratio. Use them instead of `canvas.width`. |
 | `resize(width, height)` | Changes the size of the view. |
 | `isFocused(): boolean` | True while the canvas has keyboard focus. |
@@ -76,6 +77,16 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 - `grid` (default `false`): `true`, or `{ size, color }`, draws a grid in world space behind the entities. It makes camera movement visible.
 
 **Keyboard focus:** the canvas is focusable, and clicking it gives it focus. The game only receives keyboard input while its canvas has focus. This lets several games share a page without every player moving at once. While the canvas has focus, the arrow keys and Space don't scroll the page.
+
+### Pause
+
+```ts
+game.on("frame", () => {
+  if (Input.getInstance().isPressed("Escape")) game.isPaused() ? game.resume() : game.pause();
+});
+```
+
+While paused, nothing moves: no physics steps, entity updates, animations, camera moves or scene fades. The game keeps drawing, and emits `frame`, `pause` and `resume`. A scene's `draw()` still runs, so it can show a menu while `game.isPaused()`. Keys, the pointer and pads still work for that menu: a tap lasts one frame, and doesn't reach the game after `resume()`. The time spent paused isn't simulated afterwards. Music keeps playing, so also call `audio.pauseMusic()` for silence. `stop()` is different: it stops drawing too.
 
 ### `Camera`
 

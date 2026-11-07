@@ -62,6 +62,10 @@ export interface GameEvents {
   collisionStart: { a: Entity; b: Entity };
   /** Two entities stopped touching, or one of them left the game. */
   collisionEnd: { a: Entity; b: Entity };
+  /** `pause()` froze the game. */
+  pause: Record<string, never>;
+  /** `resume()` unfroze it. */
+  resume: Record<string, never>;
 }
 
 /**
@@ -112,6 +116,7 @@ export class Game {
   private lastTime: number | null = null;
   private accumulator = 0;
   private destroyed = false;
+  private paused = false;
   /** True while stepping or drawing: nothing may free physics objects until it ends. */
   private busy = false;
   private clearRequested = false;
@@ -301,6 +306,32 @@ export class Game {
     this.rafId = requestAnimationFrame(this.loop);
   }
 
+  /**
+   * Freezes the game: no physics steps, entity updates, animations, camera moves or scene fades.
+   * It keeps drawing and emitting `frame`, so a pause menu can show, and keys, the pointer and
+   * pads still work for that menu. A tap lasts one frame and doesn't reach the game afterwards.
+   * Music keeps playing: also call `audio.pauseMusic()` for silence.
+   */
+  public pause(): void {
+    if (this.paused || this.destroyed) return;
+    this.paused = true;
+    this.events.emit("pause", {});
+  }
+
+  /** Unfreezes the game. The time spent paused isn't simulated afterwards. */
+  public resume(): void {
+    if (!this.paused) return;
+    this.paused = false;
+    this.input.endStep(); // the tap that resumed (a key or a button) doesn't also reach the game
+    this.pointer.endStep();
+    this.events.emit("resume", {});
+  }
+
+  /** True between `pause()` and `resume()`. */
+  public isPaused(): boolean {
+    return this.paused;
+  }
+
   public stop(): void {
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.rafId = null;
@@ -374,6 +405,12 @@ export class Game {
     run(a, b);
     run(b, a);
     this.guard(() => this.events.emit(started ? "collisionStart" : "collisionEnd", { a, b }));
+  }
+
+  /** While paused there are no steps, so input is read once per frame, for a pause menu. */
+  private readPausedInput(): void {
+    this.input.setEnabled(this.isFocused());
+    if (this.isFocused() && this.gamepad.poll()) this.audio.unlock();
   }
 
   /** Runs `work` with physics objects protected, then applies what it asked for. */
@@ -454,10 +491,12 @@ export class Game {
     const frame = this.rafId;
     const frameTime = this.lastTime === null ? 0 : Math.min((time - this.lastTime) / 1000, MAX_FRAME_TIME);
     this.lastTime = time;
-    this.accumulator += frameTime;
+    const pausedFrame = this.paused;
+    if (pausedFrame) this.guard(() => this.readPausedInput());
+    else this.accumulator += frameTime; // time spent paused is never simulated
 
     const dt = this.world.timestep;
-    while (this.accumulator >= dt && !this.destroyed) {
+    while (this.accumulator >= dt && !this.destroyed && !this.paused) {
       this.guard(() => this.step());
       this.accumulator -= dt; // even after a failure, or the backlog would grow forever
     }
@@ -475,6 +514,11 @@ export class Game {
       );
     }
     if (!this.destroyed) this.guard(() => this.events.emit("frame", {}));
+    if (pausedFrame && !this.destroyed) {
+      // In a paused frame, taps were for the frame listeners: they last one frame.
+      if (this.isFocused()) this.input.endStep();
+      this.pointer.endStep();
+    }
     // A listener may have stopped the game, or restarted it, which already asked for a frame.
     if (frame !== null && this.rafId === frame) this.rafId = requestAnimationFrame(this.loop);
   };
