@@ -24,6 +24,8 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Engine: audio | [`src/demos/audio.ts`](src/demos/audio.ts) | Effects tied to player events and music, all made by code, with volume sliders. |
 | Engine: gamepad | [`src/demos/gamepad.ts`](src/demos/gamepad.ts) | `game.gamepad`, with a live view of what the browser reports. |
 | Engine: controls | [`src/demos/controls.ts`](src/demos/controls.ts) | `Controls`, with a table to add and remove keys, pad buttons and axes. The choice is saved and applies to every demo. |
+| Engine: collisions | [`src/demos/collisions.ts`](src/demos/collisions.ts) | `collisionStart` and `collisionEnd`, and boxes that change color through `onCollisionStart()`, with an enemy that sends the player back. |
+| Engine: pause | [`src/demos/pause.ts`](src/demos/pause.ts) | `pause()` and `resume()`, with a pause menu drawn by a scene, and a button for mouse and touch. |
 | Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.

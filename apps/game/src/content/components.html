@@ -31,6 +31,7 @@ crate.add(new Spin());</code></pre>
     <tr><td><code>update(dt)</code></td><td>Every physics step, after the entity's own <code>update()</code>. <code>dt</code> is in seconds.</td></tr>
     <tr><td><code>draw(ctx, scale, centerX, centerY)</code></td><td>After the entity is drawn.</td></tr>
     <tr><td><code>onDetach()</code></td><td>On being removed, or when the entity is destroyed. Undo what <code>onAttach()</code> set up.</td></tr>
+    <tr><td><code>onCollisionStart(other)</code> / <code>onCollisionEnd(other)</code></td><td>When its entity starts or stops touching another one (see <a href="#collisions">Collisions</a>).</td></tr>
   </tbody>
 </table>
 <p class="mt-3 text-[0.9rem] text-muted">Components can find each other with <code>this.entity.get(Health)</code>. <code>entity.getBody()</code> gives the Rapier body, and <code>entity.getGame()</code> gives the game once the entity has been added. Components only update inside a <code>Game</code>.</p>

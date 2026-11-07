@@ -117,6 +117,11 @@ export const SECTIONS: Section[] = [
     controls: ({ player }) => movement(player),
   },
   {
+    id: "collisions", title: "Collisions", group: "Engine", file: "src/demos/collisions.ts",
+    load: () => import("./demos/collisions"), source: () => import("./demos/collisions.ts?raw"), content: () => import("./content/collisions.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
     id: "animations", title: "Animations", group: "Engine", file: "src/demos/animations.ts",
     load: () => import("./demos/animations"), source: () => import("./demos/animations.ts?raw"), content: () => import("./content/animations.html?raw"),
     controls: () => [],
@@ -159,6 +164,11 @@ export const SECTIONS: Section[] = [
   {
     id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "pause", title: "Pause", group: "Engine", file: "src/demos/pause.ts",
+    load: () => import("./demos/pause"), source: () => import("./demos/pause.ts?raw"), content: () => import("./content/pause.html?raw"),
     controls: () => [],
   },
   {
