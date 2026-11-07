@@ -16,6 +16,7 @@
 - Collisions: the `collisionStart` and `collisionEnd` events, and `onCollisionStart()` and `onCollisionEnd()` on entities and components
 
 ### Changed
+- `getAngle()` moved from `Shape` to `Entity`, so every entity has it
 - Actions: `Input.isAction()`, and on-screen buttons and pads press `left`, `right`, `jump`, `dash` and `down` instead of keys
 - `TouchButton.key` is now `press`, and gamepad mappings use actions: `{ buttons: { jump: [2] } }`
 - `Input.setBindings()` is now `Input.setActionKeys()`
@@ -43,6 +44,7 @@
 - `grid.size` must be above 0, instead of hanging the page
 - Audio stays silent after `game.destroy()`
 - `Game.create()` can try again after Rapier fails to load
+- Using a destroyed entity throws a clear error, instead of breaking Rapier's memory. `getPosition()` and `getAngle()` keep working, with where it was
 
 ## 0.2.0
 
