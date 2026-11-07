@@ -455,9 +455,9 @@ describe("A player with its own keys", () => {
     const entities = [new Ground(world), player];
     simulate(world, entities, 10);
     const input = Input.getInstance();
-    input.press("ArrowRight");
+    input.press("right");
     simulate(world, entities, 20);
-    input.release("ArrowRight");
+    input.release("right");
     expect(player.getVelocity().x).toBeGreaterThan(0);
   });
 
@@ -580,10 +580,10 @@ describe("Medium-severity audit bugs", () => {
     firePointer(canvas, "pointerdown", 42, 408, 1, "touch");
     dispatchWindowEvent("blur");
     firePointer(canvas, "pointermove", 43, 408, 1, "touch");
-    expect(Input.getInstance().isPressed("ArrowLeft")).toBe(true);
+    expect(Input.getInstance().isAction("left")).toBe(true);
     firePointer(canvas, "pointerup", 43, 408, 1, "touch");
     Input.getInstance().endStep(); // the tap from pressing lasts until the end of the step
-    expect(Input.getInstance().isPressed("ArrowLeft")).toBe(false);
+    expect(Input.getInstance().isAction("left")).toBe(false);
   });
 
   test("a grid size of 0 is rejected", async () => {

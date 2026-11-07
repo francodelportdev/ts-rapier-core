@@ -1,10 +1,10 @@
 import type { Input } from "./Input";
 import type { Pointer } from "./Pointer";
 
-/** A round on-screen button that holds a key while touched. */
+/** A round on-screen button that holds an action or a key while touched. */
 export interface TouchButton {
-  /** The `KeyboardEvent.code` it presses. */
-  key: string;
+  /** What it presses: an action such as "jump", or a `KeyboardEvent.code`. */
+  press: string;
   label: string;
   /** Center, in canvas pixels. Negative values count from the right or bottom edge. */
   x: number;
@@ -14,14 +14,14 @@ export interface TouchButton {
 }
 
 const LAYOUT: readonly TouchButton[] = [
-  { key: "ArrowLeft", label: "←", x: 42, y: -42 },
-  { key: "ArrowRight", label: "→", x: 116, y: -42 },
-  { key: "Space", label: "↑", x: -42, y: -42 },
+  { press: "left", label: "←", x: 42, y: -42 },
+  { press: "right", label: "→", x: 116, y: -42 },
+  { press: "jump", label: "↑", x: -42, y: -42 },
 ];
 
 /**
- * On-screen buttons for touch screens, at `game.touch`. They press the same keys as the
- * keyboard, so `Player` and your own code work unchanged. Off until you set `enabled`, and then
+ * On-screen buttons for touch screens, at `game.touch`. They press actions, like the
+ * keyboard, so `Player` works unchanged. Off until you set `enabled`, and then
  * hidden until the first touch, unless `alwaysVisible` is on.
  */
 export class TouchControls {
@@ -80,7 +80,7 @@ export class TouchControls {
     for (const p of this.pointer.getActive()) {
       for (const button of this.buttons) {
         const { x, y, radius } = this.layout(button);
-        if (Math.hypot(p.x - x, p.y - y) <= radius) wanted.add(button.key);
+        if (Math.hypot(p.x - x, p.y - y) <= radius) wanted.add(button.press);
       }
     }
     for (const key of [...this.held]) {
@@ -89,7 +89,7 @@ export class TouchControls {
       this.input.release(key);
     }
     for (const key of wanted) {
-      if (this.held.has(key) && this.input.isAnyHeldFromCode([key])) continue; // losing window focus lifts keys
+      if (this.held.has(key) && this.input.isHeld(key)) continue; // losing window focus lifts keys
       this.held.add(key);
       this.input.press(key);
     }
@@ -117,7 +117,7 @@ export class TouchControls {
     for (const button of this.buttons) {
       const { x, y, radius } = this.layout(button);
       ctx.font = `bold ${Math.round(radius * 0.7)}px system-ui`;
-      ctx.fillStyle = this.held.has(button.key) ? "rgb(255 255 255 / 0.4)" : "rgb(255 255 255 / 0.15)";
+      ctx.fillStyle = this.held.has(button.press) ? "rgb(255 255 255 / 0.4)" : "rgb(255 255 255 / 0.15)";
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
       ctx.fill();

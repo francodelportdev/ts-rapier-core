@@ -144,9 +144,9 @@ describe("Controls: playing", () => {
     const c = new Controls();
     c.remove("jump", K("Space"));
     const s = await setup(c);
-    Input.getInstance().press("Space");
+    Input.getInstance().press("jump");
     stepGame(s.game, 2);
-    Input.getInstance().release("Space");
+    Input.getInstance().release("jump");
     expect(s.jumps()).toBe(1);
   });
 
@@ -168,5 +168,54 @@ describe("Controls: playing", () => {
     keys.down("Enter");
     expect(Input.getInstance().isPressed("Enter")).toBe(true);
     expect(s.game).toBeDefined();
+  });
+});
+
+describe("Actions", () => {
+  test("isAction reads the keyboard and code alike, and stops while disabled", () => {
+    const input = Input.getInstance();
+    keys.down("KeyW");
+    expect(input.isAction("jump")).toBe(true);
+    keys.reset();
+    input.press("jump");
+    expect(input.isAction("jump")).toBe(true);
+    input.setEnabled(false);
+    expect(input.isAction("jump")).toBe(false);
+    input.setEnabled(true);
+    input.release("jump");
+    input.endStep();
+    expect(input.isAction("jump")).toBe(false);
+  });
+
+  test("a pad button can still press a plain key", async () => {
+    const game = await createGame();
+    game.gamepad.enabled = true;
+    game.gamepad.setMapping({ buttons: { KeyE: [1] } });
+    game.start();
+    pad.buttons[1]!.pressed = true;
+    stepGame(game);
+    expect(Input.getInstance().isPressed("KeyE")).toBe(true);
+  });
+
+  test("a player with its own keys ignores Controls on the keyboard, but not on a pad", async () => {
+    const game = await createGame();
+    game.gamepad.enabled = true;
+    game.start();
+    const world = game.getWorld();
+    const player = new Player(world, { keys: { right: ["KeyL"] } });
+    game.addEntity(new Ground(world));
+    game.addEntity(player);
+    stepGame(game, 10);
+    const c = new Controls();
+    c.add("right", K("KeyP"));
+    c.add("right", { type: "button", button: 7 });
+    c.applyTo(game);
+    keys.down("KeyP");
+    stepGame(game, 10);
+    expect(player.getVelocity().x).toBe(0);
+    keys.up("KeyP");
+    pad.buttons[7]!.pressed = true;
+    stepGame(game, 10);
+    expect(player.getVelocity().x).toBeGreaterThan(0);
   });
 });

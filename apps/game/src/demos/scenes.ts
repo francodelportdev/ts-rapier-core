@@ -17,7 +17,7 @@ abstract class TextScene<TData = void> extends Scene<TData> {
   private armed = false; // Enter must be released first, or a held key would skip this screen
 
   public override update(): void {
-    const enter = Input.getInstance().isPressed("Enter") || this.game.pointer.wasPressed() || Input.getInstance().isPressed("Space");
+    const enter = Input.getInstance().isPressed("Enter") || this.game.pointer.wasPressed() || Input.getInstance().isAction("jump");
     if (enter && this.armed) this.game.scenes.go(this.next, { fade: 0.3 });
     if (!enter) this.armed = true;
   }

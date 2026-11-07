@@ -14,6 +14,9 @@
 - `Controls`: editable keyboard and gamepad bindings that can be saved
 
 ### Changed
+- Actions: `Input.isAction()`, and on-screen buttons and pads press `left`, `right`, `jump`, `dash` and `down` instead of keys
+- `TouchButton.key` is now `press`, and gamepad mappings use actions: `{ buttons: { jump: [2] } }`
+- `Input.setBindings()` is now `Input.setActionKeys()`
 - `canvas.width` now includes the pixel ratio: use `game.width`
 - Rapier 0.21
 - A grounded player no longer presses into the floor, which made it stutter on Rapier 0.21

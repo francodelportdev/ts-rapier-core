@@ -186,7 +186,7 @@ game.touch.enabled = true;  // on-screen ←, → and jump, shown on the first t
 
 `game.pointer` treats mouse and fingers alike: `x`, `y`, `world`, `isDown`, `wasPressed()`, `wasReleased()`, `getActive()` for several fingers, and the events `down`, `move` and `up` with `{ id, type, x, y, worldX, worldY }`. A finger on the canvas doesn't scroll the page.
 
-`game.touch` draws buttons that press keyboard keys, so `Player` works unchanged. `setButtons([{ key, label, x, y, radius? }])` replaces them and `addButton()` adds one, with negative positions counting from the right or bottom edge. `alwaysVisible` shows them before the first touch. `Input.press(code)` and `release(code)` hold a key from code.
+`game.touch` draws buttons that press actions, so `Player` works unchanged. `setButtons([{ press, label, x, y, radius? }])`, where `press` is an action such as `"jump"` or a key code, replaces them and `addButton()` adds one, with negative positions counting from the right or bottom edge. `alwaysVisible` shows them before the first touch. `Input.press(name)` and `release(name)` hold an action or a key from code.
 
 ### Audio
 
@@ -208,10 +208,10 @@ game.audio.playMusic("theme", { fade: 1 });
 
 ```ts
 game.gamepad.enabled = true;
-game.gamepad.setMapping({ buttons: { Space: [2] }, moveAxes: [[0, 1], [6, 7]] }); // pads with their own layout
+game.gamepad.setMapping({ buttons: { jump: [2], dash: [3] }, moveAxes: [[0, 1], [6, 7]] }); // pads with their own layout
 ```
 
-A pad presses keyboard keys, so `Player` works unchanged. By default, button 0 is jump, 2 is dash, the D-pad (13–15) and axes 0 and 1 move. Generic USB pads often have their own layout: `getState()` returns `{ id, mapping, pressed, axes }` to find the numbers. Also `isConnected`, `deadZone` and `vibrate(seconds, strength)`. Browsers reveal a pad only after a button press. Only the first pad is read, and only by the focused game.
+A pad presses actions, or keys if you map them, so `Player` works unchanged. `buttons` replaces the whole list. By default, button 0 is jump, 2 is dash, the D-pad (13–15) and axes 0 and 1 move. Generic USB pads often have their own layout: `getState()` returns `{ id, mapping, pressed, axes }` to find the numbers. Also `isConnected`, `deadZone` and `vibrate(seconds, strength)`. Browsers reveal a pad only after a button press. Only the first pad is read, and only by the focused game.
 
 ### Controls
 
@@ -224,7 +224,7 @@ controls.applyTo(game);
 controls.on("change", () => controls.applyTo(game));
 ```
 
-Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key", code }`, `{ type: "button", button }` or `{ type: "axis", axis, direction }`. An input belongs to one action: adding it elsewhere moves it. `applyTo()` works below `Player` through `Input.setBindings()`, so players made by scenes follow it, and it's shared by all games on the page. `toJSON()`, `load()` and `reset()` save, restore and clear it. `load()` skips invalid data. On-screen buttons aren't affected, and keys outside the actions work as usual.
+Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key", code }`, `{ type: "button", button }` or `{ type: "axis", axis, direction }`. An input belongs to one action: adding it elsewhere moves it. `applyTo()` works below `Player` through `Input.setActionKeys()`, so players made by scenes follow it, and it's shared by all games on the page. `toJSON()`, `load()` and `reset()` save, restore and clear it. `load()` skips invalid data. On-screen buttons aren't affected, and keys outside the actions work as usual.
 
 ### Scenes and levels
 
@@ -360,7 +360,7 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 | `dropThroughTime` | `0.25` | Seconds that one-way platforms are ignored after ↓ + jump. |
 | `maxSlope` | `50` | Steepest walkable slope, in degrees. The player walks up and stands on slopes up to this angle without sliding. Steeper surfaces count as walls: the player can't stand on them or jump up them, and can wall slide on them. |
 | `respawnBelow` | `-15` | Falling below this Y sends the player back to its start position. |
-| `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump` and `dash`. You can override one action without the others. |
+| `keys` | see below | Lists of `KeyboardEvent.code` values for `left`, `right`, `jump`, `dash` and `down`. You can override one action without the others. They replace the action's keyboard keys for this player, so `Controls` doesn't change them. On-screen buttons and pads keep working, and reach every player. |
 
 Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`, `down: ["ArrowDown", "KeyS"]`.
 
@@ -409,6 +409,7 @@ events.emit("hit", { damage: 10 });
 const input = Input.getInstance();
 input.isPressed("ArrowLeft");             // boolean, uses KeyboardEvent.code
 input.isAnyPressed(["ArrowLeft", "KeyA"]); // true if any of them is pressed
+input.isAction("jump");                   // from the keyboard, on-screen buttons or a pad
 input.endStep();                          // Game calls it: a quick tap lasts one step
 input.setEnabled(false);                  // every key reads as not pressed
 ```

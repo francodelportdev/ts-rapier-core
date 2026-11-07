@@ -72,7 +72,7 @@ describe("Pixel ratio", () => {
     const canvas = game["canvas"];
     firePointer(canvas, "pointerdown", 758, 408, 1, "touch");
     expect(game.pointer.x).toBe(758);
-    expect(Input.getInstance().isPressed("Space")).toBe(true);
+    expect(Input.getInstance().isAction("jump")).toBe(true);
   });
 
   test("a canvas without CSS sizing keeps its size on screen", async () => {
