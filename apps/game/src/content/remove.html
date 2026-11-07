@@ -22,4 +22,4 @@
     <p><code>game.on("entityRemoved", ({ entity, reason }) =&gt; ...)</code> runs after each removal. <code>reason</code> is <code>"killPlane"</code> or <code>"manual"</code>. Use it to update a score, spawn a replacement, or clean up your own references to the entity.</p>
   </li>
 </ol>
-<p class="mt-3 text-[0.9rem] text-muted">A destroyed entity can't be added again, so create a new one instead. <code>game.debug.getStats().bodies</code> returns how many bodies the physics world has, which is handy to confirm that nothing leaks.</p>
+<p class="mt-3 text-[0.9rem] text-muted">After it's destroyed, <code>entity.getPosition()</code> and <code>getAngle()</code> still return where it was, for example to show an explosion from <code>entityRemoved</code>. Anything else that needs its body, such as <code>getBody()</code> or <code>applyImpulse()</code>, throws a clear error. A destroyed entity can't be added again, so create a new one instead. <code>game.debug.getStats().bodies</code> returns how many bodies the physics world has, which is handy to confirm that nothing leaks.</p>

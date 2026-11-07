@@ -81,12 +81,12 @@ Physics runs at a **fixed step** of `world.timestep` (1/60 s), whatever the scre
 ### Pause
 
 ```ts
-game.on("frame", () => {
-  if (Input.getInstance().isPressed("Escape")) game.isPaused() ? game.resume() : game.pause();
+canvas.addEventListener("keydown", (e) => {
+  if (e.code === "Escape" && !e.repeat) game.isPaused() ? game.resume() : game.pause();
 });
 ```
 
-While paused, nothing moves: no physics steps, entity updates, animations, camera moves or scene fades. The game keeps drawing, and emits `frame`, `pause` and `resume`. A scene's `draw()` still runs, so it can show a menu while `game.isPaused()`. Keys, the pointer and pads still work for that menu: a tap lasts one frame, and doesn't reach the game after `resume()`. The time spent paused isn't simulated afterwards. Music keeps playing, so also call `audio.pauseMusic()` for silence. `stop()` is different: it stops drawing too.
+Toggle it from a `keydown` handler, which runs once per press: reading the key every frame would toggle it on every frame while it's held. While paused, nothing moves: no physics steps, entity updates, animations, camera moves or scene fades. The game keeps drawing, and emits `frame`, `pause` and `resume`. A scene's `draw()` still runs, so it can show a menu while `game.isPaused()`. Keys, the pointer and pads still work for that menu: a tap lasts one frame, and doesn't reach the game after `resume()`. The time spent paused isn't simulated afterwards. Music keeps playing, so also call `audio.pauseMusic()` for silence. `stop()` is different: it stops drawing too.
 
 ### `Camera`
 
