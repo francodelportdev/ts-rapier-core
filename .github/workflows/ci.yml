@@ -23,7 +23,8 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.2.22
+          # Bun 1.2 crashes at random inside Rapier's WebAssembly (about 1 run in 25).
+          bun-version: 1.4.4
 
       - name: Install dependencies
         run: bun install --frozen-lockfile

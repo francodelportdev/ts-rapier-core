@@ -11,7 +11,7 @@ An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.
 
 ## Getting started
 
-Requires [Bun](https://bun.com).
+Requires [Bun](https://bun.com) 1.4.4 or later. Earlier versions crash at random inside Rapier's WebAssembly while running the tests.
 
 ```bash
 bun install
