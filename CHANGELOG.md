@@ -12,6 +12,7 @@
 - `game.audio`: effects, music, volumes, and sounds made by code
 - `game.gamepad`: physical pads, with custom layouts
 - `Controls`: editable keyboard and gamepad bindings that can be saved
+- `game.pause()`, `game.resume()` and `game.isPaused()`: freeze the game while it keeps drawing
 - Collisions: the `collisionStart` and `collisionEnd` events, and `onCollisionStart()` and `onCollisionEnd()` on entities and components
 
 ### Changed
