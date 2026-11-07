@@ -1,5 +1,6 @@
 export { default as RAPIER } from "@dimforge/rapier2d-compat";
 export { Game } from "./core/Game";
+export { SCALE } from "./core/constants";
 export type { GameOptions, GameEvents, RemoveReason } from "./core/Game";
 export { DebugRenderer, DEBUG_COLORS } from "./core/DebugRenderer";
 export type { DebugStats } from "./core/DebugRenderer";

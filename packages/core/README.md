@@ -36,7 +36,7 @@ game.start();
   py = centerY - y * scale
   ```
 
-- `SCALE = 30` pixels per meter at zoom 1. On an 800×450 canvas, the visible world is about 26.7 × 15 m. `draw()` receives the camera's `scale`, `centerX` and `centerY`, so entities follow the camera without any extra code.
+- `SCALE = 30` (exported) pixels per meter at zoom 1, the default of the `scale` option. On an 800×450 canvas, the visible world is about 26.7 × 15 m. `draw()` receives the camera's `scale`, `centerX` and `centerY`, so entities follow the camera without any extra code.
 
 ## API
 
@@ -52,12 +52,14 @@ game.start();
 | `on("entityRemoved", ({ entity, reason }) => …)` | Runs after each removal. `reason` is `"manual"` or `"killPlane"`. Returns a function that unsubscribes. `off()` is also available. |
 | `start(): void` | Starts the `requestAnimationFrame` loop. Calling it again has no effect. If nothing else on the page has focus, it focuses the canvas. |
 | `stop(): void` | Stops the loop. |
+| `isRunning(): boolean` | True while the loop is running. |
 | `pause()`, `resume()`, `isPaused()` | Freezes the game, but keeps drawing it, for a pause menu. See [Pause](#pause). |
 | `width`, `height` | The size to work with, in pixels, whatever the pixel ratio. Use them instead of `canvas.width`. |
 | `resize(width, height)` | Changes the size of the view. |
 | `isFocused(): boolean` | True while the canvas has keyboard focus. |
 | `destroy(): void` | Stops the game for good: ends the loop, removes its canvas listeners and frees the physics world. Don't use the game or its entities afterwards. |
 | `clear(): void` | Removes every entity and resets the camera, gravity and kill plane. |
+| `setKillPlane(y \| null)` | Changes the kill plane until the next `clear()`. `LevelScene` sets it below each level. |
 | `on("error", ({ error }) => …)` | Runs when game code throws during a step, a draw or a listener. |
 | `on("frame", () => …)` | Runs after each drawn frame, for work such as updating a HUD. It stops with the game. |
 
@@ -119,7 +121,7 @@ new Platform(world, { x: 0, y: -5, width: 20, collision: layers.filter("world", 
 new Player(world, { collision: layers.filter("player", ["world", "enemy"]) });
 ```
 
-A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform` and `Shape` take a `collision` option, and `Box` takes it as its fourth argument. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. A `Sensor` detects by layer too.
+A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform`, `Shape` and `Sensor` take a `collision` option, `Ground` takes it as its second argument, and `Box` as its fourth. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. A `Sensor` detects by layer too. `ALL_LAYERS` is the default for both halves, and `toInteractionGroups(filter)` turns a filter into Rapier's packed number, for queries of your own.
 
 ### Collisions
 
@@ -163,11 +165,11 @@ animatePlayer(player, sprite);     // or: clips follow the player's state and fa
 ```
 
 - `SpriteSheet`: cuts an image into frames, numbered left to right and top to bottom. `loadSpriteSheet()` loads it from a URL.
-- `Animator`: `play(name, { restart? })`, `pause()`, `resume()`, `speed`, `clip`, `frame`, `frameIndex`, `isFinished`, and the events `change`, `end` and `frame`. `Game` advances it every physics step.
-- `Sprite`: `sheet`, `width` and `height` in meters, `animator`, `frame`, `offsetX`, `offsetY`, `flipX` and `smooth`. It turns with the body. The collider doesn't change.
+- `Animator`: `play(name, { restart? })`, `pause()`, `resume()`, `speed`, `clip`, `frame`, `frameIndex`, `isFinished`, `allFrames` (every frame any clip uses), and the events `change`, `end` and `frame`. `Game` advances it every physics step.
+- `Sprite`: `sheet`, `width` and `height` in meters, `animator`, `frame`, `offsetX`, `offsetY`, `flipX` and `smooth`. `setFlipX(value)` changes the mirroring, and takes a function to read on every draw. It turns with the body. The collider doesn't change.
 - `animatePlayer(player, sprite, clips?)`: plays the clip named like each state, or the name in `clips`. A state without a clip plays `"idle"`. It returns a function that stops following.
 
-Entities now have `setSprite()`, `getSprite()` and `render()`, which `Game` calls instead of `draw()`.
+Every entity has `setSprite()` and `getSprite()`. `Game` calls `render()`, which draws the sprite if there is one, and `draw()` otherwise.
 
 ### Components
 
@@ -223,7 +225,8 @@ game.audio.playMusic("theme", { fade: 1 });
 ```
 
 - Browsers block sound until an interaction: the first click, touch or key on the canvas unlocks it. Until then, effects are skipped and music waits. `state` is `"running"` once unlocked.
-- `play(name, { volume, rate })` returns a handle with `stop()`. `playMusic(name, { volume, fade })` loops and replaces the current music, and keeps playing across scenes. `stopMusic({ fade })` ends it, and `pauseMusic()` and `resumeMusic()` hold it and continue from the same point. All sound stops while the page is hidden.
+- `play(name, { volume, rate })` returns a handle with `stop()`. `playMusic(name, { volume, fade })` loops and replaces the current music, and keeps playing across scenes. `stopMusic({ fade })` ends it, and `pauseMusic()` and `resumeMusic()` hold it and continue from the same point. `isMusicPlaying` and `isMusicPaused` tell which. All sound stops while the page is hidden.
+- `has(name)` tells whether a sound exists.
 - `masterVolume`, `effectsVolume`, `musicVolume` and `isMuted`.
 - `synth(name, { wave, frequency, endFrequency, duration, volume })` makes a sound with no file. `frequency` can be a list of notes.
 - Unknown names throw. Without Web Audio, everything does nothing.
@@ -248,7 +251,7 @@ controls.applyTo(game);
 controls.on("change", () => controls.applyTo(game));
 ```
 
-Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key", code }`, `{ type: "button", button }` or `{ type: "axis", axis, direction }`. An input belongs to one action: adding it elsewhere moves it. `applyTo()` works below `Player` through `Input.setActionKeys()`, so players made by scenes follow it, and it's shared by all games on the page. `toJSON()`, `load()` and `reset()` save, restore and clear it. `load()` skips invalid data. On-screen buttons aren't affected, and keys outside the actions work as usual.
+Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key", code }`, `{ type: "button", button }` or `{ type: "axis", axis, direction }`. An input belongs to one action: adding it elsewhere moves it. `applyTo()` works below `Player` through `Input.setActionKeys()`, so players made by scenes follow it, and it's shared by all games on the page. `toJSON()`, `load()` and `reset()` save, restore and clear it. `load()` skips invalid data. On-screen buttons aren't affected, and keys outside the actions work as usual. `CONTROL_ACTIONS` lists the actions in order, and `DEFAULT_ACTION_KEYS` has their default keyboard keys.
 
 ### Scenes and levels
 
@@ -352,7 +355,7 @@ new Shape(world, { x: 0, y: 5, body: "dynamic", restitution: 0.6, geometry: { ty
 | `color` | by body type | Gray for fixed, orange for dynamic and blue for kinematic. |
 | `oneWay` | `false` | One-way platform. Only for fixed shapes. See [One-way platforms](#one-way-platforms). |
 
-Methods: `applyImpulse(x, y)` and `applyTorqueImpulse(torque)`, plus `getAngle()` like every entity. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
+Methods: `applyImpulse(x, y)` and `applyTorqueImpulse(torque)`, plus `getAngle()` like every entity. A subclass can override `describeCollider(desc)` to change the collider before it's created, as `Sensor` does. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
 
 ### One-way platforms
 
@@ -453,6 +456,7 @@ input.isAnyPressed(["ArrowLeft", "KeyA"]); // true if any of them is pressed
 input.isAction("jump");                   // from the keyboard, on-screen buttons or a pad
 input.endStep();                          // Game calls it: a quick tap lasts one step
 input.setEnabled(false);                  // every key reads as not pressed
+input.isHeld("jump");                     // held from code, by on-screen buttons or a pad
 ```
 
 When the window loses focus, it clears the key state so that no key stays "stuck" pressed. `Game` calls `setEnabled()` before each step, so input only reaches the game whose canvas has focus.
