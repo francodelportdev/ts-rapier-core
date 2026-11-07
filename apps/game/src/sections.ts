@@ -91,6 +91,11 @@ export const SECTIONS: Section[] = [
     controls: ({ player }) => movement(player),
   },
   {
+    id: "player-api", title: "Checkpoints & knockback", group: "Player", file: "src/demos/player-api.ts",
+    load: () => import("./demos/player-api"), source: () => import("./demos/player-api.ts?raw"), content: () => import("./content/player-api.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
     id: "remove", title: "Removing entities", group: "Engine", file: "src/demos/remove.ts",
     load: () => import("./demos/remove"), source: () => import("./demos/remove.ts?raw"), content: () => import("./content/remove.html?raw"),
     controls: ({ player: p }) => [tune(p, "speed", "speed", 2, 20, 0.5, "m/s")],

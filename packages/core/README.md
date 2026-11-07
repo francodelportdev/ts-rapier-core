@@ -275,7 +275,7 @@ game.scenes.go("menu", { fade: 0.3 });
 
 Each change calls `onExit()` and then `game.clear()`, which removes every entity and resets the camera, gravity and kill plane. `this.game.on()` inside `onEnter()` ends with the scene. For other subscriptions, use `this.listen(off)`, as in `this.listen(health.on("death", ...))`.
 
-`new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `player` and `gravity`. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Fields are checked with `validateLevel()`, which throws an error naming the level.
+`new LevelScene(data, { next, fade? })` plays a level described by plain data (`LevelData`), which can come from a JSON file. Required fields: `name`, `bounds`, `spawn` and `goal`. Optional: `platforms`, `shapes`, `boxes`, `hazards`, `coins`, `checkpoints`, `player` and `gravity`. Touching a checkpoint (`{ x, y }`) makes it the spawn point. On reaching the goal it goes to `next`, passing `{ coins, totalCoins, deaths, time }`. It also has `getStats()`, `getPlayer()` and `level`. Fields are checked with `validateLevel()`, which throws an error naming the level.
 
 Goals, hazards and coins are built with [`Trigger`](#sensors-and-triggers).
 
@@ -299,6 +299,9 @@ abstract class Entity<TOptions extends object = object> {
   get isDestroyed(): boolean;
   getPosition(): { x: number; y: number }; // once destroyed, where it was then
   getAngle(): number;                      // radians, counterclockwise
+  setPosition(x, y): void;                 // a teleport: not drawn sliding there
+  getVelocity(): { x: number; y: number };
+  setVelocity(x, y): void;                 // dynamic bodies and the player
   destroy(): void;               // removes the body and its colliders (game.removeEntity() calls it)
   protected onDestroy(): void;   // override to free extra Rapier objects
 
@@ -392,6 +395,17 @@ It moves with Rapier's `KinematicCharacterController`, which resolves collisions
 Default keys: `left: ["ArrowLeft", "KeyA"]`, `right: ["ArrowRight", "KeyD"]`, `jump: ["Space", "ArrowUp", "KeyW"]`, `dash: ["ShiftLeft", "ShiftRight", "KeyX"]`, `down: ["ArrowDown", "KeyS"]`.
 
 Methods: `configure(tuning)` changes options while the game runs, for example `player.configure({ speed: 12, dash: { cooldown: 0.1 } })`, and `getTuning()` reads them. Also `isGrounded()`, `isDashing()`, `isWallSliding()`, `isOnOneWayPlatform()`, `getVelocity()`, `getFacing()`, `getState()` and `respawn()`.
+
+Moving it from code:
+
+```ts
+player.setPosition(10, 2);           // teleport, keeping its velocity
+game.camera.snapToTarget();          // optional: the camera jumps there too
+player.knockback(-6 * player.getFacing(), 8); // a hit: the arrow keys wait 0.2 s
+player.setSpawn(30, -3);             // a checkpoint: respawn() and falls come back here
+```
+
+`setVelocity(x, y)` sets the speed without locking the arrow keys, so a sideways push fades quickly. `knockback(x, y, lock = 0.2)` also ignores the arrow keys for `lock` seconds, and ends a dash. Both cancel the jump cut, so releasing jump doesn't shorten an upward push. `getSpawn()` reads the spawn point.
 
 #### State
 
@@ -518,6 +532,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `controls.test.ts` | Adding, removing, moving, saving and validating controls, and playing with them on keyboard and pad |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
+| `player-api.test.ts` | `setPosition()`, `setVelocity()` and `getVelocity()` on entities, and the player's teleport, knockback and lock, spawn point and level checkpoints |
 | `collisions.test.ts` | Contacts between bodies, the player's pushes, kinematic enemies, hooks, removal, sensors and `clear()` |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
 
