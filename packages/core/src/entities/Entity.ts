@@ -6,6 +6,17 @@ import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
 import { CONTACT_TYPES } from "../systems/Contacts";
 
+/**
+ * Stands in for the body of a destroyed entity. Rapier panics inside WebAssembly when a removed
+ * body is used, which breaks its memory for everything after, so this throws a clear error first.
+ */
+const DESTROYED_BODY = new Proxy({} as RAPIER.RigidBody, {
+  get(_, key) {
+    if (typeof key === "symbol" || key === "then") return undefined; // inspection and promise checks
+    throw new Error(`This entity was destroyed, so its physics body is gone (it tried to use "${key}")`);
+  },
+});
+
 /** Moving further than this in one step, in meters, is a teleport: it isn't interpolated. */
 const MAX_INTERPOLATED_STEP = 2;
 
@@ -21,6 +32,8 @@ export abstract class Entity<TOptions extends object = object> {
   private destroyed = false;
   /** Where the body was before the current physics step, to draw between the two. */
   private previousPose: { x: number; y: number; angle: number } | null = null;
+  /** Where the body was when the entity was destroyed. */
+  private finalPose: { x: number; y: number; angle: number } | null = null;
   private sprite: Sprite | null = null;
   private readonly components = new Map<ComponentType<Component>, Component>();
   private game: Game | null = null;
@@ -103,7 +116,7 @@ export abstract class Entity<TOptions extends object = object> {
     for (const component of this.components.values()) component.update(dt); // a Map allows removing while iterating
   }
 
-  /** The Rapier body, for components and anything the engine doesn't wrap. */
+  /** The Rapier body, for components and anything the engine doesn't wrap. Once destroyed, using it throws. */
   public getBody(): RAPIER.RigidBody {
     return this.body;
   }
@@ -194,10 +207,16 @@ export abstract class Entity<TOptions extends object = object> {
     return this.destroyed;
   }
 
-  /** Center of the body, in meters. */
+  /** Center of the body, in meters. Once destroyed, where it was then. */
   public getPosition(): { x: number; y: number } {
+    if (this.finalPose !== null) return { x: this.finalPose.x, y: this.finalPose.y };
     const t = this.body.translation();
     return { x: t.x, y: t.y };
+  }
+
+  /** Rotation in radians, counterclockwise. Once destroyed, the rotation it had then. */
+  public getAngle(): number {
+    return this.finalPose?.angle ?? this.body.rotation();
   }
 
   /**
@@ -214,7 +233,10 @@ export abstract class Entity<TOptions extends object = object> {
     for (const type of [...this.components.keys()]) this.remove(type);
     this.onDestroy();
     for (let i = 0; i < this.body.numColliders(); i++) unregisterEntity(this.world, this.body.collider(i));
+    const { x, y } = this.body.translation();
+    this.finalPose = { x, y, angle: this.body.rotation() };
     this.world.removeRigidBody(this.body); // also removes the colliders attached to it
+    this.body = DESTROYED_BODY;
     this.destroyed = true;
   }
 

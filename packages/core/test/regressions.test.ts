@@ -609,3 +609,47 @@ describe("Medium-severity audit bugs", () => {
     }
   });
 });
+
+describe("Destroyed entities", () => {
+  test("getPosition() and getAngle() return where the entity was", () => {
+    const world = createWorld();
+    const shape = new Shape(world, { x: 3, y: 4, angle: 0.5, geometry: { type: "box", width: 1, height: 1 } });
+    shape.destroy();
+    expect(shape.getPosition()).toEqual({ x: 3, y: 4 });
+    expect(shape.getAngle()).toBeCloseTo(0.5, 6);
+  });
+
+  test("using the body throws a clear error, and Rapier keeps working", () => {
+    const world = createWorld();
+    const box = new Box(world, 0, 0);
+    const player = new Player(world);
+    box.destroy();
+    player.destroy();
+    expect(() => box.getBody().translation()).toThrow(/destroyed.*"translation"/);
+    expect(() => box.applyImpulse(1, 0)).toThrow(/destroyed/);
+    expect(() => player.respawn()).toThrow(/destroyed/);
+    // Before, these calls made Rapier fail inside WebAssembly, and the world couldn't even be freed.
+    const other = new Box(world, 5, 5);
+    expect(() => simulate(world, [other], 10)).not.toThrow();
+    expect(other.getPosition().y).toBeLessThan(5);
+  });
+
+  test("an entityRemoved listener can read the position of what was removed", async () => {
+    const game = await createGame({ killPlaneY: -10 });
+    const world = game.getWorld();
+    let where: { x: number; y: number } | null = null;
+    game.on("entityRemoved", ({ entity }) => (where = entity.getPosition()));
+    game.addEntity(new Box(world, 2, 0));
+    game.start();
+    stepGame(game, 120);
+    expect(where).not.toBeNull();
+    expect(where!.x).toBeCloseTo(2, 1);
+    expect(where!.y).toBeLessThan(-10);
+  });
+
+  test("a destroyed entity can still be logged", () => {
+    const box = new Box(createWorld(), 0, 0);
+    box.destroy();
+    expect(() => Bun.inspect(box)).not.toThrow();
+  });
+});

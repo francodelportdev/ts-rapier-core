@@ -297,7 +297,8 @@ abstract class Entity<TOptions extends object = object> {
   public abstract draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void;
 
   get isDestroyed(): boolean;
-  getPosition(): { x: number; y: number };
+  getPosition(): { x: number; y: number }; // once destroyed, where it was then
+  getAngle(): number;                      // radians, counterclockwise
   destroy(): void;               // removes the body and its colliders (game.removeEntity() calls it)
   protected onDestroy(): void;   // override to free extra Rapier objects
 
@@ -306,6 +307,8 @@ abstract class Entity<TOptions extends object = object> {
   protected drawCuboid(ctx, halfW, halfH, color, scale, centerX, centerY): void;
 }
 ```
+
+**After `destroy()`**, `getPosition()` and `getAngle()` return where the entity was, and anything else that needs the body (`getBody()`, `applyImpulse()`, `respawn()`…) throws a clear error. This matters because Rapier itself doesn't throw on a removed body: it fails inside WebAssembly and breaks every later step.
 
 > **Warning:** `createBody()` and `createCollider()` run inside `super()`, before the subclass's own fields are initialized. Don't read `this.someField` inside them. Pass the configuration as `options` instead: the base class stores it before calling them, so `this.options` is safe to read there. `Platform` works this way.
 
@@ -346,7 +349,7 @@ new Shape(world, { x: 0, y: 5, body: "dynamic", restitution: 0.6, geometry: { ty
 | `color` | by body type | Gray for fixed, orange for dynamic and blue for kinematic. |
 | `oneWay` | `false` | One-way platform. Only for fixed shapes. See [One-way platforms](#one-way-platforms). |
 
-Methods: `applyImpulse(x, y)`, `applyTorqueImpulse(torque)` and `getAngle()`. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
+Methods: `applyImpulse(x, y)` and `applyTorqueImpulse(torque)`, plus `getAngle()` like every entity. Polygons and ramps are drawn from the hull that Rapier built, so the picture always matches the collisions.
 
 ### One-way platforms
 

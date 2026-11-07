@@ -107,11 +107,6 @@ export class Shape extends Entity<ShapeOptions> {
     super(world, options);
   }
 
-  /** Rotation in radians, counterclockwise. */
-  public getAngle(): number {
-    return this.body.rotation();
-  }
-
   /** Changes the velocity instantly. Only affects dynamic bodies. */
   public applyImpulse(x: number, y: number): void {
     this.body.applyImpulse({ x, y }, true);
