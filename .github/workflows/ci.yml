@@ -23,7 +23,8 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          # Bun 1.2 crashes at random inside Rapier's WebAssembly (about 1 run in 25).
+          # The tests sometimes crash inside Rapier's WebAssembly, for an unknown reason: about
+          # 1 run in 25 on Bun 1.2, and about 1 in 150 on 1.4. If a run fails that way, re-run it.
           bun-version: 1.4.4
 
       - name: Install dependencies
