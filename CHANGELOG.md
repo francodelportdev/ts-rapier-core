@@ -12,6 +12,7 @@
 - `game.audio`: effects, music, volumes, and sounds made by code
 - `game.gamepad`: physical pads, with custom layouts
 - `Controls`: editable keyboard and gamepad bindings that can be saved
+- Collisions: the `collisionStart` and `collisionEnd` events, and `onCollisionStart()` and `onCollisionEnd()` on entities and components
 
 ### Changed
 - Actions: `Input.isAction()`, and on-screen buttons and pads press `left`, `right`, `jump`, `dash` and `down` instead of keys

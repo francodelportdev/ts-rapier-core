@@ -10,6 +10,7 @@ import { SceneManager } from "../scenes/SceneManager";
 import { Camera } from "./Camera";
 import { DebugRenderer } from "./DebugRenderer";
 import { SCALE } from "./constants";
+import { Contacts } from "../systems/Contacts";
 
 /** Keys that would otherwise scroll the page while a game canvas has focus. */
 const SCROLL_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"]);
@@ -57,6 +58,10 @@ export interface GameEvents {
   frame: Record<string, never>;
   /** Something threw during a step, a draw or a listener. The game keeps running. */
   error: { error: unknown };
+  /** Two entities started touching. Sensors don't count: they have their own events. */
+  collisionStart: { a: Entity; b: Entity };
+  /** Two entities stopped touching, or one of them left the game. */
+  collisionEnd: { a: Entity; b: Entity };
 }
 
 /**
@@ -115,6 +120,7 @@ export class Game {
   private lastErrorMessage: string | null = null;
   /** Removes the canvas listeners on `destroy()`. */
   private readonly listeners = new AbortController();
+  private readonly contacts: Contacts;
 
   private constructor(canvas: HTMLCanvasElement, options: GameOptions) {
     this.canvas = canvas;
@@ -124,6 +130,7 @@ export class Game {
     this.defaultGravity = options.gravity ?? 9.81;
     this.world = new RAPIER.World({ x: 0.0, y: -this.defaultGravity });
     this.debug = new DebugRenderer(this.world);
+    this.contacts = new Contacts(this.world);
     this.camera = new Camera(options.scale ?? SCALE);
     this.background = options.background ?? null;
     this.interpolation = options.interpolation ?? true;
@@ -226,6 +233,7 @@ export class Game {
       return;
     }
     this.pendingRemovals.clear();
+    this.contacts.clear();
     for (const e of this.entities.splice(0)) {
       e.setGame(null);
       e.destroy();
@@ -317,6 +325,7 @@ export class Game {
     this.gamepad.releaseAll();
     this.audio.destroy();
     this.clear(); // destroys the entities, so their components get onDetach()
+    this.contacts.free();
     this.world.free();
     this.releaseCanvas();
   }
@@ -338,7 +347,12 @@ export class Game {
         e.updateComponents(this.world.timestep);
         e.getSprite()?.animator?.update(this.world.timestep);
       }
-      this.world.step();
+      this.world.step(this.contacts.eventQueue);
+      this.contacts.update(
+        this.entities,
+        (pair) => this.collision(pair, true),
+        (pair) => this.collision(pair, false),
+      );
       this.camera.update(this.world.timestep, this.view.width, this.view.height);
 
       if (this.killPlaneY !== null) {
@@ -352,6 +366,14 @@ export class Game {
     this.pointer.endStep();
     this.flushRemovals();
     this.scenes.flushInstant();
+  }
+
+  /** Tells both entities, their components and the listeners about a pair. */
+  private collision({ a, b }: { a: Entity; b: Entity }, started: boolean): void {
+    const run = (entity: Entity, other: Entity) => this.guard(() => entity.notifyCollision(other, started));
+    run(a, b);
+    run(b, a);
+    this.guard(() => this.events.emit(started ? "collisionStart" : "collisionEnd", { a, b }));
   }
 
   /** Runs `work` with physics objects protected, then applies what it asked for. */
@@ -400,6 +422,7 @@ export class Game {
       if (index === -1) continue; // not in this game, or already removed
       this.entities.splice(index, 1);
       entity.setGame(null);
+      for (const pair of this.contacts.remove(entity)) this.guard(() => this.collision(pair, false));
       entity.destroy();
       this.events.emit("entityRemoved", { entity, reason });
     }
