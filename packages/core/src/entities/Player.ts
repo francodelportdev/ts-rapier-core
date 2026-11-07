@@ -356,8 +356,46 @@ export class Player extends Entity<ResolvedOptions> {
   }
 
   /** Current velocity, in m/s. */
-  public getVelocity(): { x: number; y: number } {
+  public override getVelocity(): { x: number; y: number } {
     return { x: this.vx, y: this.vy };
+  }
+
+  /**
+   * Sets the velocity, in m/s. Gravity, the arrow keys and the ground act on it from the next
+   * step, so a sideways push fades quickly: `knockback()` holds the arrow keys off for a moment.
+   */
+  public override setVelocity(x: number, y: number): void {
+    this.vx = x;
+    this.vy = y;
+    this.dashTimer = 0;
+    this.rising = false; // releasing jump doesn't cut an upward push
+    if (y > 0) this.setWallSlide(0);
+  }
+
+  /**
+   * Pushes the player, for example when it's hit, and ignores the arrow keys for `lock`
+   * seconds so the push isn't cancelled at once. It ends a dash. Default lock: 0.2 s.
+   */
+  public knockback(x: number, y: number, lock = 0.2): void {
+    this.setVelocity(x, y);
+    this.controlLockTimer = Math.max(this.controlLockTimer, lock);
+  }
+
+  /** Moves the player at once, keeping its velocity. It no longer rides what it stood on. */
+  public override setPosition(x: number, y: number): void {
+    super.setPosition(x, y);
+    this.ridden = null;
+  }
+
+  /** Where `respawn()` and falls below `respawnBelow` send it, for checkpoints. */
+  public setSpawn(x: number, y: number): void {
+    if (!Number.isFinite(x) || !Number.isFinite(y)) throw new Error(`Invalid spawn point: ${x}, ${y}`);
+    this.options.x = x;
+    this.options.y = y;
+  }
+
+  public getSpawn(): { x: number; y: number } {
+    return { x: this.options.x, y: this.options.y };
   }
 
   /** Which way the player faces: 1 = right, -1 = left. */
@@ -395,7 +433,7 @@ export class Player extends Entity<ResolvedOptions> {
     return this.world.createCollider(RAPIER.ColliderDesc.cuboid(halfWidth, halfHeight), this.body);
   }
 
-  /** Moves the player back to its start position and stops it. */
+  /** Moves the player back to its spawn point (see `setSpawn()`) and stops it. */
   public respawn(): void {
     this.reset();
     this.events.emit("respawn", { fell: false });

@@ -30,6 +30,8 @@ export interface LevelData {
   /** Touching one sends the player back to the spawn. */
   hazards?: LevelArea[];
   coins?: { x: number; y: number }[];
+  /** Touching one makes it the spawn point: deaths after it send the player back there. */
+  checkpoints?: { x: number; y: number }[];
   /** Options for this level's player, such as `{ "maxJumps": 2 }`. */
   player?: Omit<PlayerOptions, "x" | "y" | "keys">;
   /**
@@ -76,7 +78,7 @@ export function validateLevel(data: LevelData): void {
   data.hazards?.forEach((h, i) => {
     if (!h || ![h.x, h.y, h.width, h.height].every(numeric)) fail(`hazard ${i} needs x, y, width and height`);
   });
-  for (const list of ["boxes", "coins"] as const) {
+  for (const list of ["boxes", "coins", "checkpoints"] as const) {
     data[list]?.forEach((p, i) => {
       if (!p || ![p.x, p.y].every(numeric)) fail(`${list} ${i} needs x and y`);
     });
@@ -158,6 +160,10 @@ export class LevelScene extends Scene {
         this.coins++;
         game.removeEntity(coin);
       });
+    }
+    for (const { x, y } of data.checkpoints ?? []) {
+      const checkpoint = add(area({ x, y, width: 1, height: 2 }, "#4299e1"));
+      checkpoint.on("enter", () => player.setSpawn(x, y));
     }
     add(area(data.goal, "#48bb78")).on("enter", () => this.finish());
     add(player); // last, so it's drawn on top

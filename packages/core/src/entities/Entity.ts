@@ -214,6 +214,26 @@ export abstract class Entity<TOptions extends object = object> {
     return { x: t.x, y: t.y };
   }
 
+  /**
+   * Moves it to a point at once, in meters: a teleport, so it isn't drawn sliding there. The camera
+   * smooths its way to it, unless you call `game.camera.snapToTarget()`.
+   */
+  public setPosition(x: number, y: number): void {
+    this.body.setTranslation({ x, y }, true);
+    this.previousPose = null;
+  }
+
+  /** Velocity, in m/s. Kinematic bodies moved by code, such as with `Patrol`, report 0. */
+  public getVelocity(): { x: number; y: number } {
+    const v = this.body.linvel();
+    return { x: v.x, y: v.y };
+  }
+
+  /** Sets the velocity, in m/s. It moves dynamic bodies, and the player; other bodies ignore it. */
+  public setVelocity(x: number, y: number): void {
+    this.body.setLinvel({ x, y }, true);
+  }
+
   /** Rotation in radians, counterclockwise. Once destroyed, the rotation it had then. */
   public getAngle(): number {
     return this.finalPose?.angle ?? this.body.rotation();

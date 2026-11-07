@@ -1,0 +1,30 @@
+<p class="mb-1 text-[0.8rem] font-semibold tracking-wider text-accent uppercase">Player</p>
+<h1>Checkpoints &amp; knockback</h1>
+<p class="text-muted">Move the player from your own code: push it when it's hit, change where it comes back, or teleport it.</p>
+<!-- demo -->
+<ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
+  <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
+  <li><kbd>Space</kbd> Jump (twice for a double jump)</li>
+  <li><kbd>R</kbd> Respawn</li>
+</ul>
+<p>Walk into the red spikes, cross the pit to the blue flag, then fall into the pit: you come back at the flag. The purple pad sends you to the start.</p>
+
+<h2>Methods</h2>
+<table>
+  <thead><tr><th>Method</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td><code>knockback(x, y, lock = 0.2)</code></td><td>Pushes the player at <code>(x, y)</code> m/s and ignores the arrow keys for <code>lock</code> seconds, so the push isn't cancelled at once. It ends a dash.</td></tr>
+    <tr><td><code>setVelocity(x, y)</code></td><td>Sets the speed without the lock. Gravity, the ground and the arrow keys act on it from the next step, so a sideways push fades quickly.</td></tr>
+    <tr><td><code>setPosition(x, y)</code></td><td>A teleport, keeping the speed. It isn't drawn sliding there. Call <code>game.camera.snapToTarget()</code> to move the camera at once too.</td></tr>
+    <tr><td><code>setSpawn(x, y)</code> / <code>getSpawn()</code></td><td>Where <code>respawn()</code> and falls below <code>respawnBelow</code> send the player.</td></tr>
+  </tbody>
+</table>
+<p class="mt-3 text-[0.9rem] text-muted"><code>setVelocity()</code> and <code>knockback()</code> also cancel the jump cut, so releasing jump doesn't shorten an upward push. Every entity has <code>setPosition()</code>, <code>getVelocity()</code> and <code>setVelocity()</code>: velocity moves dynamic bodies, and other bodies ignore it.</p>
+
+<h2>Checkpoints in levels</h2>
+<pre><code>{
+  "name": "Long level",
+  "checkpoints": [{ "x": 40, "y": -3.5 }],
+  ...
+}</code></pre>
+<p>In a <a href="#scenes"><code>LevelScene</code></a>, touching a checkpoint makes it the spawn point, for hazards and falls alike.</p>
