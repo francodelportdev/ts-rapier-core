@@ -93,7 +93,7 @@ describe("TouchControls", () => {
   test("is off by default", async () => {
     const { canvas } = await setup();
     firePointer(canvas, "pointerdown", 42, 408, 1, "touch");
-    expect(input().isPressed("ArrowLeft")).toBe(false);
+    expect(input().isAction("left")).toBe(false);
   });
 
   test("appears on the first touch, not with a mouse", async () => {
@@ -104,19 +104,19 @@ describe("TouchControls", () => {
     firePointer(canvas, "pointerup", 42, 408, 1, "mouse");
     firePointer(canvas, "pointerdown", 42, 408, 2, "touch");
     expect(game.touch.isVisible).toBe(true);
-    expect(input().isPressed("ArrowLeft")).toBe(true);
+    expect(input().isAction("left")).toBe(true);
   });
 
   test("holds the key while touched, and two fingers press two buttons", async () => {
     const { canvas } = await touchGame();
     firePointer(canvas, "pointerdown", 142, 408, 1, "touch");
     firePointer(canvas, "pointerdown", 758, 408, 2, "touch");
-    expect(input().isPressed("ArrowRight")).toBe(true);
-    expect(input().isPressed("Space")).toBe(true);
+    expect(input().isAction("right")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
     firePointer(canvas, "pointerup", 758, 408, 2, "touch");
     input().endStep();
-    expect(input().isPressed("Space")).toBe(false);
-    expect(input().isPressed("ArrowRight")).toBe(true);
+    expect(input().isAction("jump")).toBe(false);
+    expect(input().isAction("right")).toBe(true);
   });
 
   test("a finger can slide from one button to another", async () => {
@@ -124,30 +124,30 @@ describe("TouchControls", () => {
     firePointer(canvas, "pointerdown", 42, 408, 1, "touch");
     firePointer(canvas, "pointermove", 142, 408, 1, "touch");
     input().endStep();
-    expect(input().isPressed("ArrowLeft")).toBe(false);
-    expect(input().isPressed("ArrowRight")).toBe(true);
+    expect(input().isAction("left")).toBe(false);
+    expect(input().isAction("right")).toBe(true);
   });
 
   test("touching elsewhere presses nothing", async () => {
     const { canvas } = await touchGame();
     firePointer(canvas, "pointerdown", 400, 100, 1, "touch");
-    expect(input().isPressed("ArrowLeft")).toBe(false);
+    expect(input().isAction("left")).toBe(false);
   });
 
   test("setButtons() replaces them, with negative positions from the far edges", async () => {
     const { game, canvas } = await touchGame();
-    game.touch.setButtons([{ key: "KeyX", label: "X", x: -100, y: 50, radius: 10 }]);
+    game.touch.setButtons([{ press: "KeyX", label: "X", x: -100, y: 50, radius: 10 }]);
     firePointer(canvas, "pointerdown", 700, 50, 1, "touch");
     expect(input().isPressed("KeyX")).toBe(true);
   });
 
   test("addButton() keeps the others", async () => {
     const { game, canvas } = await touchGame();
-    game.touch.addButton({ key: "KeyX", label: "X", x: -116, y: -42 });
+    game.touch.addButton({ press: "KeyX", label: "X", x: -116, y: -42 });
     firePointer(canvas, "pointerdown", 684, 408, 1, "touch");
     firePointer(canvas, "pointerdown", 758, 408, 2, "touch");
     expect(input().isPressed("KeyX")).toBe(true);
-    expect(input().isPressed("Space")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
   });
 
   test("on a canvas shrunk by CSS, buttons keep their size on screen", async () => {
@@ -155,12 +155,12 @@ describe("TouchControls", () => {
     canvas.getBoundingClientRect = () => ({ left: 0, top: 0, width: 400, height: 225 }) as DOMRect;
     // Half size: the jump button sits 42 px from the corner on screen, so at (358, 183).
     firePointer(canvas, "pointerdown", 358, 183, 1, "touch");
-    expect(input().isPressed("Space")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
     firePointer(canvas, "pointerup", 358, 183, 1, "touch");
     input().endStep();
     // 30 px on screen from its center: inside the 32 px radius.
     firePointer(canvas, "pointerdown", 328, 183, 2, "touch");
-    expect(input().isPressed("Space")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
   });
 
   test("the player moves and jumps with them", async () => {
@@ -185,6 +185,6 @@ describe("TouchControls", () => {
     firePointer(canvas, "pointerdown", 142, 408, 1, "touch");
     game["touch"].releaseAll();
     input().endStep();
-    expect(input().isPressed("ArrowRight")).toBe(false);
+    expect(input().isAction("right")).toBe(false);
   });
 });

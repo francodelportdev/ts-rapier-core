@@ -1,6 +1,6 @@
 import { afterEach } from "bun:test";
 import RAPIER from "@dimforge/rapier2d-compat";
-import { Game, Input, type Entity } from "../src";
+import { DEFAULT_ACTION_KEYS, Game, Input, type Entity } from "../src";
 import { dispatchWindowEvent, fakeDocument } from "./setup";
 
 /** Physics steps per second (Rapier's default timestep is 1/60 s). */
@@ -17,7 +17,7 @@ export const keys = {
   reset(): void {
     dispatchWindowEvent("blur"); // Input clears every key on blur
     Input.getInstance().setEnabled(true);
-    Input.getInstance().setBindings({});
+    Input.getInstance().setActionKeys(DEFAULT_ACTION_KEYS);
   },
 };
 

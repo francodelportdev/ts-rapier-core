@@ -123,7 +123,7 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
       started.game.gamepad.enabled = true; // and with a gamepad
       gameControls.applyTo(started.game);
       stopFollowing = gameControls.on("change", () => gameControls.applyTo(started.game));
-      if (started.player?.getTuning().dash) started.game.touch.addButton({ key: "KeyX", label: "»", x: -116, y: -42 });
+      if (started.player?.getTuning().dash) started.game.touch.addButton({ press: "dash", label: "»", x: -116, y: -42 });
       setDemo(started);
       canvas.focus({ preventScroll: true });
     }).catch((error: unknown) => {

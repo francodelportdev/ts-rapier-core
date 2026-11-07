@@ -1,5 +1,6 @@
 import RAPIER from "@dimforge/rapier2d-compat";
 import { Entity } from "./Entity";
+import type { ControlAction } from "../systems/actions";
 import { Input } from "../systems/Input";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { toInteractionGroups, type CollisionFilter } from "../systems/layers";
@@ -32,14 +33,7 @@ export interface PlayerEvents {
 }
 
 /** Which keys (`KeyboardEvent.code`) trigger each action. Any key in the list works. */
-export interface PlayerKeys {
-  left: readonly string[];
-  right: readonly string[];
-  jump: readonly string[];
-  dash: readonly string[];
-  /** Held together with jump to drop through a one-way platform. */
-  down: readonly string[];
-}
+export type PlayerKeys = Record<ControlAction, readonly string[]>;
 
 export interface DashOptions {
   /** Horizontal speed during the dash, in m/s. Default: 20. */
@@ -120,18 +114,11 @@ export interface PlayerOptions {
    */
   wallJump?: boolean | WallJumpOptions;
 
+  /** Its own keyboard keys, instead of those of the action. On-screen buttons and pads still work. */
   keys?: Partial<PlayerKeys>;
   /** What it is and what it collides with. Default: everything. */
   collision?: CollisionFilter;
 }
-
-const DEFAULT_KEYS: PlayerKeys = {
-  left: ["ArrowLeft", "KeyA"],
-  right: ["ArrowRight", "KeyD"],
-  jump: ["Space", "ArrowUp", "KeyW"],
-  dash: ["ShiftLeft", "ShiftRight", "KeyX"],
-  down: ["ArrowDown", "KeyS"],
-};
 
 /** The options `player.configure()` can change while the game runs. */
 export type PlayerTuning = Partial<
@@ -162,7 +149,7 @@ type ResolvedOptions = Required<Omit<PlayerOptions, "dash" | "wallJump" | "keys"
   collision?: CollisionFilter;
   dash: Required<DashOptions> | null;
   wallJump: Required<WallJumpOptions> | null;
-  keys: PlayerKeys;
+  keys: Partial<PlayerKeys>;
 };
 
 function resolveOptions(o: PlayerOptions): ResolvedOptions {
@@ -200,7 +187,7 @@ function resolveOptions(o: PlayerOptions): ResolvedOptions {
       controlLock: wallJump.controlLock ?? 0.15,
       coyoteTime: wallJump.coyoteTime ?? 0.1,
     },
-    keys: { ...DEFAULT_KEYS, ...o.keys },
+    keys: { ...o.keys },
     collision: o.collision,
   };
 }
@@ -465,9 +452,8 @@ export class Player extends Entity<ResolvedOptions> {
     return { dir, locked, jumpDown, jumpPressed, dashPressed };
   }
 
-  /** The player's own keys, or the default ones held from code: touch and gamepads press those. */
-  private isActionDown(action: keyof PlayerKeys): boolean {
-    return this.input.isAnyPressed(this.options.keys[action]) || this.input.isAnyHeldFromCode(DEFAULT_KEYS[action]);
+  private isActionDown(action: ControlAction): boolean {
+    return this.input.isAction(action, this.options.keys[action]);
   }
 
   private tickTimers(jumpPressed: boolean): void {

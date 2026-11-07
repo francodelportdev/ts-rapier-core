@@ -1,8 +1,7 @@
 import type { Game } from "../core/Game";
 import { EventEmitter, type Listener } from "./EventEmitter";
+import { CONTROL_ACTIONS, DEFAULT_ACTION_KEYS, type ControlAction } from "./actions";
 import { Input } from "./Input";
-
-export type ControlAction = "left" | "right" | "jump" | "dash" | "down";
 
 /** One control that can trigger an action. */
 export type ControlInput =
@@ -16,28 +15,17 @@ export interface ControlsEvents {
   change: { bindings: ControlBindings };
 }
 
-export const CONTROL_ACTIONS: readonly ControlAction[] = ["left", "right", "jump", "dash", "down"];
-
-/** The key each action is known by inside the engine, then its other default keys. */
-const ACTION_KEYS: Record<ControlAction, readonly string[]> = {
-  left: ["ArrowLeft", "KeyA"],
-  right: ["ArrowRight", "KeyD"],
-  jump: ["Space", "ArrowUp", "KeyW"],
-  dash: ["ShiftLeft", "ShiftRight", "KeyX"],
-  down: ["ArrowDown", "KeyS"],
-};
-
 const key = (code: string): ControlInput => ({ type: "key", code });
 const axis = (number: number, direction: 1 | -1): ControlInput => ({ type: "axis", axis: number, direction });
 const button = (number: number): ControlInput => ({ type: "button", button: number });
 
 function defaults(): ControlBindings {
   return {
-    left: [...ACTION_KEYS.left.map(key), button(14), axis(0, -1)],
-    right: [...ACTION_KEYS.right.map(key), button(15), axis(0, 1)],
-    jump: [...ACTION_KEYS.jump.map(key), button(0)],
-    dash: [...ACTION_KEYS.dash.map(key), button(2)],
-    down: [...ACTION_KEYS.down.map(key), button(13), axis(1, 1)],
+    left: [...DEFAULT_ACTION_KEYS.left.map(key), button(14), axis(0, -1)],
+    right: [...DEFAULT_ACTION_KEYS.right.map(key), button(15), axis(0, 1)],
+    jump: [...DEFAULT_ACTION_KEYS.jump.map(key), button(0)],
+    dash: [...DEFAULT_ACTION_KEYS.dash.map(key), button(2)],
+    down: [...DEFAULT_ACTION_KEYS.down.map(key), button(13), axis(1, 1)],
   };
 }
 
@@ -124,18 +112,16 @@ export class Controls {
 
   /** Makes a game use these controls. Call it again after creating another game. */
   public applyTo(game: Game): void {
-    const keys: Record<string, string[]> = {};
+    const keys = {} as Record<ControlAction, string[]>;
     const buttons: Record<string, number[]> = {};
     const axes: Record<string, { axis: number; direction: 1 | -1 }[]> = {};
     for (const action of CONTROL_ACTIONS) {
-      const [name, ...aliases] = ACTION_KEYS[action] as [string, ...string[]];
       const inputs = this.bindings[action];
-      keys[name] = inputs.flatMap((i) => (i.type === "key" ? [i.code] : []));
-      for (const alias of aliases) keys[alias] = []; // only the action's main key counts now
-      buttons[name] = inputs.flatMap((i) => (i.type === "button" ? [i.button] : []));
-      axes[name] = inputs.flatMap((i) => (i.type === "axis" ? [{ axis: i.axis, direction: i.direction }] : []));
+      keys[action] = inputs.flatMap((i) => (i.type === "key" ? [i.code] : []));
+      buttons[action] = inputs.flatMap((i) => (i.type === "button" ? [i.button] : []));
+      axes[action] = inputs.flatMap((i) => (i.type === "axis" ? [{ axis: i.axis, direction: i.direction }] : []));
     }
-    Input.getInstance().setBindings(keys);
+    Input.getInstance().setActionKeys(keys);
     game.gamepad.setMapping({ buttons, axes, moveAxes: [] });
   }
 

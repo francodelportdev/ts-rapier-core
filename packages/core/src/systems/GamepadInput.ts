@@ -1,22 +1,25 @@
 import type { Input } from "./Input";
 
-/** Which controls press which keys. Buttons and axes are numbers as the browser reports them. */
+/**
+ * Which controls press what: an action such as "jump", or a key (`KeyboardEvent.code`).
+ * Buttons and axes are numbers as the browser reports them.
+ */
 export interface GamepadMapping {
-  /** Key (`KeyboardEvent.code`) → buttons that press it. */
+  /** Action or key → buttons that press it. */
   buttons: Record<string, readonly number[]>;
   /** Pairs of axes that work as left/right and up/down, such as a stick or a D-pad. */
   moveAxes: readonly (readonly [number, number])[];
-  /** Key → single axis directions that press it. */
+  /** Action or key → single axis directions that press it. */
   axes?: Record<string, readonly { axis: number; direction: 1 | -1 }[]>;
-  /** Keys for the four directions of `moveAxes`. */
+  /** Actions or keys for the four directions of `moveAxes`. */
   directions: { left: string; right: string; up: string; down: string };
 }
 
 /** For pads the browser reports as "standard": A, X and the D-pad. */
 const DEFAULT_MAPPING: GamepadMapping = {
-  buttons: { Space: [0], KeyX: [2], ArrowUp: [], ArrowLeft: [14], ArrowRight: [15], ArrowDown: [13] },
+  buttons: { jump: [0], dash: [2], left: [14], right: [15], down: [13] },
   moveAxes: [[0, 1]],
-  directions: { left: "ArrowLeft", right: "ArrowRight", up: "", down: "ArrowDown" },
+  directions: { left: "left", right: "right", up: "", down: "down" },
 };
 
 /** What the browser reports right now. Useful to find a pad's button numbers. */
@@ -30,7 +33,7 @@ export interface GamepadSnapshot {
 }
 
 /**
- * A physical gamepad, at `game.gamepad`. Like the on-screen buttons, it presses keyboard keys,
+ * A physical gamepad, at `game.gamepad`. Like the on-screen buttons, it presses actions,
  * so `Player` works unchanged. Off until you set `enabled`. Browsers reveal a pad only after a
  * button is pressed on it.
  */
@@ -93,7 +96,7 @@ export class GamepadInput {
     }
     let pressed = false;
     for (const key of wanted) {
-      if (this.held.has(key) && this.input.isAnyHeldFromCode([key])) continue; // losing window focus lifts keys
+      if (this.held.has(key) && this.input.isHeld(key)) continue; // losing window focus lifts keys
       this.held.add(key);
       this.input.press(key);
       pressed = true;

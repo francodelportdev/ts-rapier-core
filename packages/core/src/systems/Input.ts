@@ -1,5 +1,8 @@
+import { DEFAULT_ACTION_KEYS, type ControlAction } from "./actions";
+
 /**
- * Global keyboard state (Singleton). Keys are identified by `KeyboardEvent.code`.
+ * Global input state (Singleton). Keys are identified by `KeyboardEvent.code`. Actions, such as
+ * "jump", are what the game asks for: the keyboard, on-screen buttons and gamepads all reach them.
  *
  * When several games share a page, `Game` enables input only while its canvas has focus,
  * so a key press moves only the focused game.
@@ -7,10 +10,10 @@
 export class Input {
   private static instance: Input | null = null;
   private readonly keys = new Map<string, boolean>();
-  /** Keys held from code, such as on-screen buttons and gamepads. Bindings don't apply to them. */
+  /** Actions and keys held from code, such as on-screen buttons and gamepads. */
   private readonly virtual = new Set<string>();
-  /** Game key → physical keys that trigger it, when remapped. */
-  private bindings = new Map<string, readonly string[]>();
+  /** The keyboard keys of each action. */
+  private actionKeys: Readonly<Record<ControlAction, readonly string[]>> = DEFAULT_ACTION_KEYS;
   /** Keys pressed since the last step, so a tap between two steps still counts. */
   private readonly taps = new Set<string>();
   private readonly virtualTaps = new Set<string>();
@@ -38,11 +41,10 @@ export class Input {
     return Input.instance;
   }
 
+  /** True if a key is pressed, on the keyboard or from code. */
   public isPressed(code: string): boolean {
     if (!this.enabled) return false;
-    if (this.virtual.has(code) || this.virtualTaps.has(code)) return true;
-    const physical = this.bindings.get(code) ?? [code];
-    return physical.some((c) => (this.keys.get(c) ?? false) || this.taps.has(c));
+    return this.isHeld(code) || (this.keys.get(code) ?? false) || this.taps.has(code);
   }
 
   /** True if any of the given keys is pressed. */
@@ -50,27 +52,32 @@ export class Input {
     return codes.some((code) => this.isPressed(code));
   }
 
-  /** True if any of the keys is held from code, by on-screen buttons or a gamepad. */
-  public isAnyHeldFromCode(codes: readonly string[]): boolean {
-    return this.enabled && codes.some((code) => this.virtual.has(code) || this.virtualTaps.has(code));
-  }
-
-  /** Holds a key from code, as if it were pressed on the keyboard. On-screen buttons use it. */
-  public press(code: string): void {
-    this.virtual.add(code);
-    this.virtualTaps.add(code);
-  }
-
-  public release(code: string): void {
-    this.virtual.delete(code);
-  }
-
   /**
-   * Remaps the keyboard: each game key is triggered only by the physical keys listed for it.
-   * Keys not listed work as usual. `Controls` builds this for you.
+   * True if an action is requested by any input. `keys` replaces the action's keyboard keys,
+   * for a player with its own.
    */
-  public setBindings(bindings: Record<string, readonly string[]>): void {
-    this.bindings = new Map(Object.entries(bindings));
+  public isAction(action: ControlAction, keys: readonly string[] = this.actionKeys[action]): boolean {
+    return this.enabled && (this.isHeld(action) || this.isAnyPressed(keys));
+  }
+
+  /** Holds an action or a key from code. On-screen buttons and gamepads use it. */
+  public press(name: string): void {
+    this.virtual.add(name);
+    this.virtualTaps.add(name);
+  }
+
+  public release(name: string): void {
+    this.virtual.delete(name);
+  }
+
+  /** True if an action or a key is held from code. */
+  public isHeld(name: string): boolean {
+    return this.virtual.has(name) || this.virtualTaps.has(name);
+  }
+
+  /** Changes the keyboard keys of the actions. `Controls` builds this for you. */
+  public setActionKeys(keys: Readonly<Record<ControlAction, readonly string[]>>): void {
+    this.actionKeys = keys;
   }
 
   /** Called by `Game` after each step of the focused game: a tap lasts for one step. */

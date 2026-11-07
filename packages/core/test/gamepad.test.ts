@@ -45,7 +45,7 @@ describe("Gamepad", () => {
     stepGame(game);
     expect(game.gamepad.isConnected).toBe(true);
     input().endStep();
-    expect(input().isPressed("Space")).toBe(false);
+    expect(input().isAction("jump")).toBe(false);
   });
 
   test("no pad, or no API, does nothing", async () => {
@@ -69,11 +69,11 @@ describe("Gamepad", () => {
     pads = [pad];
     pad.buttons[0]!.pressed = true;
     game.gamepad.poll();
-    expect(input().isPressed("Space")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
     pad.buttons[0]!.pressed = false;
     game.gamepad.poll();
     input().endStep();
-    expect(input().isPressed("Space")).toBe(false);
+    expect(input().isAction("jump")).toBe(false);
   });
 
   test("holding a button isn't a new press", async () => {
@@ -91,15 +91,15 @@ describe("Gamepad", () => {
     pads = [pad];
     pad.axes[0] = 0.2;
     game.gamepad.poll();
-    expect(input().isPressed("ArrowRight")).toBe(false);
+    expect(input().isAction("right")).toBe(false);
     pad.axes[0] = 0.8;
     game.gamepad.poll();
-    expect(input().isPressed("ArrowRight")).toBe(true);
+    expect(input().isAction("right")).toBe(true);
     pad.axes[0] = -0.8;
     game.gamepad.poll();
     input().endStep();
-    expect(input().isPressed("ArrowRight")).toBe(false);
-    expect(input().isPressed("ArrowLeft")).toBe(true);
+    expect(input().isAction("right")).toBe(false);
+    expect(input().isAction("left")).toBe(true);
   });
 
   test("the stick down presses ↓, and two controls for one key don't fight", async () => {
@@ -109,11 +109,11 @@ describe("Gamepad", () => {
     pad.axes[1] = 0.9;
     pad.buttons[13]!.pressed = true;
     game.gamepad.poll();
-    expect(input().isPressed("ArrowDown")).toBe(true);
+    expect(input().isAction("down")).toBe(true);
     pad.buttons[13]!.pressed = false;
     game.gamepad.poll();
     input().endStep();
-    expect(input().isPressed("ArrowDown")).toBe(true); // the stick still holds it
+    expect(input().isAction("down")).toBe(true); // the stick still holds it
   });
 
   test("the keyboard keeps working next to a pad", async () => {
@@ -122,20 +122,20 @@ describe("Gamepad", () => {
     keys.down("ArrowLeft");
     game.gamepad.poll();
     input().endStep();
-    expect(input().isPressed("ArrowLeft")).toBe(true);
+    expect(input().isAction("left")).toBe(true);
   });
 
   test("setMapping() adapts a pad with its own layout", async () => {
     const game = await setup();
     const pad = makePad("");
     pads = [pad];
-    game.gamepad.setMapping({ buttons: { Space: [2], KeyX: [3] }, moveAxes: [[0, 1], [4, 5]] });
+    game.gamepad.setMapping({ buttons: { jump: [2], dash: [3] }, moveAxes: [[0, 1], [4, 5]] });
     pad.buttons[2]!.pressed = true;
     pad.axes[4] = 1;
     pad.axes.push(0, 0);
     game.gamepad.poll();
-    expect(input().isPressed("Space")).toBe(true);
-    expect(input().isPressed("ArrowRight")).toBe(true);
+    expect(input().isAction("jump")).toBe(true);
+    expect(input().isAction("right")).toBe(true);
   });
 
   test("getState() shows what the browser reports", async () => {
@@ -156,7 +156,7 @@ describe("Gamepad", () => {
     pads = [];
     game.gamepad.poll();
     input().endStep();
-    expect(input().isPressed("Space")).toBe(false);
+    expect(input().isAction("jump")).toBe(false);
   });
 
   test("only the focused game polls the pad", async () => {
@@ -169,7 +169,7 @@ describe("Gamepad", () => {
     stepGame(game);
     input().endStep();
     input().setEnabled(true);
-    expect(input().isPressed("Space")).toBe(false);
+    expect(input().isAction("jump")).toBe(false);
   });
 
   test("vibrate() asks the pad to rumble, if it can", async () => {

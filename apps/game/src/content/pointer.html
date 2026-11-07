@@ -32,8 +32,8 @@ game.pointer.getActive();  // every finger on the canvas</code></pre>
 <pre><code>game.touch.enabled = true;  // appears on the first touch
 
 game.touch.setButtons([
-  { key: "ArrowLeft", label: "←", x: 42, y: -42 },
-  { key: "Space", label: "↑", x: -42, y: -42, radius: 40 },
+  { press: "left", label: "←", x: 42, y: -42 },
+  { press: "jump", label: "↑", x: -42, y: -42, radius: 40 },
 ]);</code></pre>
-<p>On-screen buttons press the same keys as the keyboard, so <code>Player</code> and your code don't change. Several fingers work at once, and a finger can slide between buttons. Positions are in canvas pixels, and negative values count from the right or bottom edge. The default buttons are ←, → and jump, and <code>addButton()</code> adds more. On a canvas shrunk by CSS, as on a phone, buttons grow to keep their size on screen. With <code>alwaysVisible</code>, they're shown from the start, and a mouse can press them too.</p>
-<p class="mt-3 text-[0.9rem] text-muted"><code>Input.getInstance().press(code)</code> and <code>release(code)</code> hold a key from code, for your own controls.</p>
+<p>On-screen buttons press actions, such as <code>"jump"</code>, or a key code, so <code>Player</code> works unchanged. Read them with <code>Input.getInstance().isAction("jump")</code>. Several fingers work at once, and a finger can slide between buttons. Positions are in canvas pixels, and negative values count from the right or bottom edge. The default buttons are ←, → and jump, and <code>addButton()</code> adds more. On a canvas shrunk by CSS, as on a phone, buttons grow to keep their size on screen. With <code>alwaysVisible</code>, they're shown from the start, and a mouse can press them too.</p>
+<p class="mt-3 text-[0.9rem] text-muted"><code>Input.getInstance().press(name)</code> and <code>release(name)</code> hold an action or a key from code, for your own controls.</p>
