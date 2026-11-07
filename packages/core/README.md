@@ -110,6 +110,19 @@ new Player(world, { collision: layers.filter("player", ["world", "enemy"]) });
 
 A filter is `{ layers, mask }`: what the entity is, and what it collides with. Two entities collide only if each one's layer is in the other's mask. The default is every layer. `Player`, `Platform` and `Shape` take a `collision` option, and `Box` takes it as its fourth argument. On any entity, `setCollision(filter)` changes it at runtime and `getCollision()` reads it. The player applies its filter to walking, ground checks, wall slides and pushing. A `Sensor` detects by layer too.
 
+### Collisions
+
+```ts
+game.on("collisionStart", ({ a, b }) => {});  // two entities started touching
+game.on("collisionEnd", ({ a, b }) => {});
+
+class Crate extends Box {
+  override onCollisionStart(other: Entity) {}  // also on components
+}
+```
+
+Each pair starts once and ends once: when the entities stop touching, or when either one leaves the game. `clear()` ends nothing, like it emits no `entityRemoved`. Sensors don't count, because they have `enter` and `exit`. The player's pushes count too, although its controller moves bodies without Rapier reporting a contact. A shoved box flies off, so that contact ends soon. Hooks run inside the physics step, where removing entities is safe.
+
 ### Sensors and triggers
 
 ```ts
@@ -491,6 +504,7 @@ simulate(world, [new Ground(world), player], 30); // 30 physics steps = 0.5 s
 | `controls.test.ts` | Adding, removing, moving, saving and validating controls, and playing with them on keyboard and pad |
 | `events.test.ts` | `EventEmitter`, and the order and payloads of player events (no fake `land` on spawn or after a ground dash) |
 | `game.test.ts` | `destroy()` and `removeEntity()` (including mid-step and from listeners), kill plane, input going only to the focused game |
+| `collisions.test.ts` | Contacts between bodies, the player's pushes, kinematic enemies, hooks, removal, sensors and `clear()` |
 | `camera.test.ts` | Follow, smoothing, dead zone, offset, bounds, centering small levels, zoom, conversions, shake, removed targets |
 
 Rapier is deterministic, so a given sequence of key presses always produces the same result.

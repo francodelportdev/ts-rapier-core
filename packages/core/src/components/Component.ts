@@ -24,6 +24,12 @@ export abstract class Component {
   /** Runs when removed, and when its entity is destroyed. */
   public onDetach(): void {}
 
+  /** Runs when its entity starts touching another one. Sensors don't count. */
+  public onCollisionStart(_other: Entity): void {}
+
+  /** Runs when its entity stops touching another one. */
+  public onCollisionEnd(_other: Entity): void {}
+
   /** Runs once per physics step. `dt` is in seconds. */
   public update(_dt: number): void {}
 

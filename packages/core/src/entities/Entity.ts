@@ -4,6 +4,7 @@ import type { Component, ComponentType } from "../components/Component";
 import type { Game } from "../core/Game";
 import { registerEntity, unregisterEntity } from "../systems/entityRegistry";
 import { ALL_LAYERS, toInteractionGroups, type CollisionFilter } from "../systems/layers";
+import { CONTACT_TYPES } from "../systems/Contacts";
 
 /** Moving further than this in one step, in meters, is a teleport: it isn't interpolated. */
 const MAX_INTERPOLATED_STEP = 2;
@@ -24,13 +25,22 @@ export abstract class Entity<TOptions extends object = object> {
   private readonly components = new Map<ComponentType<Component>, Component>();
   private game: Game | null = null;
   private collision: CollisionFilter = { layers: ALL_LAYERS, mask: ALL_LAYERS };
+  private static nextContactId = 0;
+  /** @internal Orders pairs of touching entities. */
+  public readonly contactId = Entity.nextContactId++;
 
   constructor(world: RAPIER.World, options: TOptions = {} as TOptions) {
     this.world = world;
     this.options = options;
     this.body = this.createBody();
     this.createCollider();
-    for (let i = 0; i < this.body.numColliders(); i++) registerEntity(world, this.body.collider(i), this as unknown as Entity);
+    for (let i = 0; i < this.body.numColliders(); i++) {
+      const collider = this.body.collider(i);
+      registerEntity(world, collider, this as unknown as Entity);
+      if (collider.isSensor()) continue; // sensors report through their own events
+      collider.setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS);
+      collider.setActiveCollisionTypes(CONTACT_TYPES);
+    }
     const { collision } = options as { collision?: CollisionFilter };
     if (collision !== undefined) this.setCollision(collision);
   }
@@ -65,6 +75,27 @@ export abstract class Entity<TOptions extends object = object> {
     if (component === undefined) return;
     this.components.delete(type);
     component.onDetach();
+  }
+
+  /** Runs when it starts touching another entity in the game. Sensors don't count. */
+  public onCollisionStart(_other: Entity): void {}
+
+  /** Runs when it stops touching another entity, or when either one leaves the game. */
+  public onCollisionEnd(_other: Entity): void {}
+
+  /** @internal Called by `Game`: runs the hooks of the entity, then of its components. */
+  public notifyCollision(other: Entity, started: boolean): void {
+    if (started) this.onCollisionStart(other);
+    else this.onCollisionEnd(other);
+    for (const component of [...this.components.values()]) {
+      if (started) component.onCollisionStart(other);
+      else component.onCollisionEnd(other);
+    }
+  }
+
+  /** @internal Entities touched in a way Rapier doesn't report, such as by a character controller. */
+  public collectContacts(): readonly Entity[] {
+    return [];
   }
 
   /** Called by `Game` every physics step. */

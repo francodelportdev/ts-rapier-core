@@ -5,6 +5,7 @@ import { Input } from "../systems/Input";
 import { EventEmitter, type Listener } from "../systems/EventEmitter";
 import { toInteractionGroups, type CollisionFilter } from "../systems/layers";
 import { isOneWay, oneWayBlocks } from "../systems/oneWay";
+import { entityOf } from "../systems/entityRegistry";
 
 /** What the player is doing. Updated once per physics step. */
 export type PlayerState = "idle" | "run" | "jump" | "fall" | "dash" | "wallSlide";
@@ -276,6 +277,8 @@ export class Player extends Entity<ResolvedOptions> {
   /** Seconds since the player last touched the ground. */
   private airTime = 0;
   private readonly events = new EventEmitter<PlayerEvents>();
+  /** What the controller ran into during the last step. */
+  private hits: Entity[] = [];
   /** True while wall jumps use the player's `jumpHeight`, because none of their own was given. */
   private wallJumpHeightInherited: boolean;
 
@@ -593,6 +596,12 @@ export class Player extends Entity<ResolvedOptions> {
     };
     this.controller.computeColliderMovement(collider, desired, RAPIER.QueryFilterFlags.EXCLUDE_SENSORS, this.queryGroups(), this.solidFilter);
     const moved = this.controller.computedMovement();
+    this.hits = [];
+    for (let i = 0; i < this.controller.numComputedCollisions(); i++) {
+      const collider = this.controller.computedCollision(i)?.collider;
+      const entity = collider ? entityOf(this.world, collider) : undefined;
+      if (entity !== undefined && !this.hits.includes(entity)) this.hits.push(entity);
+    }
     const fallSpeed = Math.max(0, -this.vy);
     // The controller also reports "grounded" when a corner of the box rests on a steep surface,
     // which would let the player stand on (and jump up) walls. Only walkable ground counts.
@@ -614,6 +623,11 @@ export class Player extends Entity<ResolvedOptions> {
     this.setState(this.computeState());
 
     this.body.setNextKinematicTranslation({ x: start.x + moved.x, y: start.y + moved.y });
+  }
+
+  /** @internal The controller pushes bodies without Rapier reporting a contact. */
+  public override collectContacts(): readonly Entity[] {
+    return this.hits;
   }
 
   protected override onDestroy(): void {
