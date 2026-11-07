@@ -1,4 +1,4 @@
-import { EventEmitter, type Listener } from "../systems/EventEmitter";
+import { Observable } from "../systems/EventEmitter";
 
 /** A named sequence of sprite sheet frames. */
 export interface AnimationClip {
@@ -22,11 +22,10 @@ export interface AnimatorEvents {
 }
 
 /** Plays clips over time. It knows nothing about images: `Sprite` draws its current frame. */
-export class Animator {
+export class Animator extends Observable<AnimatorEvents> {
   /** Playback speed multiplier: 2 is twice as fast. */
   public speed = 1;
   private readonly clips: Readonly<Record<string, AnimationClip>>;
-  private readonly events = new EventEmitter<AnimatorEvents>();
   private clipName: string;
   private index = 0;
   private elapsed = 0;
@@ -34,6 +33,7 @@ export class Animator {
   private finished = false;
 
   constructor(clips: Readonly<Record<string, AnimationClip>>, initial: string) {
+    super();
     for (const [name, clip] of Object.entries(clips)) {
       if (clip.frames.length === 0) throw new Error(`Animation "${name}" has no frames`);
       if (!(clip.fps > 0)) throw new Error(`Animation "${name}" needs an fps above 0`);
@@ -53,7 +53,7 @@ export class Animator {
     this.index = 0;
     this.elapsed = 0;
     this.finished = false;
-    if (from !== name) this.events.emit("change", { from, to: name });
+    if (from !== name) this.emit("change", { from, to: name });
   }
 
   /** Every frame number used by any clip. */
@@ -88,19 +88,6 @@ export class Animator {
     return this.finished;
   }
 
-  public on<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): () => void {
-    return this.events.on(event, listener);
-  }
-
-  /** Like `on()`, but the listener runs only once. */
-  public once<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): () => void {
-    return this.events.once(event, listener);
-  }
-
-  public off<K extends keyof AnimatorEvents>(event: K, listener: Listener<AnimatorEvents[K]>): void {
-    this.events.off(event, listener);
-  }
-
   /** Advances by `dt` seconds. `Game` calls it every physics step for entities with a sprite. */
   public update(dt: number): void {
     if (this.paused || this.finished) return;
@@ -126,10 +113,10 @@ export class Animator {
     } else {
       const clip = this.clipName;
       this.finished = true;
-      this.events.emit("end", { clip });
+      this.emit("end", { clip });
       if (next !== undefined && this.clipName === clip) this.play(next);
       return;
     }
-    this.events.emit("frame", { clip: this.clipName, index: this.index });
+    this.emit("frame", { clip: this.clipName, index: this.index });
   }
 }

@@ -1,7 +1,6 @@
-import RAPIER from "@dimforge/rapier2d-compat";
-import { Entity } from "./Entity";
+import type RAPIER from "@dimforge/rapier2d-compat";
 import type { CollisionFilter } from "../systems/layers";
-import { registerOneWay, unregisterOneWay } from "../systems/oneWay";
+import { Shape } from "./Shape";
 
 export interface PlatformOptions {
   /** Center X, in meters. */
@@ -24,58 +23,29 @@ export interface PlatformOptions {
   collision?: CollisionFilter;
 }
 
-/** A static, axis-aligned rectangle to stand on. */
-export class Platform extends Entity<PlatformOptions> {
-  constructor(world: RAPIER.World, options: PlatformOptions) {
-    super(world, options);
+/** A shortcut: a fixed, axis-aligned rectangle to stand on. One-way platforms show a bright top edge. */
+export class Platform extends Shape {
+  constructor(world: RAPIER.World, { width, height = 0.5, ...options }: PlatformOptions) {
+    super(world, { ...options, geometry: { type: "box", width, height } });
   }
 
-  private get halfWidth(): number {
-    return this.options.width / 2;
-  }
-
-  private get halfHeight(): number {
-    return (this.options.height ?? 0.5) / 2;
+  private get size(): { width: number; height: number } {
+    const g = this.options.geometry as { width: number; height: number };
+    return { width: g.width, height: g.height };
   }
 
   /** Y of the top surface, in meters. */
   public get top(): number {
-    return this.options.y + this.halfHeight;
+    return this.getPosition().y + this.size.height / 2;
   }
-
-  protected override createBody(): RAPIER.RigidBody {
-    return this.world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(this.options.x, this.options.y));
-  }
-
-  protected override createCollider(): RAPIER.Collider {
-    const collider = this.world.createCollider(RAPIER.ColliderDesc.cuboid(this.halfWidth, this.halfHeight), this.body);
-    if (this.options.oneWay) {
-      const { x, y } = this.options;
-      const [w, h] = [this.halfWidth, this.halfHeight];
-      registerOneWay(this.world, collider, [
-        { x: x - w, y: y - h },
-        { x: x + w, y: y - h },
-        { x: x + w, y: y + h },
-        { x: x - w, y: y + h },
-      ]);
-    }
-    return collider;
-  }
-
-  protected override onDestroy(): void {
-    if (this.options.oneWay) unregisterOneWay(this.world, this.body.collider(0));
-  }
-
-  public override update(): void {}
 
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
-    const color = this.options.color ?? (this.options.oneWay ? "#718096" : "#4a5568");
-    this.drawCuboid(ctx, this.halfWidth, this.halfHeight, color, scale, centerX, centerY);
-    if (this.options.oneWay) {
-      // A bright top edge marks the side you can stand on.
-      const { px, py } = this.toCanvas(this.options.x - this.halfWidth, this.top, scale, centerX, centerY);
-      ctx.fillStyle = "#e2e8f0";
-      ctx.fillRect(px, py, this.options.width * scale, Math.max(2, 0.06 * scale));
-    }
+    super.draw(ctx, scale, centerX, centerY);
+    if (!this.options.oneWay) return;
+    // A bright top edge marks the side you can stand on.
+    const { width } = this.size;
+    const { px, py } = this.toCanvas(this.getPosition().x - width / 2, this.top, scale, centerX, centerY);
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(px, py, width * scale, Math.max(2, 0.06 * scale));
   }
 }

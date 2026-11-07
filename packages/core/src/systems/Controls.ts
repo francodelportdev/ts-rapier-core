@@ -1,5 +1,5 @@
 import type { Game } from "../core/Game";
-import { EventEmitter, type Listener } from "./EventEmitter";
+import { Observable } from "./EventEmitter";
 import { CONTROL_ACTIONS, DEFAULT_ACTION_KEYS, type ControlAction } from "./actions";
 import { Input } from "./Input";
 
@@ -51,9 +51,8 @@ function isControlInput(value: unknown): value is ControlInput {
  * controls.applyTo(game);
  * ```
  */
-export class Controls {
+export class Controls extends Observable<ControlsEvents> {
   private bindings = defaults();
-  private readonly events = new EventEmitter<ControlsEvents>();
 
   /** The inputs of an action. */
   public get(action: ControlAction): readonly ControlInput[] {
@@ -76,10 +75,6 @@ export class Controls {
   public reset(): void {
     this.bindings = defaults();
     this.changed();
-  }
-
-  public on<K extends keyof ControlsEvents>(event: K, listener: Listener<ControlsEvents[K]>): () => void {
-    return this.events.on(event, listener);
   }
 
   /** The bindings as plain data, to save. */
@@ -126,6 +121,6 @@ export class Controls {
   }
 
   private changed(): void {
-    this.events.emit("change", { bindings: this.toJSON() });
+    this.emit("change", { bindings: this.toJSON() });
   }
 }

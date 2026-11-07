@@ -1,3 +1,4 @@
+import { HeldKeys } from "./HeldKeys";
 import type { Input } from "./Input";
 
 /**
@@ -43,11 +44,10 @@ export class GamepadInput {
   /** How far an axis must move to count, from 0 to 1. Default: 0.3. */
   public deadZone = 0.3;
   private mapping: GamepadMapping = DEFAULT_MAPPING;
-  private readonly held = new Set<string>();
-  private readonly input: Input;
+  private readonly held: HeldKeys;
 
   constructor(input: Input) {
-    this.input = input;
+    this.held = new HeldKeys(input);
   }
 
   /** Changes what's mapped, keeping whatever isn't given. */
@@ -88,26 +88,12 @@ export class GamepadInput {
       this.releaseAll();
       return false;
     }
-    const wanted = this.wantedKeys(pad);
-    for (const key of [...this.held]) {
-      if (wanted.has(key)) continue;
-      this.held.delete(key);
-      this.input.release(key);
-    }
-    let pressed = false;
-    for (const key of wanted) {
-      if (this.held.has(key) && this.input.isHeld(key)) continue; // losing window focus lifts keys
-      this.held.add(key);
-      this.input.press(key);
-      pressed = true;
-    }
-    return pressed;
+    return this.held.sync(this.wantedKeys(pad));
   }
 
   /** @internal Lifts every key the pad is holding. */
   public releaseAll(): void {
-    for (const key of this.held) this.input.release(key);
-    this.held.clear();
+    this.held.releaseAll();
   }
 
   private wantedKeys(pad: Gamepad): Set<string> {

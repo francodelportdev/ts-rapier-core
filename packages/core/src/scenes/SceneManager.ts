@@ -1,5 +1,5 @@
 import type { Game } from "../core/Game";
-import { EventEmitter, type Listener } from "../systems/EventEmitter";
+import { Observable } from "../systems/EventEmitter";
 import type { Scene } from "./Scene";
 
 export interface SceneEvents {
@@ -27,10 +27,9 @@ interface Pending {
  * step, so `go()` is safe anywhere, even inside `update()` or an event listener. The physics
  * is frozen during a fade out. While a change is under way, further `go()` calls are ignored.
  */
-export class SceneManager {
+export class SceneManager extends Observable<SceneEvents> {
   private readonly game: Game;
   private readonly factories = new Map<string, SceneFactory>();
-  private readonly events = new EventEmitter<SceneEvents>();
   private scene: Scene<never> | null = null;
   private currentName: string | null = null;
   private lastData: unknown;
@@ -40,6 +39,7 @@ export class SceneManager {
   private fadeIn = 0;
 
   constructor(game: Game) {
+    super();
     this.game = game;
   }
 
@@ -69,19 +69,6 @@ export class SceneManager {
 
   public get currentSceneName(): string | null {
     return this.currentName;
-  }
-
-  public on<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): () => void {
-    return this.events.on(event, listener);
-  }
-
-  /** Like `on()`, but the listener runs only once. */
-  public once<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): () => void {
-    return this.events.once(event, listener);
-  }
-
-  public off<K extends keyof SceneEvents>(event: K, listener: Listener<SceneEvents[K]>): void {
-    this.events.off(event, listener);
   }
 
   /** @internal Ends the current scene for good. Called by `Game` on `destroy()`. */
@@ -117,8 +104,8 @@ export class SceneManager {
   }
 
   /** @internal */
-  public update(): void {
-    this.scene?.update();
+  public update(dt: number): void {
+    this.scene?.update(dt);
   }
 
   /** @internal */
@@ -147,6 +134,6 @@ export class SceneManager {
     const listeners = this.game.collectListeners(() => scene.onEnter(next.data as never));
     for (const off of listeners) scene["listen"](off);
     this.game.camera.snapToTarget();
-    this.events.emit("change", { from, to: next.name });
+    this.emit("change", { from, to: next.name });
   }
 }

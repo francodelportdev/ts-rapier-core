@@ -216,8 +216,6 @@ export class Shape extends Entity<ShapeOptions> {
     return desc;
   }
 
-  public override update(): void {}
-
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
     const g = this.options.geometry;
     const color = this.options.color ?? (this.options.oneWay ? ONE_WAY_COLOR : DEFAULT_COLORS[this.options.body ?? "fixed"]);

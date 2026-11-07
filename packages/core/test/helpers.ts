@@ -50,7 +50,7 @@ export function simulate(
 ): void {
   for (let i = 0; i < steps; i++) {
     onStep?.(i);
-    for (const e of entities) e.update();
+    for (const e of entities) e.update(world.timestep);
     world.step();
     Input.getInstance().endStep();
   }
@@ -65,7 +65,7 @@ export function simulateUntil(
 ): number {
   for (let i = 0; i < maxSteps; i++) {
     if (done()) return i;
-    for (const e of entities) e.update();
+    for (const e of entities) e.update(world.timestep);
     world.step();
     Input.getInstance().endStep();
   }

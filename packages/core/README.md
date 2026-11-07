@@ -257,7 +257,7 @@ Actions are `left`, `right`, `jump`, `dash` and `down`. Inputs are `{ type: "key
 ```ts
 class Menu extends Scene {
   onEnter() {}                  // receives the data passed to go()
-  update() {}                   // once per physics step
+  update(dt) {}                 // once per physics step, dt in seconds
   draw(ctx, width, height) {}   // in pixels, after the entities
   onExit() {}
 }
@@ -293,7 +293,7 @@ abstract class Entity<TOptions extends object = object> {
 
   protected abstract createBody(): RAPIER.RigidBody;
   protected abstract createCollider(): RAPIER.Collider;
-  public abstract update(): void;
+  public update(dt: number): void;   // optional: once per physics step, dt in seconds
   public abstract draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void;
 
   get isDestroyed(): boolean;
@@ -320,7 +320,7 @@ abstract class Entity<TOptions extends object = object> {
 | Class | Body | Collider (half extents) | Behavior |
 |---|---|---|---|
 | `Ground` | `fixed`, at `(0, -5)` | `cuboid(10, 0.5)` | A shortcut for a `Platform`. Its top surface is at y = -4.5. |
-| `Platform` | `fixed` | `width × height` | `new Platform(world, { x, y, width, height?, color?, oneWay? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
+| `Platform` | `fixed` | `width × height` | A shortcut for a fixed box `Shape`: `new Platform(world, { x, y, width, height?, color?, oneWay?, collision? })`. `height` defaults to 0.5. Has a `top` getter for the Y of its top surface. |
 | `Box` | `dynamic` | `cuboid(0.5, 0.5)` | `new Box(world, x = 0, y = 5, collision?)`. A shortcut for a dynamic `Shape`. |
 | `Shape` | any | any | Any geometry and body type. See [Shape](#shape). |
 | `Player` | `kinematicPositionBased` | `cuboid(0.5, 1)` | A platformer character. See [Player](#player). |
@@ -473,8 +473,6 @@ export class Ball extends Entity {
     return this.world.createCollider(RAPIER.ColliderDesc.ball(RADIUS).setRestitution(0.8), this.body);
   }
 
-  public override update(): void {}
-
   public override draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void {
     const t = this.body.translation();
     const { px, py } = this.toCanvas(t.x, t.y, scale, centerX, centerY);
@@ -488,7 +486,7 @@ export class Ball extends Entity {
 
 Import `RAPIER` from the engine. It gives you both values (`RigidBodyDesc`, `ColliderDesc`) and types (`RAPIER.World`), and it's the same instance the engine uses. Importing Rapier separately can load a second copy, which fails.
 
-All objects with events (`Game`, `Player`, `Sensor`, `Health`, `Animator` and `game.scenes`) share `on`, `once` and `off`.
+All objects with events (`Game`, `Player`, `Sensor`, `Health`, `Animator`, `Controls`, `game.pointer` and `game.scenes`) share `on`, `once` and `off`. To give your own class events, extend `Observable<Events>`, which adds them and a protected `emit()`.
 
 ## Development
 

@@ -36,3 +36,29 @@ export class EventEmitter<Events extends object> {
     for (const listener of [...set]) listener(payload); // copy: listeners may unsubscribe while running
   }
 }
+
+/**
+ * A base class for objects with events: public \`on\`, \`once\` and \`off\`, and a protected
+ * \`emit\` for the class itself.
+ */
+export class Observable<Events extends object> {
+  private readonly emitter = new EventEmitter<Events>();
+
+  /** Subscribes to an event. Returns a function that unsubscribes. */
+  public on<K extends keyof Events>(event: K, listener: Listener<Events[K]>): () => void {
+    return this.emitter.on(event, listener);
+  }
+
+  /** Like \`on()\`, but the listener runs only once. */
+  public once<K extends keyof Events>(event: K, listener: Listener<Events[K]>): () => void {
+    return this.emitter.once(event, listener);
+  }
+
+  public off<K extends keyof Events>(event: K, listener: Listener<Events[K]>): void {
+    this.emitter.off(event, listener);
+  }
+
+  protected emit<K extends keyof Events>(event: K, payload: Events[K]): void {
+    this.emitter.emit(event, payload);
+  }
+}

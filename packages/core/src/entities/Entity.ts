@@ -90,6 +90,9 @@ export abstract class Entity<TOptions extends object = object> {
     component.onDetach();
   }
 
+  /** Runs once per physics step, before the physics moves. `dt` is in seconds. Optional. */
+  public update(_dt: number): void {}
+
   /** Runs when it starts touching another entity in the game. Sensors don't count. */
   public onCollisionStart(_other: Entity): void {}
 
@@ -265,7 +268,6 @@ export abstract class Entity<TOptions extends object = object> {
 
   protected abstract createBody(): RAPIER.RigidBody;
   protected abstract createCollider(): RAPIER.Collider;
-  public abstract update(): void;
   public abstract draw(ctx: CanvasRenderingContext2D, scale: number, centerX: number, centerY: number): void;
 
   /** Meters (world) → pixels (canvas). */
