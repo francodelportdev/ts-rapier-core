@@ -1,5 +1,5 @@
 {
-  "name": "@francodelportdev/rapier-engine",
+  "name": "rapier-engine",
   "version": "0.3.0",
   "description": "Object-oriented 2D game engine built on Rapier physics",
   "license": "MIT",

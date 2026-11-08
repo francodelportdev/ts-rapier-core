@@ -2,7 +2,7 @@
  * Controls: try your keys and pad here. The table below changes what triggers each action.
  * Explanation: the "controls" page of the docs.
  */
-import { Box, Game, Ground, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Platform, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

@@ -2,7 +2,7 @@
  * Wall jump: climb a shaft by sliding down a wall and jumping off it to the other side.
  * Explanation and options: the "wall-jump" page of the docs.
  */
-import { Game, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Game, Platform, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

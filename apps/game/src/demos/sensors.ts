@@ -2,7 +2,7 @@
  * Sensors: a pressure plate that opens a gate, and a radar that follows the player.
  * Explanation: the "sensors" page of the docs.
  */
-import { Game, Ground, Platform, Player, Sensor, Shape, Trigger, type Entity } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Platform, Player, Sensor, Shape, Trigger, type Entity } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

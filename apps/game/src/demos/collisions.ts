@@ -2,7 +2,7 @@
  * Collisions: events when two entities start and stop touching.
  * Explanation: the "collisions" page of the docs.
  */
-import { Box, Game, Ground, Patrol, Platform, Player, Shape, type Entity } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Patrol, Platform, Player, Shape, type Entity } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 /** A box that turns red while something other than the floor touches it, through its own hooks. */

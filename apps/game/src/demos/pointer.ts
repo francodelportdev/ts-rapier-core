@@ -2,7 +2,7 @@
  * Mouse & touch: click or tap to drop a ball, and drag a box around. The on-screen buttons
  * move the player. Explanation: the "pointer" page of the docs.
  */
-import { Box, Game, Ground, Player, Shape } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Player, Shape } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

@@ -1,4 +1,4 @@
-import type { Game, Player } from "@francodelportdev/rapier-engine";
+import type { Game, Player } from "rapier-engine";
 
 /** What a demo can show around its canvas. */
 export interface DemoUI {

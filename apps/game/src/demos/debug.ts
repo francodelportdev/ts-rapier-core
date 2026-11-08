@@ -2,7 +2,7 @@
  * Debug renderer: shows what the physics sees. Sprites and shapes on screen may differ from
  * their colliders, and sensors are often invisible. Explanation: the "debug" page of the docs.
  */
-import { Box, Game, Ground, Platform, Player, Sensor, Shape } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Platform, Player, Sensor, Shape } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

@@ -2,7 +2,7 @@
  * Scenes & levels: a menu, three levels loaded from JSON, and a results screen after each one.
  * Explanation: the "scenes" page of the docs.
  */
-import { Game, Input, LevelScene, Scene, type LevelData, type LevelStats } from "@francodelportdev/rapier-engine";
+import { Game, Input, LevelScene, Scene, type LevelData, type LevelStats } from "rapier-engine";
 import firstSteps from "../levels/1-first-steps.json";
 import spikes from "../levels/2-spikes.json";
 import shaft from "../levels/3-shaft.json";

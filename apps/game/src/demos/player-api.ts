@@ -2,7 +2,7 @@
  * Checkpoints & knockback: move the player from code. Spikes push it away, a flag moves its
  * spawn point, and a pad teleports it. Explanation: the "player-api" page of the docs.
  */
-import { Game, Platform, Player, Sensor, Trigger } from "@francodelportdev/rapier-engine";
+import { Game, Platform, Player, Sensor, Trigger } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 const START = { x: -12, y: -3.5 };

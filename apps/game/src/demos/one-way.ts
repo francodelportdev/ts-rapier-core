@@ -3,7 +3,7 @@
  * and drop through with ↓ + jump.
  * Explanation and options: the "one-way" page of the docs.
  */
-import { Game, Ground, Platform, Player, Shape } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Platform, Player, Shape } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

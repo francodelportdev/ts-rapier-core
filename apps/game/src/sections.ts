@@ -1,4 +1,4 @@
-import type { DashOptions, Player, PlayerTuning, WallJumpOptions } from "@francodelportdev/rapier-engine";
+import type { DashOptions, Player, PlayerTuning, WallJumpOptions } from "rapier-engine";
 import type { Control, Demo, DemoUI } from "./ui";
 
 type NumericKey = { [K in keyof PlayerTuning]-?: NonNullable<PlayerTuning[K]> extends number ? K : never }[keyof PlayerTuning];

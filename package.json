@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "bun run --filter game dev",
     "build": "bun run --filter '*' build",
-    "test": "bun run --filter @francodelportdev/rapier-engine test",
+    "test": "bun run --filter rapier-engine test",
     "typecheck": "bun run --filter '*' typecheck"
   },
   "devDependencies": {

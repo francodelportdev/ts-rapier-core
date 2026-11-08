@@ -1,4 +1,4 @@
-# @francodelportdev/rapier-engine
+# rapier-engine
 
 A small, object-oriented 2D game engine built on [`@dimforge/rapier2d-compat`](https://www.npmjs.com/package/@dimforge/rapier2d-compat).
 You write entities as classes, and the engine runs the physics and draws them on a `<canvas>`.
@@ -7,17 +7,17 @@ It isn't on npm yet. To use it in another project, build it and pack it into a f
 
 ```bash
 cd packages/core
-bun run build && bun pm pack    # writes francodelportdev-rapier-engine-0.3.0.tgz
+bun run build && bun pm pack    # writes rapier-engine-0.3.0.tgz
 ```
 
-Then, in your project: `bun add /path/to/francodelportdev-rapier-engine-0.3.0.tgz`.
+Then, in your project: `bun add /path/to/rapier-engine-0.3.0.tgz`.
 
 The `-compat` build of Rapier embeds its WASM in JavaScript, so it works with Vite and other bundlers without extra configuration.
 
 ## Quick start
 
 ```ts
-import { Box, Game, Ground, Player } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Player } from "rapier-engine";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game")!;
 
@@ -445,7 +445,7 @@ Listeners run synchronously, inside the physics step.
 The typed emitter that `Player` uses. It's exported so that your own entities can emit events too:
 
 ```ts
-import { EventEmitter } from "@francodelportdev/rapier-engine";
+import { EventEmitter } from "rapier-engine";
 
 const events = new EventEmitter<{ hit: { damage: number } }>();
 events.on("hit", ({ damage }) => console.log(damage));
@@ -469,7 +469,7 @@ When the window loses focus, it clears the key state so that no key stays "stuck
 ## Writing your own entity
 
 ```ts
-import { Entity, RAPIER } from "@francodelportdev/rapier-engine";
+import { Entity, RAPIER } from "rapier-engine";
 
 const RADIUS = 0.4;
 

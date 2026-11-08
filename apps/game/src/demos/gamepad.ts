@@ -3,7 +3,7 @@
  * own layout need `setMapping()`: the label over the canvas shows the numbers to use.
  * Explanation: the "gamepad" page of the docs.
  */
-import { Box, Game, Ground, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Platform, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

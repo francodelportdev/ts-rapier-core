@@ -2,7 +2,7 @@
  * Camera: follow the player through a level wider than the screen.
  * Explanation and options: the "camera" page of the docs.
  */
-import { Game, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Game, Platform, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

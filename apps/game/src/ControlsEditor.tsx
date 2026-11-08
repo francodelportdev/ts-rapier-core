@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { CONTROL_ACTIONS, type ControlAction, type ControlInput } from "@francodelportdev/rapier-engine";
+import { CONTROL_ACTIONS, type ControlAction, type ControlInput } from "rapier-engine";
 import { captureInput, controlLabel, controls, defaultControls } from "./controls";
 
 const NAMES: Record<ControlAction, string> = { left: "Move left", right: "Move right", jump: "Jump", dash: "Dash", down: "Down" };

@@ -2,7 +2,7 @@
  * State & events: react to what the player does (sounds, animations, UI) without touching the engine.
  * Explanation: the "events" page of the docs.
  */
-import { Game, Ground, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Platform, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

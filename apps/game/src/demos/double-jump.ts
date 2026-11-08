@@ -2,7 +2,7 @@
  * Double jump: `maxJumps: 2` allows one extra jump in the air.
  * Explanation: the "double-jump" page of the docs.
  */
-import { Game, Ground, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Platform, Player } from "rapier-engine";
 import type { Demo } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement): Promise<Demo> {

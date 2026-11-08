@@ -3,7 +3,7 @@
  * and you can remove any entity yourself with `game.removeEntity()`.
  * Explanation: the "remove" page of the docs.
  */
-import { Box, Game, Ground, Player } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Player } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {
