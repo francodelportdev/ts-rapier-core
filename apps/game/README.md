@@ -60,10 +60,8 @@ To add a page, write its demo and its content file, then add an entry to `SECTIO
 ```bash
 bun create vite my-game --template vanilla-ts
 cd my-game
-bun add /path/to/rapier-engine-0.3.0.tgz
+bun add rapier-engine
 ```
-
-The engine isn't on npm yet: the [engine's README](../../packages/core/README.md) shows how to make that file.
 
 Add a `<canvas>` to `index.html` and paste the body of a demo function, such as [`src/demos/overview.ts`](src/demos/overview.ts), into your `src/main.ts`. You don't need any Vite configuration.
 
