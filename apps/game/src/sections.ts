@@ -96,12 +96,35 @@ export const SECTIONS: Section[] = [
     controls: ({ player }) => movement(player),
   },
   {
-    id: "remove", title: "Removing entities", group: "Engine", file: "src/demos/remove.ts",
+    id: "shapes", title: "Geometry", group: "Physics", file: "src/demos/shapes.ts",
+    load: () => import("./demos/shapes"), source: () => import("./demos/shapes.ts?raw"), content: () => import("./content/shapes.html?raw"),
+    controls: ({ game, player: p }) => [
+      { label: "world gravity", min: 0, max: 30, step: 0.5, value: 9.81, unit: "m/s²", set: (v) => (game.getWorld().gravity.y = -v) },
+      tune(p, "maxSlope", "maxSlope", 10, 80, 1, "°"),
+    ],
+  },
+  {
+    id: "layers", title: "Collision layers", group: "Physics", file: "src/demos/layers.ts",
+    load: () => import("./demos/layers"), source: () => import("./demos/layers.ts?raw"), content: () => import("./content/layers.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "sensors", title: "Sensors & triggers", group: "Physics", file: "src/demos/sensors.ts",
+    load: () => import("./demos/sensors"), source: () => import("./demos/sensors.ts?raw"), content: () => import("./content/sensors.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
+    id: "collisions", title: "Collisions", group: "Physics", file: "src/demos/collisions.ts",
+    load: () => import("./demos/collisions"), source: () => import("./demos/collisions.ts?raw"), content: () => import("./content/collisions.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
+    id: "remove", title: "Removing entities", group: "Physics", file: "src/demos/remove.ts",
     load: () => import("./demos/remove"), source: () => import("./demos/remove.ts?raw"), content: () => import("./content/remove.html?raw"),
     controls: ({ player: p }) => [tune(p, "speed", "speed", 2, 20, 0.5, "m/s")],
   },
   {
-    id: "camera", title: "Camera", group: "Engine", file: "src/demos/camera.ts",
+    id: "camera", title: "Camera", group: "Game flow", file: "src/demos/camera.ts",
     load: () => import("./demos/camera"), source: () => import("./demos/camera.ts?raw"), content: () => import("./content/camera.html?raw"),
     controls: ({ game, player }) => [
       { label: "camera.zoom", min: 0.5, max: 2, step: 0.05, value: game.camera.zoom, unit: "×", set: (v) => (game.camera.zoom = v) },
@@ -112,76 +135,53 @@ export const SECTIONS: Section[] = [
     ],
   },
   {
-    id: "layers", title: "Collision layers", group: "Engine", file: "src/demos/layers.ts",
-    load: () => import("./demos/layers"), source: () => import("./demos/layers.ts?raw"), content: () => import("./content/layers.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "sensors", title: "Sensors & triggers", group: "Engine", file: "src/demos/sensors.ts",
-    load: () => import("./demos/sensors"), source: () => import("./demos/sensors.ts?raw"), content: () => import("./content/sensors.html?raw"),
-    controls: ({ player }) => movement(player),
-  },
-  {
-    id: "collisions", title: "Collisions", group: "Engine", file: "src/demos/collisions.ts",
-    load: () => import("./demos/collisions"), source: () => import("./demos/collisions.ts?raw"), content: () => import("./content/collisions.html?raw"),
-    controls: ({ player }) => movement(player),
-  },
-  {
-    id: "animations", title: "Animations", group: "Engine", file: "src/demos/animations.ts",
-    load: () => import("./demos/animations"), source: () => import("./demos/animations.ts?raw"), content: () => import("./content/animations.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "components", title: "Components", group: "Engine", file: "src/demos/components.ts",
-    load: () => import("./demos/components"), source: () => import("./demos/components.ts?raw"), content: () => import("./content/components.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "debug", title: "Debug renderer", group: "Engine", file: "src/demos/debug.ts",
-    load: () => import("./demos/debug"), source: () => import("./demos/debug.ts?raw"), content: () => import("./content/debug.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "pointer", title: "Mouse & touch", group: "Engine", file: "src/demos/pointer.ts",
-    load: () => import("./demos/pointer"), source: () => import("./demos/pointer.ts?raw"), content: () => import("./content/pointer.html?raw"),
-    controls: ({ player }) => movement(player),
-  },
-  {
-    id: "display", title: "Display", group: "Engine", file: "src/demos/display.ts",
-    load: () => import("./demos/display"), source: () => import("./demos/display.ts?raw"), content: () => import("./content/display.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "audio", title: "Audio", group: "Engine", file: "src/demos/audio.ts",
-    load: () => import("./demos/audio"), source: () => import("./demos/audio.ts?raw"), content: () => import("./content/audio.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "gamepad", title: "Gamepad", group: "Engine", file: "src/demos/gamepad.ts",
-    load: () => import("./demos/gamepad"), source: () => import("./demos/gamepad.ts?raw"), content: () => import("./content/gamepad.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "controls", title: "Controls", group: "Engine", file: "src/demos/controls.ts", editor: true,
-    load: () => import("./demos/controls"), source: () => import("./demos/controls.ts?raw"), content: () => import("./content/controls.html?raw"),
-    controls: () => [],
-  },
-  {
-    id: "scenes", title: "Scenes & levels", group: "Engine", file: "src/demos/scenes.ts",
+    id: "scenes", title: "Scenes & levels", group: "Game flow", file: "src/demos/scenes.ts",
     load: () => import("./demos/scenes"), source: () => import("./demos/scenes.ts?raw"), content: () => import("./content/scenes.html?raw"),
     controls: () => [],
   },
   {
-    id: "pause", title: "Pause", group: "Engine", file: "src/demos/pause.ts",
+    id: "pause", title: "Pause", group: "Game flow", file: "src/demos/pause.ts",
     load: () => import("./demos/pause"), source: () => import("./demos/pause.ts?raw"), content: () => import("./content/pause.html?raw"),
     controls: () => [],
   },
   {
-    id: "shapes", title: "Geometry", group: "Engine", file: "src/demos/shapes.ts",
-    load: () => import("./demos/shapes"), source: () => import("./demos/shapes.ts?raw"), content: () => import("./content/shapes.html?raw"),
-    controls: ({ game, player: p }) => [
-      { label: "world gravity", min: 0, max: 30, step: 0.5, value: 9.81, unit: "m/s²", set: (v) => (game.getWorld().gravity.y = -v) },
-      tune(p, "maxSlope", "maxSlope", 10, 80, 1, "°"),
-    ],
+    id: "components", title: "Components", group: "Game flow", file: "src/demos/components.ts",
+    load: () => import("./demos/components"), source: () => import("./demos/components.ts?raw"), content: () => import("./content/components.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "pointer", title: "Mouse & touch", group: "Input", file: "src/demos/pointer.ts",
+    load: () => import("./demos/pointer"), source: () => import("./demos/pointer.ts?raw"), content: () => import("./content/pointer.html?raw"),
+    controls: ({ player }) => movement(player),
+  },
+  {
+    id: "gamepad", title: "Gamepad", group: "Input", file: "src/demos/gamepad.ts",
+    load: () => import("./demos/gamepad"), source: () => import("./demos/gamepad.ts?raw"), content: () => import("./content/gamepad.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "controls", title: "Controls", group: "Input", file: "src/demos/controls.ts", editor: true,
+    load: () => import("./demos/controls"), source: () => import("./demos/controls.ts?raw"), content: () => import("./content/controls.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "animations", title: "Animations", group: "Graphics & sound", file: "src/demos/animations.ts",
+    load: () => import("./demos/animations"), source: () => import("./demos/animations.ts?raw"), content: () => import("./content/animations.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "debug", title: "Debug renderer", group: "Graphics & sound", file: "src/demos/debug.ts",
+    load: () => import("./demos/debug"), source: () => import("./demos/debug.ts?raw"), content: () => import("./content/debug.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "display", title: "Display", group: "Graphics & sound", file: "src/demos/display.ts",
+    load: () => import("./demos/display"), source: () => import("./demos/display.ts?raw"), content: () => import("./content/display.html?raw"),
+    controls: () => [],
+  },
+  {
+    id: "audio", title: "Audio", group: "Graphics & sound", file: "src/demos/audio.ts",
+    load: () => import("./demos/audio"), source: () => import("./demos/audio.ts?raw"), content: () => import("./content/audio.html?raw"),
+    controls: () => [],
   },
 ];
