@@ -37,10 +37,7 @@
 </div>
 
 <h2>Use it in your project</h2>
-<p>It isn't on npm yet. Build it and pack it into a file, from a copy of <a href="https://github.com/francodelportdev/ts-rapier-core">the repository</a>:</p>
-<pre><code>cd packages/core
-bun run build &amp;&amp; bun pm pack    # writes rapier-engine-0.3.0.tgz</code></pre>
-<p>Then add that file to your project with <code>bun add /path/to/rapier-engine-0.3.0.tgz</code>, and start a game on a canvas:</p>
+<p>Install it from npm with <code>bun add rapier-engine</code>, and start a game on a canvas:</p>
 <pre><code>import { Box, Game, Ground, Player } from "rapier-engine";
 
 const game = await Game.create(document.querySelector("canvas")!);
