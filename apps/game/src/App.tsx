@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { version } from "../../../packages/core/package.json";
 import { controls as gameControls } from "./controls";
 import { ControlsEditor } from "./ControlsEditor";
+import { highlight, highlightBlocks } from "./highlight";
 import { PROSE } from "./prose";
 import { SECTIONS, type Section } from "./sections";
 import type { Control, Demo, Toggle } from "./ui";
@@ -27,19 +28,33 @@ const BUTTON = "shrink-0 cursor-pointer rounded-md border border-line px-3.5 py-
 
 function Sidebar({ current }: { current: Section }) {
   const groups = [...new Set(SECTIONS.map((s) => s.group))];
+  // On phones the list is behind a button, and closes when a page is chosen.
+  const [open, setOpen] = useState(false);
+  useEffect(() => setOpen(false), [current]);
   return (
     <nav
-      className="sticky top-0 z-10 flex items-center gap-4 overflow-x-auto border-b border-surface bg-page px-4 py-3 md:block md:h-screen md:overflow-y-auto md:border-r md:border-b-0 md:px-4 md:py-8"
+      className="sticky top-0 z-10 border-b border-surface bg-page px-4 py-3 md:block md:h-screen md:overflow-y-auto md:border-r md:border-b-0 md:px-4 md:py-8"
       aria-label="Sections"
     >
-      <div className="shrink-0 md:mb-6">
-        <a className="font-bold whitespace-nowrap text-fg" href="#overview">rapier-engine</a>{" "}
-        <span className="font-mono text-xs text-muted">v{version}</span>
-        <a className="mt-1 hidden text-[0.85rem] text-muted hover:text-fg md:block" href={REPO}>Source on GitHub ↗</a>
+      <div className="flex items-center justify-between gap-4 md:mb-6 md:block">
+        <div>
+          <a className="font-bold whitespace-nowrap text-fg" href="#overview">rapier-engine</a>{" "}
+          <span className="font-mono text-xs text-muted">v{version}</span>
+          <a className="mt-1 hidden text-[0.85rem] text-muted hover:text-fg md:block" href={REPO}>Source on GitHub ↗</a>
+        </div>
+        <button
+          type="button"
+          className={`${BUTTON} md:hidden`}
+          aria-expanded={open}
+          aria-controls="section-list"
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? "Close ✕" : `${current.title} ☰`}
+        </button>
       </div>
-      <ul className="flex gap-1 md:block">
+      <ul id="section-list" className={`${open ? "block" : "hidden"} mt-3 max-h-[75vh] overflow-y-auto md:mt-0 md:block md:max-h-none md:overflow-visible`}>
         {groups.flatMap((group) => [
-          group && <li className="mt-5 mb-1 hidden px-2.5 text-xs font-semibold tracking-wider text-muted uppercase md:block" key={group}>{group}</li>,
+          group && <li className="mt-5 mb-1 px-2.5 text-xs font-semibold tracking-wider text-muted uppercase" key={group}>{group}</li>,
           ...SECTIONS.filter((s) => s.group === group).map((s) => (
             <li key={s.id}>
               <a
@@ -180,6 +195,9 @@ function DemoView({ section, onReset }: { section: Section; onReset: () => void 
             Exit full screen (Esc)
           </button>
         )}
+        {!demo && !failed && (
+          <p role="status" className="pointer-events-none absolute inset-0 grid place-items-center text-[0.95rem] text-muted">Loading…</p>
+        )}
         {failed && <p role="alert" className="absolute inset-x-3 top-3 rounded-lg bg-page p-3 text-[0.9rem] text-fg">This demo couldn't start: {failed}</p>}
         <span className="pointer-events-none absolute top-3 right-3 rounded-full bg-page/85 px-2.5 py-1 text-[0.8rem] text-muted peer-focus:hidden">Click to play</span>
         {(status || log.length > 0) && (
@@ -240,14 +258,39 @@ function Source({ section }: { section: Section }) {
         <h2 className="text-xl font-bold">Source: <code className="font-mono text-[0.9em] text-accent">{section.file}</code></h2>
         <button type="button" className={`${BUTTON} bg-surface`} onClick={() => void copy()}>{copied ?? "Copy"}</button>
       </div>
-      <pre className="overflow-x-auto rounded-lg bg-surface p-4"><code className="font-mono text-[0.85rem] leading-normal">{code}</code></pre>
+      <pre className="overflow-x-auto rounded-lg bg-surface p-4"><code className="font-mono text-[0.85rem] leading-normal" dangerouslySetInnerHTML={{ __html: highlight(code) }} /></pre>
     </>
+  );
+}
+
+/** Links to the previous and next pages, to read the docs in order. */
+function PageNav({ section }: { section: Section }) {
+  const index = SECTIONS.indexOf(section);
+  const previous = SECTIONS[index - 1];
+  const next = SECTIONS[index + 1];
+  const link = (target: Section, label: string, align: string) => (
+    <a href={`#${target.id}`} className={`block rounded-lg border border-line px-4 py-3 hover:border-accent ${align}`}>
+      <span className="block text-[0.8rem] text-muted">{label}</span>
+      <span className="font-semibold text-fg">{target.title}</span>
+    </a>
+  );
+  return (
+    <nav aria-label="Previous and next pages" className="mt-12 grid grid-cols-2 gap-3">
+      <div>{previous && link(previous, "← Previous", "")}</div>
+      <div>{next && link(next, "Next →", "text-right")}</div>
+    </nav>
   );
 }
 
 function Page({ section }: { section: Section }) {
   const [html, setHtml] = useState<[string, string]>(["", ""]);
   const [resets, setResets] = useState(0);
+  // Code in the page text gets its colors once the text is on the page.
+  const introRef = useRef<HTMLDivElement>(null);
+  const restRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    for (const block of [introRef.current, restRef.current]) if (block) highlightBlocks(block);
+  }, [html]);
   useEffect(() => {
     void section.content().then((m) => {
       const [intro = "", rest = ""] = m.default.split("<!-- demo -->");
@@ -257,11 +300,12 @@ function Page({ section }: { section: Section }) {
   return (
     <main className="mx-auto w-full max-w-[1080px] px-4 pt-6 pb-12 md:px-8 md:pt-8 md:pb-16">
       {/* Our own static files from src/content, so rendering them as HTML is safe. */}
-      <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[0] }} />
+      <div ref={introRef} className={PROSE} dangerouslySetInnerHTML={{ __html: html[0] }} />
       <DemoView key={`${section.id}-${resets}`} section={section} onReset={() => setResets((n) => n + 1)} />
       {section.editor && <ControlsEditor />}
-      <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[1] }} />
+      <div ref={restRef} className={PROSE} dangerouslySetInnerHTML={{ __html: html[1] }} />
       <Source section={section} />
+      <PageNav section={section} />
       <footer className="mt-12 border-t border-surface pt-4 text-[0.85rem] text-muted">
         rapier-engine v{version} · MIT · <a className="underline hover:text-fg" href={REPO}>Source on GitHub</a>
       </footer>

@@ -10,8 +10,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "rapier-engine": "workspace:*",
     "@tailwindcss/vite": "^4.3.4",
+    "highlight.js": "11.11.1",
+    "rapier-engine": "workspace:*",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "tailwindcss": "^4.3.4"

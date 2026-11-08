@@ -1,5 +1,5 @@
-<h1>Push the boxes off the platform</h1>
-<p class="text-muted">A demo of <code>rapier-engine</code>, a 2D engine built on Rapier physics.</p>
+<h1>A 2D game engine for the web</h1>
+<p class="text-muted"><code>rapier-engine</code> is a TypeScript engine built on <a href="https://rapier.rs">Rapier</a> physics. You write entities as classes, and it runs the physics, the input and the drawing on a canvas. Every page of this site is a playable demo with its source code. Try this one: push the boxes off the platform.</p>
 <!-- demo -->
 <ul class="my-4 flex flex-wrap gap-x-6 gap-y-2 text-muted">
   <li><kbd>←</kbd> <kbd>→</kbd> Move</li>
@@ -7,7 +7,50 @@
   <li><kbd>E</kbd> Kick the first box upwards</li>
 </ul>
 
-<h2>How it's built</h2>
+<h2>What's inside</h2>
+<div class="my-4 grid gap-3 sm:grid-cols-2">
+  <div class="rounded-lg bg-surface p-4">
+    <h3>Player</h3>
+    <p class="text-[0.9rem] text-muted">A platformer character, ready to tune: acceleration, jumps, dash, wall jumps and one-way platforms.</p>
+    <p class="mt-2 text-[0.9rem]"><a href="#player">Move &amp; jump</a> · <a href="#dash">Dash</a> · <a href="#wall-jump">Wall jump</a> · <a href="#player-api">Checkpoints</a></p>
+  </div>
+  <div class="rounded-lg bg-surface p-4">
+    <h3>Physics</h3>
+    <p class="text-[0.9rem] text-muted">Any shape, collision layers, sensors and collision events, on Rapier's real physics.</p>
+    <p class="mt-2 text-[0.9rem]"><a href="#shapes">Geometry</a> · <a href="#layers">Layers</a> · <a href="#sensors">Sensors</a> · <a href="#collisions">Collisions</a></p>
+  </div>
+  <div class="rounded-lg bg-surface p-4">
+    <h3>Game flow</h3>
+    <p class="text-[0.9rem] text-muted">A camera that follows, scenes and levels from JSON, pause, and reusable components.</p>
+    <p class="mt-2 text-[0.9rem]"><a href="#camera">Camera</a> · <a href="#scenes">Scenes</a> · <a href="#pause">Pause</a> · <a href="#components">Components</a></p>
+  </div>
+  <div class="rounded-lg bg-surface p-4">
+    <h3>Input</h3>
+    <p class="text-[0.9rem] text-muted">Keyboard, mouse, touch buttons and gamepads, all reaching the same actions.</p>
+    <p class="mt-2 text-[0.9rem]"><a href="#pointer">Mouse &amp; touch</a> · <a href="#gamepad">Gamepad</a> · <a href="#controls">Controls</a></p>
+  </div>
+  <div class="rounded-lg bg-surface p-4">
+    <h3>Graphics &amp; sound</h3>
+    <p class="text-[0.9rem] text-muted">Sprite animations, a debug view, sharp and smooth drawing, and audio made by code.</p>
+    <p class="mt-2 text-[0.9rem]"><a href="#animations">Animations</a> · <a href="#debug">Debug</a> · <a href="#display">Display</a> · <a href="#audio">Audio</a></p>
+  </div>
+</div>
+
+<h2>Use it in your project</h2>
+<p>It isn't on npm yet. Build it and pack it into a file, from a copy of <a href="https://github.com/francodelportdev/ts-rapier-core">the repository</a>:</p>
+<pre><code>cd packages/core
+bun run build &amp;&amp; bun pm pack    # writes rapier-engine-0.3.0.tgz</code></pre>
+<p>Then add that file to your project with <code>bun add /path/to/rapier-engine-0.3.0.tgz</code>, and start a game on a canvas:</p>
+<pre><code>import { Box, Game, Ground, Player } from "rapier-engine";
+
+const game = await Game.create(document.querySelector("canvas")!);
+const world = game.getWorld();
+game.addEntity(new Ground(world));
+game.addEntity(new Player(world));
+game.addEntity(new Box(world, 0, 5));
+game.start();</code></pre>
+
+<h2>How this demo is built</h2>
 <ol class="my-4 list-decimal pl-5 [&>li]:mb-5 [&_p]:text-muted">
   <li>
     <h3>Create the game</h3>
@@ -34,4 +77,4 @@
     <p><code>game.start()</code> runs physics at a fixed 60 steps per second, whatever your screen's refresh rate. Each step calls <code>update()</code> on every entity and then <code>world.step()</code>. Each frame then calls <code>draw()</code>.</p>
   </li>
 </ol>
-<p class="mt-3 text-[0.9rem] text-muted">Each demo is one function that receives a canvas. To use one in your own project, run <code>bun add rapier-engine</code> and paste the body of the function. <code>ui</code> and <code>Demo</code> only belong to this site: they show the labels over the canvas.</p>
+<p class="mt-3 text-[0.9rem] text-muted">Each demo is one function that receives a canvas. To use one in your own project, paste the body of the function. <code>ui</code> and <code>Demo</code> only belong to this site: they show the labels over the canvas.</p>
