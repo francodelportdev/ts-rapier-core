@@ -3,9 +3,14 @@
 A small, object-oriented 2D game engine built on [`@dimforge/rapier2d-compat`](https://www.npmjs.com/package/@dimforge/rapier2d-compat).
 You write entities as classes, and the engine runs the physics and draws them on a `<canvas>`.
 
+It isn't on npm yet. To use it in another project, build it and pack it into a file:
+
 ```bash
-bun add @francodelportdev/rapier-engine
+cd packages/core
+bun run build && bun pm pack    # writes francodelportdev-rapier-engine-0.3.0.tgz
 ```
+
+Then, in your project: `bun add /path/to/francodelportdev-rapier-engine-0.3.0.tgz`.
 
 The `-compat` build of Rapier embeds its WASM in JavaScript, so it works with Vite and other bundlers without extra configuration.
 

@@ -4,6 +4,8 @@
 
 An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.rs) physics, plus a playable demo.
 
+**[Play the demo](https://francodelportdev.github.io/ts-rapier-core/)**: every feature on its own page, with its source code.
+
 | Path | What it is |
 |---|---|
 | [`packages/core`](packages/core) | `@francodelportdev/rapier-engine`, the engine package ([API docs](packages/core/README.md)) |

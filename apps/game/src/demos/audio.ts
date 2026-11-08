@@ -14,7 +14,8 @@ export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promi
   audio.synth("jump", { wave: "square", frequency: 300, endFrequency: 700, duration: 0.15, volume: 0.25 });
   audio.synth("land", { wave: "noise", duration: 0.08, volume: 0.3 });
   audio.synth("dash", { wave: "sawtooth", frequency: 900, endFrequency: 200, duration: 0.18, volume: 0.2 });
-  await audio.load("coin", "/sounds/coin.wav");
+  // BASE_URL is "/" in development, and the site's folder once deployed.
+  await audio.load("coin", `${import.meta.env.BASE_URL}sounds/coin.wav`);
   audio.synth("music", { wave: "triangle", frequency: [262, 330, 392, 330, 294, 349, 440, 349], duration: 0.25, volume: 0.25 });
 
   game.addEntity(new Ground(world));
