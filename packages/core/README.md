@@ -1,5 +1,7 @@
 # rapier-engine
 
+[![npm](https://img.shields.io/npm/v/rapier-engine)](https://www.npmjs.com/package/rapier-engine)
+
 A small, object-oriented 2D game engine built on [`@dimforge/rapier2d-compat`](https://www.npmjs.com/package/@dimforge/rapier2d-compat).
 You write entities as classes, and the engine runs the physics and draws them on a `<canvas>`.
 
