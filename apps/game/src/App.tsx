@@ -225,7 +225,7 @@ function Page({ section }: { section: Section }) {
     });
   }, [section]);
   return (
-    <main className="w-full max-w-[800px] px-4 pt-6 pb-12 md:px-8 md:pt-8 md:pb-16">
+    <main className="mx-auto w-full max-w-[800px] px-4 pt-6 pb-12 md:px-8 md:pt-8 md:pb-16">
       {/* Our own static files from src/content, so rendering them as HTML is safe. */}
       <div className={PROSE} dangerouslySetInnerHTML={{ __html: html[0] }} />
       <DemoView key={`${section.id}-${resets}`} section={section} onReset={() => setResets((n) => n + 1)} />
