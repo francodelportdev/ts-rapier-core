@@ -22,3 +22,16 @@
     @apply bg-page leading-[1.6] text-fg;
   }
 }
+
+/* Code colors (highlight.js), from the site's palette. */
+@layer components {
+  .hljs-keyword, .hljs-built_in, .hljs-literal { color: #f687b3; }
+  .hljs-string, .hljs-regexp { color: #9ae6b4; }
+  .hljs-number { color: #fbd38d; }
+  .hljs-comment { color: var(--color-muted); font-style: italic; }
+  .hljs-title, .hljs-title.function_ { color: #90cdf4; }
+  .hljs-title.class_, .hljs-type { color: #faf089; }
+  .hljs-attr, .hljs-property { color: #90cdf4; }
+  .hljs-params, .hljs-variable { color: var(--color-fg); }
+  .hljs-meta { color: var(--color-muted); }
+}
