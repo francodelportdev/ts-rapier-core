@@ -14,20 +14,20 @@ Interactive docs for [`@francodelportdev/rapier-engine`](../../packages/core/REA
 | Player: checkpoints & knockback | [`src/demos/player-api.ts`](src/demos/player-api.ts) | `knockback()` on spikes, `setSpawn()` on a checkpoint flag, and `setPosition()` on a teleport pad. |
 | Engine: removing entities | [`src/demos/remove.ts`](src/demos/remove.ts) | Kill plane, `game.removeEntity()` and the `entityRemoved` event, with a live body count. |
 | Engine: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |
-| Engine: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
 | Engine: collision layers | [`src/demos/layers.ts`](src/demos/layers.ts) | `defineLayers()` and `setCollision()`, with switches for who collides with whom. |
 | Engine: sensors & triggers | [`src/demos/sensors.ts`](src/demos/sensors.ts) | A pressure plate that opens a gate, a radar that follows the player, and a one-shot goal. |
+| Engine: collisions | [`src/demos/collisions.ts`](src/demos/collisions.ts) | `collisionStart` and `collisionEnd`, and boxes that change color through `onCollisionStart()`, with an enemy that sends the player back. |
 | Engine: animations | [`src/demos/animations.ts`](src/demos/animations.ts) | `SpriteSheet`, `Animator`, `Sprite` and `animatePlayer()`, with a sheet drawn by code. |
 | Engine: components | [`src/demos/components.ts`](src/demos/components.ts) | `Health`, `Patrol` and `Lifetime`, plus two components written in the demo. |
 | Engine: debug renderer | [`src/demos/debug.ts`](src/demos/debug.ts) | `game.debug`, with every kind of body and two invisible sensors. All demos also have a "debug view" switch. |
 | Engine: mouse & touch | [`src/demos/pointer.ts`](src/demos/pointer.ts) | `game.pointer` and `game.touch`: drop balls, drag boxes, and on-screen buttons. |
 | Engine: display | [`src/demos/display.ts`](src/demos/display.ts) | Sharp drawing and interpolation, with a physics-rate slider to see the difference. |
-| Engine: audio | [`src/demos/audio.ts`](src/demos/audio.ts) | Effects tied to player events and music, all made by code, with volume sliders. |
+| Engine: audio | [`src/demos/audio.ts`](src/demos/audio.ts) | Effects tied to player events and music, made by code, plus a coin sound loaded from a file (`public/sounds/coin.wav`), with volume sliders. |
 | Engine: gamepad | [`src/demos/gamepad.ts`](src/demos/gamepad.ts) | `game.gamepad`, with a live view of what the browser reports. |
 | Engine: controls | [`src/demos/controls.ts`](src/demos/controls.ts) | `Controls`, with a table to add and remove keys, pad buttons and axes. The choice is saved and applies to every demo. |
-| Engine: collisions | [`src/demos/collisions.ts`](src/demos/collisions.ts) | `collisionStart` and `collisionEnd`, and boxes that change color through `onCollisionStart()`, with an enemy that sends the player back. |
-| Engine: pause | [`src/demos/pause.ts`](src/demos/pause.ts) | `pause()` and `resume()`, with a pause menu drawn by a scene, and a button for mouse and touch. |
 | Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
+| Engine: pause | [`src/demos/pause.ts`](src/demos/pause.ts) | `pause()` and `resume()`, with a pause menu drawn by a scene, and a button for mouse and touch. |
+| Engine: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.
 
@@ -46,6 +46,10 @@ The site is a React app. [`src/sections.ts`](src/sections.ts) lists every page: 
 | `src/demos/*.ts` | One function per demo. It receives a canvas, and returns its `game` and `player`. No React in here. |
 | `src/content/*.html` | The text of each page. `<!-- demo -->` marks where the demo goes. |
 | `src/App.tsx` | Sidebar, hash routing (`#player`), the demo's lifecycle, the sliders and the source viewer. |
+| `src/ui.ts` | The types a demo hands back: `Demo`, sliders and switches. |
+| `src/prose.ts` | The styles of the page text, applied from its container. |
+| `src/controls.ts`, `src/ControlsEditor.tsx` | The site's saved `Controls`, shared by every demo, and the table on the Controls page. |
+| `src/levels/*.json` | The levels of the Scenes & levels page. |
 
 Only the open page runs a game: leaving a page calls `game.destroy()`. The "Tune it live" sliders call `player.configure()`, so changes apply immediately, and **Reset** restarts the demo with its defaults.
 
