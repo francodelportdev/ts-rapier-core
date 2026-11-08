@@ -12,22 +12,22 @@ Interactive docs for [`rapier-engine`](../../packages/core/README.md). Each sect
 | Player: one-way platforms | [`src/demos/one-way.ts`](src/demos/one-way.ts) | `oneWay: true` on platforms and shapes, jump up through them and drop with ↓ + jump, in a 6-level tower. |
 | Player: state & events | [`src/demos/events.ts`](src/demos/events.ts) | `getState()` and `player.on("jump" \| "land" \| "dash" \| "respawn" \| "stateChange")`, shown in a live HUD. |
 | Player: checkpoints & knockback | [`src/demos/player-api.ts`](src/demos/player-api.ts) | `knockback()` on spikes, `setSpawn()` on a checkpoint flag, and `setPosition()` on a teleport pad. |
-| Engine: removing entities | [`src/demos/remove.ts`](src/demos/remove.ts) | Kill plane, `game.removeEntity()` and the `entityRemoved` event, with a live body count. |
-| Engine: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |
-| Engine: collision layers | [`src/demos/layers.ts`](src/demos/layers.ts) | `defineLayers()` and `setCollision()`, with switches for who collides with whom. |
-| Engine: sensors & triggers | [`src/demos/sensors.ts`](src/demos/sensors.ts) | A pressure plate that opens a gate, a radar that follows the player, and a one-shot goal. |
-| Engine: collisions | [`src/demos/collisions.ts`](src/demos/collisions.ts) | `collisionStart` and `collisionEnd`, and boxes that change color through `onCollisionStart()`, with an enemy that sends the player back. |
-| Engine: animations | [`src/demos/animations.ts`](src/demos/animations.ts) | `SpriteSheet`, `Animator`, `Sprite` and `animatePlayer()`, with a sheet drawn by code. |
-| Engine: components | [`src/demos/components.ts`](src/demos/components.ts) | `Health`, `Patrol` and `Lifetime`, plus two components written in the demo. |
-| Engine: debug renderer | [`src/demos/debug.ts`](src/demos/debug.ts) | `game.debug`, with every kind of body and two invisible sensors. All demos also have a "debug view" switch. |
-| Engine: mouse & touch | [`src/demos/pointer.ts`](src/demos/pointer.ts) | `game.pointer` and `game.touch`: drop balls, drag boxes, and on-screen buttons. |
-| Engine: display | [`src/demos/display.ts`](src/demos/display.ts) | Sharp drawing and interpolation, with a physics-rate slider to see the difference. |
-| Engine: audio | [`src/demos/audio.ts`](src/demos/audio.ts) | Effects tied to player events and music, made by code, plus a coin sound loaded from a file (`public/sounds/coin.wav`), with volume sliders. |
-| Engine: gamepad | [`src/demos/gamepad.ts`](src/demos/gamepad.ts) | `game.gamepad`, with a live view of what the browser reports. |
-| Engine: controls | [`src/demos/controls.ts`](src/demos/controls.ts) | `Controls`, with a table to add and remove keys, pad buttons and axes. The choice is saved and applies to every demo. |
-| Engine: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
-| Engine: pause | [`src/demos/pause.ts`](src/demos/pause.ts) | `pause()` and `resume()`, with a pause menu drawn by a scene, and a button for mouse and touch. |
-| Engine: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
+| Physics: geometry | [`src/demos/shapes.ts`](src/demos/shapes.ts) | `Shape` with hills (polyline), a ramp, a tilted platform, a seesaw and a steep slab. Click to drop circles, boxes, triangles, hexagons or capsules. |
+| Physics: collision layers | [`src/demos/layers.ts`](src/demos/layers.ts) | `defineLayers()` and `setCollision()`, with switches for who collides with whom. |
+| Physics: sensors & triggers | [`src/demos/sensors.ts`](src/demos/sensors.ts) | A pressure plate that opens a gate, a radar that follows the player, and a one-shot goal. |
+| Physics: collisions | [`src/demos/collisions.ts`](src/demos/collisions.ts) | `collisionStart` and `collisionEnd`, and boxes that change color through `onCollisionStart()`, with an enemy that sends the player back. |
+| Physics: removing entities | [`src/demos/remove.ts`](src/demos/remove.ts) | Kill plane, `game.removeEntity()` and the `entityRemoved` event, with a live body count. |
+| Game flow: camera | [`src/demos/camera.ts`](src/demos/camera.ts) | `camera.follow()` with smoothing and a dead zone, level bounds, zoom, and shake on hard landings, in an 80 m level. |
+| Game flow: scenes & levels | [`src/demos/scenes.ts`](src/demos/scenes.ts) | A menu, three JSON levels in `src/levels/` and a results screen, with `Scene`, `LevelScene` and fades. |
+| Game flow: pause | [`src/demos/pause.ts`](src/demos/pause.ts) | `pause()` and `resume()`, with a pause menu drawn by a scene, and a button for mouse and touch. |
+| Game flow: components | [`src/demos/components.ts`](src/demos/components.ts) | `Health`, `Patrol` and `Lifetime`, plus two components written in the demo. |
+| Input: mouse & touch | [`src/demos/pointer.ts`](src/demos/pointer.ts) | `game.pointer` and `game.touch`: drop balls, drag boxes, and on-screen buttons. |
+| Input: gamepad | [`src/demos/gamepad.ts`](src/demos/gamepad.ts) | `game.gamepad`, with a live view of what the browser reports. |
+| Input: controls | [`src/demos/controls.ts`](src/demos/controls.ts) | `Controls`, with a table to add and remove keys, pad buttons and axes. The choice is saved and applies to every demo. |
+| Graphics & sound: animations | [`src/demos/animations.ts`](src/demos/animations.ts) | `SpriteSheet`, `Animator`, `Sprite` and `animatePlayer()`, with a sheet drawn by code. |
+| Graphics & sound: debug renderer | [`src/demos/debug.ts`](src/demos/debug.ts) | `game.debug`, with every kind of body and two invisible sensors. All demos also have a "debug view" switch. |
+| Graphics & sound: display | [`src/demos/display.ts`](src/demos/display.ts) | Sharp drawing and interpolation, with a physics-rate slider to see the difference. |
+| Graphics & sound: audio | [`src/demos/audio.ts`](src/demos/audio.ts) | Effects tied to player events and music, made by code, plus a coin sound loaded from a file (`public/sounds/coin.wav`), with volume sliders. |
 
 The demo takes keyboard focus when its page opens. If it loses focus, click it.
 
