@@ -8,7 +8,7 @@ An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.
 
 | Path | What it is |
 |---|---|
-| [`packages/core`](packages/core) | `@francodelportdev/rapier-engine`, the engine package ([API docs](packages/core/README.md)) |
+| [`packages/core`](packages/core) | `rapier-engine`, the engine package ([API docs](packages/core/README.md)) |
 | [`apps/game`](apps/game) | Vite demo that uses the engine ([walkthrough](apps/game/README.md)) |
 
 ## Getting started

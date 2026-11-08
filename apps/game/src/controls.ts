@@ -1,4 +1,4 @@
-import { Controls, type ControlInput } from "@francodelportdev/rapier-engine";
+import { Controls, type ControlInput } from "rapier-engine";
 
 const STORAGE_KEY = "rapier-engine-controls";
 

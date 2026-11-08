@@ -2,7 +2,7 @@
  * Pause: freeze the game while it keeps drawing, so a pause menu can show.
  * Explanation: the "pause" page of the docs.
  */
-import { Box, Game, Ground, Platform, Player, Scene } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Platform, Player, Scene } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 /** The pause button, in canvas pixels from the top right corner. */

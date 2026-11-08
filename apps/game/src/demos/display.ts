@@ -2,7 +2,7 @@
  * Display: sharp and smooth drawing. Lower the physics rate to see interpolation at work: without
  * it, everything moves in visible jumps. Explanation: the "display" page of the docs.
  */
-import { Game, Ground, Patrol, Player, Shape } from "@francodelportdev/rapier-engine";
+import { Game, Ground, Patrol, Player, Shape } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {

@@ -19,6 +19,7 @@
 - Collisions: the `collisionStart` and `collisionEnd` events, and `onCollisionStart()` and `onCollisionEnd()` on entities and components
 
 ### Changed
+- The package is now `rapier-engine`, without the `@francodelportdev/` scope
 - `update(dt)` on entities and scenes receives the step in seconds, like components. It's optional on entities
 - `Platform` (and `Ground`) is now a `Shape`
 - `Controls` has `once()` and `off()`

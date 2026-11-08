@@ -4,7 +4,7 @@
  * With your own art, use loadSpriteSheet("/hero.png", 32, 32).
  * Explanation: the "animations" page of the docs.
  */
-import { Animator, Game, Ground, Platform, Player, Shape, Sprite, animatePlayer, loadSpriteSheet } from "@francodelportdev/rapier-engine";
+import { Animator, Game, Ground, Platform, Player, Shape, Sprite, animatePlayer, loadSpriteSheet } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 const FRAME = 32;

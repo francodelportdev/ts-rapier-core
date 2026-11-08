@@ -3,7 +3,7 @@
  * and HealthBar and SparkWhenHurt are written here, as examples of your own.
  * Explanation: the "components" page of the docs.
  */
-import { Component, Game, Ground, Health, Lifetime, Patrol, Platform, Player, Sensor, Shape } from "@francodelportdev/rapier-engine";
+import { Component, Game, Ground, Health, Lifetime, Patrol, Platform, Player, Sensor, Shape } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 /** Your own component: draws a bar over any entity that has Health. */

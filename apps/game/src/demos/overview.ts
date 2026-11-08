@@ -2,7 +2,7 @@
  * Demo: push the boxes off the platform.
  * Explanation: the Overview page of the docs.
  */
-import { Box, Game, Ground, Player } from "@francodelportdev/rapier-engine";
+import { Box, Game, Ground, Player } from "rapier-engine";
 import type { Demo } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement): Promise<Demo> {

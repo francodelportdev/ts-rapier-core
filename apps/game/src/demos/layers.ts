@@ -2,7 +2,7 @@
  * Collision layers: red balls and blue boxes, with switches for who collides with whom.
  * Explanation: the "layers" page of the docs.
  */
-import { Game, Platform, Player, Shape, defineLayers } from "@francodelportdev/rapier-engine";
+import { Game, Platform, Player, Shape, defineLayers } from "rapier-engine";
 import type { Demo } from "../ui";
 
 const layers = defineLayers(["world", "player", "red", "blue"]);

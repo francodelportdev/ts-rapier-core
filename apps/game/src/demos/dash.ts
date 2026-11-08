@@ -2,7 +2,7 @@
  * Dash: a short horizontal burst (Shift or X), on the ground or once in the air.
  * Explanation and options: the "dash" page of the docs.
  */
-import { Game, Platform, Player } from "@francodelportdev/rapier-engine";
+import { Game, Platform, Player } from "rapier-engine";
 import type { Demo } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement): Promise<Demo> {

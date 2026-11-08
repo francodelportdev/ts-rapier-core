@@ -3,7 +3,7 @@
  * that fall, roll and bounce. Click the canvas to drop a shape where you click.
  * Explanation and options: the "shapes" page of the docs.
  */
-import { Game, Player, Shape, type Geometry } from "@francodelportdev/rapier-engine";
+import { Game, Player, Shape, type Geometry } from "rapier-engine";
 import type { Demo, DemoUI } from "../ui";
 
 export default async function demo(canvas: HTMLCanvasElement, ui: DemoUI): Promise<Demo> {
