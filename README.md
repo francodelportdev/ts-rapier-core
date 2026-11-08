@@ -1,6 +1,6 @@
 # ts-rapier-core
 
-[![CI](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml/badge.svg)](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml)
+[![CI](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml/badge.svg)](https://github.com/francodelportdev/ts-rapier-core/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/rapier-engine)](https://www.npmjs.com/package/rapier-engine)
 
 An object-oriented 2D game engine for the web, built on [Rapier](https://rapier.rs) physics, plus a playable demo.
 
